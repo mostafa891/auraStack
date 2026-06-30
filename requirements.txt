@@ -1,0 +1,15 @@
+Django
+inertia-django
+django-allauth
+django-environ
+django-money
+django-lifecycle
+django-cleanup
+
+Pillow
+psycopg[binary]
+
+whitenoise
+gunicorn
+
+ruff

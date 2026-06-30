@@ -1,0 +1,12 @@
+# A:\auraflow\.pre-commit-config.yaml
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # استخدام أحدث نسخة مستقرة من حارس الجودة Ruff في 2026
+    rev: v0.15.20
+    hooks:
+      # الخطاف الأول: فحص الأخطاء والـ Imports غير المستخدمة
+      - id: ruff-check
+        args: [--fix] # إجبار الأداة على إصلاح الأخطاء القابلة للتعديل تلقائياً
+
+      # الخطاف الثاني: إعادة تنسيق الكود بالملي ليتطابق مع قواعد التنسيق العالمية
+      - id: ruff-format
