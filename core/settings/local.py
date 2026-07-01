@@ -7,6 +7,9 @@ DEBUG = env.bool("DEBUG", default=True)
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "LOCATION": BASE_DIR / "db.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# تعطيل التحقق من البريد تماماً في بيئة التطوير المحلية لتسريع بناء الواجهات
+ACCOUNT_EMAIL_VERIFICATION = "none"

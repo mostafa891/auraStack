@@ -43,6 +43,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -80,3 +81,32 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTH_USER_MODEL = "users.CustomUser"
+
+# معرّف الموقع الأساسي للمنصة (مطلوب لـ Sites Framework)
+SITE_ID = 1
+
+# خطوط دفاع المصادقة المعتمدة في دجانغو
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+# ==============================================================================
+# إعدادات الحداثة لـ django-allauth (المطابقة لتوثيق 2026 المحدث)
+# ==============================================================================
+
+# نسف وإسقاط حقل الـ username تماماً من خلايا الـ Backend
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_USERNAME_REQUIRED = False
+
+# المعيار الحديث لعام 2026: تحديد طرق الدخول كـ set صريحة
+ACCOUNT_LOGIN_METHODS = {"email"}
+
+# سياسات الحصانة الفريدة للجلسات والمستخدمين
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_SESSION_REMEMBER = True
+
+# القيمة الافتراضية الصارمة للإنتاج (سيتم تعديلها محلياً في local للتطوير)
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
