@@ -24,16 +24,26 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "django_cleanup.apps.CleanupConfig",
     "django_extensions",
+    "django_vite",
+    "inertia",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
 ]
 
 LOCAL_APPS = [
-    "users.apps.UsersConfig",
+    "apps.users.apps.UsersConfig",
 ]
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+INSTALLED_APPS = (
+    [
+        "unfold",
+        "unfold.contrib.filters",
+    ]
+    + DJANGO_APPS
+    + THIRD_PARTY_APPS
+    + LOCAL_APPS
+)
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -44,6 +54,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "inertia.middleware.InertiaMiddleware",
+    "common.middleware.ShareUserDataMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -51,7 +63,7 @@ ROOT_URLCONF = "core.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -80,6 +92,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.CustomUser"
@@ -110,3 +123,27 @@ ACCOUNT_SESSION_REMEMBER = True
 
 # القيمة الافتراضية الصارمة للإنتاج (سيتم تعديلها محلياً في local للتطوير)
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+
+# ==============================================================================
+# Inertia.js — ربط Django بـ Vue عبر بروتوكول Inertia
+# ==============================================================================
+
+INERTIA_LAYOUT = "base.html"
+
+# توافق CSRF مع Axios (المكتبة الداخلية لـ Inertia)
+CSRF_HEADER_NAME = "HTTP_X_XSRF_TOKEN"
+CSRF_COOKIE_NAME = "XSRF-TOKEN"
+
+# ==============================================================================
+# django-vite — إدارة الأصول المبنية بـ Vite
+# ==============================================================================
+
+DJANGO_VITE = {
+    "default": {
+        "dev_mode": False,
+        "dev_server_host": "localhost",
+        "dev_server_port": 5173,
+        "manifest_path": BASE_DIR / "static" / "dist" / ".vite" / "manifest.json",
+        "static_url_prefix": "dist",
+    }
+}

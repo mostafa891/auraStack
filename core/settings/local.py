@@ -13,3 +13,11 @@ DATABASES = {
 
 # تعطيل التحقق من البريد تماماً في بيئة التطوير المحلية لتسريع بناء الواجهات
 ACCOUNT_EMAIL_VERIFICATION = "none"
+
+# تفعيل وضع التطوير الفوري لـ Vite (Hot Module Replacement)
+DJANGO_VITE = {
+    "default": {
+        **DJANGO_VITE["default"],
+        "dev_mode": True,
+    }
+}

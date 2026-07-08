@@ -5,11 +5,20 @@ django-environ
 django-money
 django-lifecycle
 django-cleanup
+django-vite
+django-extensions
 
 Pillow
 psycopg[binary]
 
 whitenoise
 gunicorn
+
+django-unfold
+qrcode
+pytest
+pytest-django
+pytest-playwright
+pytest-asyncio
 
 ruff
