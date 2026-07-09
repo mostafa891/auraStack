@@ -3,12 +3,16 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 from unfold.admin import ModelAdmin
 
+from apps.users.forms import CustomUserChangeForm, CustomUserCreationForm
 from apps.users.models import CustomUser
 
 
 @admin.register(CustomUser)
 class CustomUserAdmin(BaseUserAdmin, ModelAdmin):
     """تخصيص لوحة إدارة المستخدم المخصص وتزيينها بسمة Unfold الراقية."""
+
+    add_form = CustomUserCreationForm
+    form = CustomUserChangeForm
 
     list_display = (
         "email",

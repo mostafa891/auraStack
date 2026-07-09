@@ -1,6 +1,12 @@
 from typing import Any
 
 from django import forms
+from django.contrib.auth.forms import (
+    UserChangeForm as BaseUserChangeForm,
+)
+from django.contrib.auth.forms import (
+    UserCreationForm as BaseUserCreationForm,
+)
 from django.utils.translation import gettext_lazy as _
 
 from apps.users.models import CustomUser
@@ -61,3 +67,15 @@ class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ["language", "theme", "timezone"]
+
+
+class CustomUserCreationForm(BaseUserCreationForm):
+    class Meta(BaseUserCreationForm.Meta):
+        model = CustomUser
+        fields = ("email",)
+
+
+class CustomUserChangeForm(BaseUserChangeForm):
+    class Meta(BaseUserChangeForm.Meta):
+        model = CustomUser
+        fields = "__all__"

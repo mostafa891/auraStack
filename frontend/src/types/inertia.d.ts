@@ -14,10 +14,25 @@ export interface FieldError {
 /** الأخطاء المُشاركة عبر Inertia share() */
 export type SharedErrors = Record<string, FieldError[]> | null;
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  avatar_url: string;
+  language: string;
+  theme: string;
+  timezone: string;
+  is_staff: boolean;
+  is_superuser: boolean;
+}
+
 /** كل الـ Shared Props اللي Inertia بيبعتها مع كل Response */
 export interface SharedProps {
   errors?: SharedErrors;
   error_code?: string | null;
+  auth: {
+    user: AuthUser | null;
+  };
+  [key: string]: any;
 }
 
 /** لتعريف props أي صفحة Inertia */

@@ -21,6 +21,8 @@ class ShareUserDataMiddleware:
                         "language": request.user.language,
                         "theme": request.user.theme,
                         "timezone": request.user.timezone,
+                        "is_staff": request.user.is_staff,
+                        "is_superuser": request.user.is_superuser,
                     }
                 },
             )

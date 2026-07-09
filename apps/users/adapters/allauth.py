@@ -41,7 +41,7 @@ class AllauthAdapter:
             user.set_password(password)
 
             # الحفظ الصارم في قاعدة البيانات - سيطلق الـ IntegrityError فوراً لو كان البريد مكرراً
-            adapter.save_user(request, user, form=None)
+            user.save()
 
             # إكمال المعاملة الخلفية لـ allauth (إطلاق الـ Signals، وتجهيز بريد التفعيل)
             complete_signup(

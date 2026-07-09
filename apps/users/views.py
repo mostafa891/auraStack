@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
@@ -7,6 +9,16 @@ from inertia import render, share
 
 from apps.users.forms import AuraLoginForm, AuraRegisterForm, ProfileUpdateForm
 from apps.users.services import AuthService
+
+
+def get_request_data(request) -> dict:
+    """استخراج بيانات الطلب سواء كانت JSON أو Form-Encoded بأمان."""
+    if request.content_type == "application/json":
+        try:
+            return json.loads(request.body)
+        except json.JSONDecodeError:
+            return {}
+    return request.POST
 
 
 class LoginView(View):
@@ -21,7 +33,8 @@ class LoginView(View):
         if request.user.is_authenticated:
             return redirect(reverse("profile"))
 
-        form = AuraLoginForm(data=request.POST)
+        data = get_request_data(request)
+        form = AuraLoginForm(data=data)
 
         if not form.is_valid():
             share(request, errors=form.errors.get_json_data())
@@ -52,7 +65,8 @@ class RegisterView(View):
         if request.user.is_authenticated:
             return redirect(reverse("profile"))
 
-        form = AuraRegisterForm(data=request.POST)
+        data = get_request_data(request)
+        form = AuraRegisterForm(data=data)
 
         if not form.is_valid():
             share(request, errors=form.errors.get_json_data())
@@ -86,7 +100,8 @@ class ProfileUpdateView(LoginRequiredMixin, View):
     login_url = "auth:login"
 
     def post(self, request):
-        form = ProfileUpdateForm(data=request.POST, instance=request.user)
+        data = get_request_data(request)
+        form = ProfileUpdateForm(data=data, instance=request.user)
 
         if form.is_valid():
             form.save()

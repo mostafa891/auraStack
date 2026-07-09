@@ -31,7 +31,12 @@ def test_auth_and_preferences_flow(live_server, page: Page):
     page.click("button[type='submit']")
 
     # 3. التأكد من تحويل المستخدم تلقائياً لصفحة التفضيلات والملف الشخصي
-    page.wait_for_url("**/profile/")
+    try:
+        page.wait_for_url("**/profile/", timeout=5000)
+    except Exception as e:
+        print(f"Redirect to /profile/ failed. Current URL: {page.url}")
+        print(f"Page content: {page.content()}")
+        raise e
 
     # التحقق من وجود نصوص لوحة الإعدادات
     assert page.locator("h2:has-text('User Preferences & Settings')").is_visible()

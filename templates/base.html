@@ -10,6 +10,8 @@
     {% vite_asset "src/main.ts" %}
 </head>
 <body>
-    {% block inertia %}{% endblock %}
+    {% block content %}
+        {% block inertia %}{% endblock %}
+    {% endblock %}
 </body>
 </html>

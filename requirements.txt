@@ -1,24 +1,25 @@
-Django
-inertia-django
-django-allauth
-django-environ
-django-money
-django-lifecycle
-django-cleanup
-django-vite
-django-extensions
+Django>=5.1,<6.0
+inertia-django>=0.6,<0.7
+django-allauth[mfa]>=65.0,<66.0
+django-environ>=0.11,<0.12
+django-cleanup>=8.1,<9.0
+django-vite>=3.0,<4.0
+django-extensions>=3.2,<4.0
 
-Pillow
-psycopg[binary]
+Pillow>=10.4,<11.0
+psycopg[binary]>=3.2,<4.0
 
-whitenoise
-gunicorn
+whitenoise>=6.7,<7.0
+gunicorn>=23.0,<24.0
 
-django-unfold
-qrcode
-pytest
-pytest-django
-pytest-playwright
-pytest-asyncio
+django-unfold>=0.33,<1.0
+qrcode>=8.0,<9.0
+pytest>=8.3,<9.0
+pytest-django>=4.9,<5.0
+pytest-playwright>=0.5,<0.6
+pytest-asyncio>=0.24,<0.25
 
-ruff
+ruff>=0.6,<0.7
+fido2>=1.1,<2.0
+pyjwt>=2.9,<3.0
+cryptography>=43.0,<44.0

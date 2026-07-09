@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, watch, onMounted } from "vue";
 import { usePage, useForm, Link } from "@inertiajs/vue3";
+import type { SharedProps } from "@/types/inertia";
 
 // استخراج البيانات المشتركة من الباك إند
-const page = usePage();
-const user = computed(() => (page.props.auth as any)?.user);
+const page = usePage<SharedProps>();
+const user = computed(() => page.props.auth?.user);
 
 // فورم تحديث التفضيلات الشخصية
 const form = useForm({
@@ -112,6 +113,7 @@ watch(
         
         <div class="flex items-center space-x-3">
           <a
+            v-if="user?.is_staff || user?.is_superuser"
             href="/admin/"
             target="_blank"
             class="hidden sm:inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-border)] transition-colors cursor-pointer"
@@ -167,27 +169,27 @@ watch(
             <p class="text-xs text-[var(--color-text-muted)]">Built-in authentication capabilities ready for exploration:</p>
             
             <div class="space-y-2.5">
-              <a
-                href="/accounts/password/change/"
+              <Link
+                href="/auth/password/change/"
                 class="flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface-muted)] border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all group"
               >
                 <span class="text-xs font-medium text-[var(--color-text)]">Change Password</span>
                 <span class="text-[var(--color-primary)] opacity-60 group-hover:opacity-100 transition-opacity">→</span>
-              </a>
-              <a
-                href="/accounts/mfa/list/"
+              </Link>
+              <Link
+                href="/auth/mfa/"
                 class="flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface-muted)] border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all group"
               >
                 <span class="text-xs font-medium text-[var(--color-text)]">Configure Two-Factor (2FA)</span>
                 <span class="text-[var(--color-primary)] opacity-60 group-hover:opacity-100 transition-opacity">→</span>
-              </a>
-              <a
-                href="/accounts/social/connections/"
+              </Link>
+              <Link
+                href="/auth/social/connections/"
                 class="flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface-muted)] border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all group"
               >
                 <span class="text-xs font-medium text-[var(--color-text)]">Linked Accounts (OAuth)</span>
                 <span class="text-[var(--color-primary)] opacity-60 group-hover:opacity-100 transition-opacity">→</span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>

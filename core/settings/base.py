@@ -29,6 +29,9 @@ THIRD_PARTY_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.github",
+    "allauth.mfa",
 ]
 
 LOCAL_APPS = [
@@ -146,4 +149,83 @@ DJANGO_VITE = {
         "manifest_path": BASE_DIR / "static" / "dist" / ".vite" / "manifest.json",
         "static_url_prefix": "dist",
     }
+}
+
+# ==============================================================================
+# Logging Configuration — إدارة السجلات والتتبع الأمني
+# ==============================================================================
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {asctime} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "auraflow.security": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "auraflow.audit": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
+# ==============================================================================
+# Social Account Providers — إعدادات تسجيل الدخول الاجتماعي
+# ==============================================================================
+
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": env.str("GOOGLE_CLIENT_ID", default=""),
+            "secret": env.str("GOOGLE_CLIENT_SECRET", default=""),
+            "key": "",
+        },
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+    },
+    "github": {
+        "APP": {
+            "client_id": env.str("GITHUB_CLIENT_ID", default=""),
+            "secret": env.str("GITHUB_CLIENT_SECRET", default=""),
+            "key": "",
+        },
+        "SCOPE": [
+            "user",
+            "read:user",
+            "user:email",
+        ],
+    },
 }

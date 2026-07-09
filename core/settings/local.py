@@ -1,3 +1,5 @@
+import sys
+
 from core.settings.base import *
 
 # تفعيل الـ Debug والمؤشرات المحلية
@@ -14,10 +16,13 @@ DATABASES = {
 # تعطيل التحقق من البريد تماماً في بيئة التطوير المحلية لتسريع بناء الواجهات
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
-# تفعيل وضع التطوير الفوري لـ Vite (Hot Module Replacement)
+# التحقق مما إذا كان المشروع يعمل تحت بيئة الاختبارات (pytest)
+TESTING = "test" in sys.argv or any("pytest" in arg for arg in sys.argv)
+
+# تفعيل وضع التطوير الفوري لـ Vite (Hot Module Replacement) فقط خارج بيئة الاختبارات
 DJANGO_VITE = {
     "default": {
         **DJANGO_VITE["default"],
-        "dev_mode": True,
+        "dev_mode": not TESTING,
     }
 }

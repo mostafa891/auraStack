@@ -143,3 +143,20 @@ pytest
 ```
 *   تقوم الاختبارات بفحص نموذج المستخدم المخصص وصحة الصلاحيات.
 *   تقوم واجهات Playwright بتشغيل متصفح حقيقي بالخلفية لفتح صفحة التسجيل والدخول وتغيير التفضيلات الشخصية (Theme) والتأكد من تطبيق السمة داكن/فاتح بصرياً والتأكد من نجاح تسجيل الخروج.
+
+---
+
+## 📚 التوثيقات التقنية المرجعية (Technical Reference Docs)
+
+للمراجعة السريعة والتفصيلية للتقنيات والـ APIs المستخدمة في المشروع محلياً، يمكنك قراءة الأدلة التالية المدمجة في مجلد التوثيق:
+
+1.  **[دليل Django Core](file:///a:/auraflow/docs/reference/django_core.md):** إعدادات دجانغو الأساسية، نماذج البيانات (ORM) والـ Lifecycle ومكونات الباك إند.
+2.  **[دليل Django Allauth](file:///a:/auraflow/docs/reference/django_allauth.md):** الإعدادات الأساسية، وبنية الـ Adapters وتعديلها، والروابط والـ API المدمجة.
+3.  **[دليل Inertia-Django](file:///a:/auraflow/docs/reference/inertia_django.md):** كيفية رندرة الصفحات، ومشاركة البيانات (`share`) والروابط والـ Middleware.
+4.  **[دليل Django Vite](file:///a:/auraflow/docs/reference/django_vite.md):** نظام تجميع الملفات وعملها في التطوير والإنتاج والوسوم المخصصة.
+5.  **[دليل Django Unfold](file:///a:/auraflow/docs/reference/django_unfold.md):** لوحة التحكم الإدارية وتصميمها والتحكم بقوائمها وخياراتها.
+6.  **[دليل Vue 3 Composition API](file:///a:/auraflow/docs/reference/vue3.md):** هيكل المكونات الفردية (SFC)، التفاعل (Props & Emits)، وإدارة الحالة التفاعلية.
+7.  **[دليل Tailwind CSS v4](file:///a:/auraflow/docs/reference/tailwind_v4.md):** نمط التنسيق CSS-First وتعديل السمات (Dark Mode) وتوليد الكلاسات المخصصة.
+8.  **[دليل Pytest & Playwright](file:///a:/auraflow/docs/reference/pytest_playwright.md):** كتابة وتوزيع اختبارات الباك إند وتكامل الـ E2E ومحاكاة سلوك العميل.
+9.  **[دليل حزم دجانغو المساعدة](file:///a:/auraflow/docs/reference/django_packages.md):** توثيق مكتبات `django-environ`, `django-lifecycle`, `django-money`, و `django-cleanup`.
+
