@@ -60,4 +60,10 @@ MIDDLEWARE = [
 ```
 
 ### Custom Middleware: `ShareUserDataMiddleware`
-Located in [common/middleware.py](file:///a:/auraflow/common/middleware.py), this middleware shares the authenticated user metadata (`id`, `email`, `language`, `theme`, `timezone`) using Inertia's `share()` method. This makes user profile information globally accessible as reactive `props.auth.user` in any Vue 3 page!
+Located in [common/middleware.py](file:///a:/auraflow/common/middleware.py), this middleware shares key user metadata and workspace state with Vue:
+- **`auth.user`**: Authenticated user details (`id`, `email`, `language`, `theme`, `timezone`, etc.).
+- **`auth.workspaces`**: List of all workspaces the authenticated user belongs to (with their membership roles: `OWNER`, `ADMIN`, `MEMBER`).
+- **`auth.active_workspace`**: The currently selected/active workspace from the session, defaulting to the first workspace if not set.
+- **`flash`**: Django flash messages for displaying beautiful instant toast notifications.
+
+This makes user profile, active tenancy context, and notification messages globally accessible as reactive props in Vue 3 pages.

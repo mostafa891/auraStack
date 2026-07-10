@@ -62,11 +62,11 @@ class AuraRegisterForm(forms.Form):
 
 
 class ProfileUpdateForm(forms.ModelForm):
-    """نموذج تحديث التفضيلات الشخصية للمستخدم (اللغة، المظهر، المنطقة الزمنية)."""
+    """نموذج تحديث التفضيلات الشخصية للمستخدم (اللغة، المظهر، المنطقة الزمنية، الصورة الرمزية)."""
 
     class Meta:
         model = CustomUser
-        fields = ["language", "theme", "timezone"]
+        fields = ["language", "theme", "timezone", "avatar_url"]
 
 
 class CustomUserCreationForm(BaseUserCreationForm):

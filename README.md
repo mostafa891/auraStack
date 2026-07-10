@@ -159,4 +159,5 @@ pytest
 7.  **[دليل Tailwind CSS v4](file:///a:/auraflow/docs/reference/tailwind_v4.md):** نمط التنسيق CSS-First وتعديل السمات (Dark Mode) وتوليد الكلاسات المخصصة.
 8.  **[دليل Pytest & Playwright](file:///a:/auraflow/docs/reference/pytest_playwright.md):** كتابة وتوزيع اختبارات الباك إند وتكامل الـ E2E ومحاكاة سلوك العميل.
 9.  **[دليل حزم دجانغو المساعدة](file:///a:/auraflow/docs/reference/django_packages.md):** توثيق مكتبات `django-environ`, `django-lifecycle`, `django-money`, و `django-cleanup`.
+10. **[دليل إدارة الفرق وتعدد المستأجرين](file:///a:/auraflow/docs/reference/django_multi_tenancy.md):** معمارية مساحات العمل (Workspaces) ونظام الصلاحيات (OWNER, ADMIN, MEMBER) وإدارة الدعوات والـ Slugs الفريدة.
 

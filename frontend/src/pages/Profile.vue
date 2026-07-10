@@ -12,6 +12,7 @@ const form = useForm({
   language: user.value?.language || "en",
   theme: user.value?.theme || "SYSTEM",
   timezone: user.value?.timezone || "UTC",
+  avatar_url: user.value?.avatar_url || "",
 });
 
 // قائمة اللغات المعتمدة
@@ -27,15 +28,77 @@ const themes = [
   { value: "SYSTEM", label: "System Default / تلقائي" },
 ];
 
-// بعض المناطق الزمنية الشائعة للتسهيل
+// قائمة موسعة من 70 منطقة زمنية عالمية مرتبة جغرافياً وأبجدياً
 const commonTimezones = [
   "UTC",
+  "Africa/Abidjan",
   "Africa/Cairo",
-  "Asia/Riyadh",
-  "Europe/London",
+  "Africa/Casablanca",
+  "Africa/Johannesburg",
+  "Africa/Lagos",
+  "Africa/Nairobi",
+  "America/Anchorage",
+  "America/Argentina/Buenos_Aires",
+  "America/Bogota",
+  "America/Caracas",
+  "America/Chicago",
+  "America/Denver",
+  "America/Halifax",
+  "America/Los_Angeles",
+  "America/Mexico_City",
   "America/New_York",
-  "Asia/Tokyo",
+  "America/Phoenix",
+  "America/Santiago",
+  "America/Sao_Paulo",
+  "Asia/Almaty",
+  "Asia/Baghdad",
+  "Asia/Baku",
+  "Asia/Bangkok",
+  "Asia/Calcutta",
+  "Asia/Dhaka",
   "Asia/Dubai",
+  "Asia/Hong_Kong",
+  "Asia/Jakarta",
+  "Asia/Jerusalem",
+  "Asia/Kabul",
+  "Asia/Karachi",
+  "Asia/Kathmandu",
+  "Asia/Kuala_Lumpur",
+  "Asia/Manila",
+  "Asia/Riyadh",
+  "Asia/Seoul",
+  "Asia/Singapore",
+  "Asia/Taipei",
+  "Asia/Tashkent",
+  "Asia/Tbilisi",
+  "Asia/Tehran",
+  "Asia/Tokyo",
+  "Atlantic/Azores",
+  "Atlantic/Cape_Verde",
+  "Atlantic/Reykjavik",
+  "Australia/Adelaide",
+  "Australia/Brisbane",
+  "Australia/Darwin",
+  "Australia/Melbourne",
+  "Australia/Perth",
+  "Australia/Sydney",
+  "Europe/Amsterdam",
+  "Europe/Athens",
+  "Europe/Berlin",
+  "Europe/Brussels",
+  "Europe/Istanbul",
+  "Europe/Lisbon",
+  "Europe/London",
+  "Europe/Madrid",
+  "Europe/Moscow",
+  "Europe/Paris",
+  "Europe/Rome",
+  "Europe/Stockholm",
+  "Europe/Vienna",
+  "Europe/Zurich",
+  "Pacific/Auckland",
+  "Pacific/Fiji",
+  "Pacific/Honolulu",
 ];
 
 // دالة لتطبيق المظهر بصرياً في المتصفح فوراً
@@ -74,6 +137,56 @@ const savePreferences = () => {
   });
 };
 
+// إدارة رفع الصورة الرمزية (Direct Upload)
+import { ref as vueRef } from "vue";
+
+const isUploadingAvatar = vueRef(false);
+const avatarInput = vueRef<HTMLInputElement | null>(null);
+
+const triggerAvatarUpload = () => {
+  avatarInput.value?.click();
+};
+
+const handleAvatarUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (!target.files || target.files.length === 0) return;
+
+  const file = target.files[0];
+  isUploadingAvatar.value = true;
+
+  try {
+    // 1. طلب رابط موقع للرفع السحابي (Presigned URL)
+    const presignResponse = await fetch("/auth/profile/avatar/presign/");
+    if (!presignResponse.ok) throw new Error("Failed to get presigned URL");
+    const { upload_url, method, fields } = await presignResponse.json();
+
+    // 2. تجهيز كائن البيانات الثنائية
+    const formData = new FormData();
+    if (fields) {
+      Object.entries(fields).forEach(([key, value]) => {
+        formData.append(key, value as string);
+      });
+    }
+    formData.append("file", file);
+
+    // 3. الرفع المباشر إلى مساحة التخزين باستخدام fetch
+    const uploadResponse = await fetch(upload_url, {
+      method: method,
+      body: formData,
+    });
+    if (!uploadResponse.ok) throw new Error("Upload failed");
+    const uploadData = await uploadResponse.json();
+
+    // 4. تعيين الرابط وحفظ التغييرات تلقائياً
+    form.avatar_url = uploadData.avatar_url;
+    savePreferences();
+  } catch (error) {
+    console.error("Avatar upload failed:", error);
+  } finally {
+    isUploadingAvatar.value = false;
+  }
+};
+
 // تطبيق المظهر المختار عند التحميل الأولي
 onMounted(() => {
   if (user.value?.theme) {
@@ -89,6 +202,7 @@ watch(
       form.language = newUser.language;
       form.theme = newUser.theme;
       form.timezone = newUser.timezone;
+      form.avatar_url = newUser.avatar_url;
     }
   },
   { deep: true }
@@ -137,11 +251,43 @@ watch(
         <!-- Sidebar Info -->
         <div class="md:col-span-1 space-y-6">
           <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 shadow-sm text-center">
-            <div class="relative w-24 h-24 mx-auto mb-4">
-              <div class="w-full h-full rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-inner">
+            <div class="relative w-24 h-24 mx-auto mb-4 group">
+              <!-- الصورة الشخصية الحالية -->
+              <img
+                v-if="form.avatar_url"
+                :src="form.avatar_url"
+                alt="Avatar"
+                class="w-full h-full rounded-full object-cover border border-[var(--color-border)] shadow-md"
+              />
+              <div v-else class="w-full h-full rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-inner">
                 {{ user?.email?.charAt(0).toUpperCase() }}
               </div>
-              <span class="absolute bottom-0 right-2 w-5 h-5 bg-green-500 border-4 border-[var(--color-surface)] rounded-full"></span>
+              
+              <!-- مؤشر النشاط -->
+              <span class="absolute bottom-0 right-1 w-4 h-4 bg-green-500 border-2 border-[var(--color-surface)] rounded-full z-10"></span>
+
+              <!-- غلاف خيارات الرفع المباشر عند التحليق -->
+              <button
+                @click="triggerAvatarUpload"
+                type="button"
+                class="absolute inset-0 bg-black/65 rounded-full flex flex-col items-center justify-center text-white text-[10px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+                :disabled="isUploadingAvatar"
+              >
+                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>{{ isUploadingAvatar ? 'Uploading...' : 'Change' }}</span>
+              </button>
+
+              <!-- حقل الرفع المخفي -->
+              <input
+                type="file"
+                ref="avatarInput"
+                class="hidden"
+                accept="image/*"
+                @change="handleAvatarUpload"
+              />
             </div>
             
             <h2 class="text-lg font-bold text-[var(--color-text)] truncate">{{ user?.email }}</h2>
@@ -160,6 +306,25 @@ watch(
                 <span class="text-[var(--color-text-muted)]">Timezone:</span>
                 <span class="font-medium text-[var(--color-text)] truncate max-w-[120px]">{{ user?.timezone }}</span>
               </div>
+            </div>
+          </div>
+
+          <!-- Workspaces & Multi-tenancy Link -->
+          <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 shadow-sm space-y-4">
+            <h3 class="text-sm font-bold text-[var(--color-text)] uppercase tracking-wider">Multi-tenancy / الفرق</h3>
+            <p class="text-xs text-[var(--color-text-muted)]">Manage teams and switch workspaces:</p>
+            
+            <div class="space-y-2.5">
+              <Link
+                href="/workspaces/"
+                class="flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface-muted)] border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all group"
+              >
+                <div class="flex items-center gap-2.5">
+                  <span class="text-base">🏢</span>
+                  <span class="text-xs font-semibold text-[var(--color-text)]">Manage Workspaces / مساحات العمل</span>
+                </div>
+                <span class="text-[var(--color-primary)] opacity-60 group-hover:opacity-100 transition-opacity">→</span>
+              </Link>
             </div>
           </div>
 

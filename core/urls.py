@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
@@ -16,6 +18,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # توجيه مسارات المصادقة والـ Accounts إلى تطبيقنا الداخلي الموزع
     path("auth/", include("apps.users.urls", namespace="auth")),
+    # مسارات إدارة الفرق ومساحات العمل (Multi-tenancy)
+    path("workspaces/", include("apps.teams.urls", namespace="teams")),
     # صفحة تفضيلات الملف الشخصي الرئيسي
     path("profile/", ProfileView.as_view(), name="profile"),
     # تجاوز مسارات allauth الافتراضية بمسارات Inertia المخصصة على المستوى العام
@@ -33,3 +37,8 @@ urlpatterns = [
     # تضمين مسارات django-allauth بالكامل للوصول لروابط المزايا الأمنية المتقدمة
     path("accounts/", include("allauth.urls")),
 ]
+
+# تمكين خدمة ملفات الميديا محلياً في بيئة التطوير
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

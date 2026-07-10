@@ -25,12 +25,22 @@ export interface AuthUser {
   is_superuser: boolean;
 }
 
+export interface WorkspaceInfo {
+  id: string;
+  name: string;
+  slug: string;
+  role: string;
+  role_display: string;
+}
+
 /** كل الـ Shared Props اللي Inertia بيبعتها مع كل Response */
 export interface SharedProps {
   errors?: SharedErrors;
   error_code?: string | null;
   auth: {
     user: AuthUser | null;
+    workspaces?: WorkspaceInfo[];
+    active_workspace?: WorkspaceInfo | null;
   };
   [key: string]: any;
 }
