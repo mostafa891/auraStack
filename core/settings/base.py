@@ -127,6 +127,10 @@ ACCOUNT_SESSION_REMEMBER = True
 # القيمة الافتراضية الصارمة للإنتاج (سيتم تعديلها محلياً في local للتطوير)
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
+# توجيه المستخدمين بعد تسجيل الدخول والخروج
+LOGIN_REDIRECT_URL = "profile"
+LOGOUT_REDIRECT_URL = "auth:login"
+
 # ==============================================================================
 # Inertia.js — ربط Django بـ Vue عبر بروتوكول Inertia
 # ==============================================================================
@@ -229,3 +233,6 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
     },
 }
+
+# كتم تحذير الانتقال لـ Django 6.0 وتفعيل معيار الـ HTTPS الافتراضي لحقول الروابط
+FORMS_URLFIELD_ASSUME_HTTPS = True

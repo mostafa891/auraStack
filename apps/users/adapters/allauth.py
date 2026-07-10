@@ -43,6 +43,11 @@ class AllauthAdapter:
             # الحفظ الصارم في قاعدة البيانات - سيطلق الـ IntegrityError فوراً لو كان البريد مكرراً
             user.save()
 
+            # تهيئة البريد الإلكتروني في جداول Allauth لضمان إنشاء سجل EmailAddress
+            from allauth.account.utils import setup_user_email
+
+            setup_user_email(request, user, [])
+
             # إكمال المعاملة الخلفية لـ allauth (إطلاق الـ Signals، وتجهيز بريد التفعيل)
             complete_signup(
                 request=request,
@@ -53,8 +58,10 @@ class AllauthAdapter:
             return ServiceResult(success=True, data=user)
 
         except ValidationError as e:
+            # بما أن الخطأ يتم إطلاقه من clean_password، فهو دائماً يتعلق بحقل كلمة المرور
+            errors = e.message_dict if hasattr(e, "error_dict") else {"password": e.messages}
             return ServiceResult(
-                success=False, errors=e.message_dict, code=AuthErrorCode.INVALID_CREDENTIALS
+                success=False, errors=errors, code=AuthErrorCode.INVALID_CREDENTIALS
             )
         except IntegrityError:
             # صيد ثغرة الـ Race Condition من المنبع (قاعدة البيانات)

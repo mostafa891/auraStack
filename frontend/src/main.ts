@@ -1,6 +1,7 @@
 import { createApp, h, type DefineComponent } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
 import { createPinia } from "pinia";
+import ToastContainer from "@/layouts/ToastContainer.vue";
 import "@/app.css";
 
 // حل توافقية Inertia v2/v3 مع django-inertia:
@@ -28,7 +29,17 @@ createInertiaApp({
   },
 
   setup({ el, App, props, plugin }) {
-    const app = createApp({ render: () => h(App, props) });
+    // بناء غلاف جذري يضم تطبيق Inertia بالإضافة لحاوية التنبيهات (Toasts)
+    const RootApp = {
+      render() {
+        return h("div", [
+          h(App, props),
+          h(ToastContainer),
+        ]);
+      },
+    };
+
+    const app = createApp(RootApp);
 
     app.use(plugin);
     app.use(createPinia());

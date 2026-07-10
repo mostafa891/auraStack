@@ -31,7 +31,12 @@ export function useFormErrors() {
     const result: Record<string, string> = {};
     for (const [field, messages] of Object.entries(errors)) {
       if (Array.isArray(messages) && messages.length > 0) {
-        result[field] = messages[0].message;
+        const msg = messages[0];
+        if (typeof msg === "string") {
+          result[field] = msg;
+        } else if (msg && typeof msg === "object" && "message" in msg) {
+          result[field] = (msg as any).message;
+        }
       }
     }
     return result;

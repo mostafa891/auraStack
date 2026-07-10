@@ -29,5 +29,19 @@ class ShareUserDataMiddleware:
         else:
             share(request, auth={"user": None})
 
+        # مشاركة الرسائل الفورية (Flash Messages) الخاصة بـ Django مع Inertia
+        from django.contrib.messages import get_messages
+
+        django_messages = []
+        for message in get_messages(request):
+            django_messages.append(
+                {
+                    "message": message.message,
+                    "level": message.level,
+                    "tags": message.tags or "",
+                }
+            )
+        share(request, flash=django_messages)
+
         response = self.get_response(request)
         return response

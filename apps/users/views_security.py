@@ -11,7 +11,6 @@ from allauth.socialaccount.forms import DisconnectForm
 from allauth.socialaccount.models import SocialAccount
 from allauth.socialaccount.providers import registry
 from allauth.socialaccount.views import SignupView as AllauthSocialSignupView
-from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -43,14 +42,35 @@ class PasswordChangeView(LoginRequiredMixin, View):
 
     def post(self, request):
         data = get_request_data(request)
-        form = ChangePasswordForm(user=request.user, data=data)
+
+        # خريطة تحويل الحقول لتطابق مسميات النموذج الداخلي لـ allauth
+        mapped_data = {
+            "oldpassword": data.get("old_password"),
+            "password1": data.get("password"),
+            "password2": data.get("password_confirm"),
+        }
+
+        form = ChangePasswordForm(user=request.user, data=mapped_data)
 
         if form.is_valid():
             form.save()
-            update_session_auth_hash(request, form.user)
+            # إنهاء التغيير وتحديث الجلسة وإرسال التنبيهات الرسمية لـ allauth
+            from allauth.account.internal.flows.password_change import finalize_password_change
+
+            finalize_password_change(request, form.user)
             return redirect(reverse("profile"))
         else:
-            share(request, errors=form.errors.get_json_data())
+            # إعادة خريطة مسميات الأخطاء لتظهر في الواجهة الأمامية بشكل صحيح
+            errors = form.errors.get_json_data()
+            mapped_errors = {}
+            if "oldpassword" in errors:
+                mapped_errors["old_password"] = errors["oldpassword"]
+            if "password1" in errors:
+                mapped_errors["password"] = errors["password1"]
+            if "password2" in errors:
+                mapped_errors["password_confirm"] = errors["password2"]
+
+            share(request, errors=mapped_errors)
             return redirect(reverse("auth:password_change"))
 
 

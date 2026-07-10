@@ -15,7 +15,8 @@ const registerSchema = toTypedSchema(
         .email("Please enter a valid email address."),
       password: z
         .string()
-        .min(8, "Password must be at least 8 characters."),
+        .min(8, "Password must be at least 8 characters.")
+        .refine((val) => !/^\d+$/.test(val), "Password cannot be entirely numeric."),
       password_confirm: z
         .string()
         .min(1, "Please confirm your password."),
@@ -24,6 +25,18 @@ const registerSchema = toTypedSchema(
       message: "Passwords do not match.",
       path: ["password_confirm"],
     })
+    .refine(
+      (data) => {
+        if (!data.email || !data.password) return true;
+        const emailUser = data.email.split("@")[0].toLowerCase();
+        if (emailUser.length < 4) return true; // تخطي الإيميلات القصيرة جداً
+        return !data.password.toLowerCase().includes(emailUser);
+      },
+      {
+        message: "Password cannot be too similar to your email address.",
+        path: ["password"],
+      }
+    )
 );
 
 const { handleSubmit, errors: clientErrors } = useVeeForm({

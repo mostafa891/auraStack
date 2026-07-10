@@ -46,8 +46,6 @@ It exposes:
 
 ---
 
-## 🏗️ SPA Page Components
-
 All pages are built using the Vue 3 `<script setup lang="ts">` Composition API:
 - **State Management**: Uses Pinia (registered in `main.ts`).
 - **Reactive Forms**: Form submissions are triggered via Inertia's `useForm` hook, which intercepts standard form POST submissions to preserve SPA states:
@@ -56,3 +54,17 @@ All pages are built using the Vue 3 `<script setup lang="ts">` Composition API:
   const form = useForm({ email: "", password: "" });
   form.post("/auth/login/");
   ```
+
+---
+
+## 🔔 Premium Toast Notification System
+AuraFlow includes a lightweight, beautiful, reactive toast notification system that requires zero heavy third-party dependencies:
+1. **Toast Store (`useToast.ts`)**: Located in [useToast.ts](file:///a:/auraflow/frontend/src/composables/useToast.ts), this composable exposes a global ref list of active toasts. It supports standard utility methods:
+   - `toast.success("Message")`
+   - `toast.error("Message")`
+   - `toast.info("Message")`
+   - `toast.warning("Message")`
+2. **Toast Container (`ToastContainer.vue`)**: Located in [ToastContainer.vue](file:///a:/auraflow/frontend/src/layouts/ToastContainer.vue), this layout component is mounted globally in the Inertia setup wrapper in [main.ts](file:///a:/auraflow/frontend/src/main.ts). It includes a slide-in transition group, automatic dismiss durations, custom status icons, and responsive styling.
+3. **Auto-Triggering from Backend**: The container automatically watches:
+   - `page.props.flash`: Shares Django's native request messages (e.g. password changed successfully) piped via [ShareUserDataMiddleware](file:///a:/auraflow/common/middleware.py).
+   - `page.props.errors` and `page.props.error_code`: Triggers red error toasts automatically for invalid logins, deactivated accounts, and other general non-field errors.

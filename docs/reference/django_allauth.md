@@ -52,5 +52,10 @@ Rather than rendering default django-allauth Django Templates (which cause full-
 5. **TOTP Deactivation**: `TotpDeactivateView` verifying the account password to disable TOTP.
 6. **Social Connections**: `SocialConnectionsView` listing linked OAuth providers.
 
+### 🛡️ Dual Password Validation & Field Error Mapping
+To provide a smooth user experience alongside solid backend protection, AuraFlow applies a dual password validation layer:
+* **Client-Side (Zod & VeeValidate)**: Enforces minimum 8 characters, non-numeric checks, and prevents using passwords similar to the email prefix directly in the browser before the form is sent.
+* **Server-Side (Django Password Validators)**: Performs full checks (similarity, length, common passwords, numeric). Any caught `ValidationError` is intercepted by [AllauthAdapter](file:///a:/auraflow/apps/users/adapters/allauth.py) and mapped directly to the `"password"` key in the error dictionary, ensuring the error is displayed directly under the password input in Vue instead of as a generic page alert.
+
 ### Global URL Overrides
 In [core/urls.py](file:///a:/auraflow/core/urls.py), the custom Inertia security views are registered globally before allauth's URL patterns. This ensures that any internal redirect within allauth (e.g. redirecting to MFA verification after login) resolves to the Inertia page instead of the old HTML templates.

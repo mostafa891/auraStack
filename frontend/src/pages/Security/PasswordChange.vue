@@ -10,7 +10,10 @@ import { useFormErrors } from "@/composables/useFormErrors";
 const passwordChangeSchema = toTypedSchema(
   z.object({
     old_password: z.string().min(1, "Current password is required."),
-    password: z.string().min(8, "New password must be at least 8 characters."),
+    password: z
+      .string()
+      .min(8, "New password must be at least 8 characters.")
+      .refine((val) => !/^\d+$/.test(val), "Password cannot be entirely numeric."),
     password_confirm: z.string().min(1, "Please confirm your new password."),
   }).refine((data) => data.password === data.password_confirm, {
     message: "New passwords do not match.",
