@@ -1,0 +1,39 @@
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+db.sqlite3-shm
+db.sqlite3-wal
+media/
+staticfiles/
+debug_dispatch.log
+
+# Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# Node.js
+node_modules/
+dist/
+.vite/
+q/
+
+# Python
+.pytest_cache/
+.ruff_cache/
+
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

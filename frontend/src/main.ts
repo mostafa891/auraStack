@@ -12,10 +12,8 @@ const page = el && el.dataset.page ? JSON.parse(el.dataset.page) : undefined;
 createInertiaApp({
   page,
   resolve: (name: string) => {
-    // تحميل الصفحات ديناميكياً من مجلد pages/
-    const pages = import.meta.glob<DefineComponent>("./pages/**/*.vue", {
-      eager: true,
-    });
+    // تحميل الصفحات ديناميكياً ومجزءاً (Lazy Loading) من مجلد pages/
+    const pages = import.meta.glob<DefineComponent>("./pages/**/*.vue");
 
     const pageModule = pages[`./pages/${name}.vue`];
 
@@ -25,7 +23,8 @@ createInertiaApp({
       );
     }
 
-    return pageModule;
+    // دعم استيراد الوعد (Promise) في Inertia v3
+    return typeof pageModule === "function" ? pageModule() : pageModule;
   },
 
   setup({ el, App, props, plugin }) {

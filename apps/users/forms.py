@@ -25,6 +25,7 @@ class AuraLoginForm(forms.Form):
         widget=forms.PasswordInput,
         error_messages={"required": _("Password is required.")},
     )
+    remember = forms.BooleanField(required=False)
 
     def clean_email(self) -> str:
         return normalize_email(self.cleaned_data["email"])
@@ -64,9 +65,18 @@ class AuraRegisterForm(forms.Form):
 class ProfileUpdateForm(forms.ModelForm):
     """نموذج تحديث التفضيلات الشخصية للمستخدم (اللغة، المظهر، المنطقة الزمنية، الصورة الرمزية)."""
 
+    timezone = forms.ChoiceField(choices=[])
+
     class Meta:
         model = CustomUser
         fields = ["language", "theme", "timezone", "avatar_url"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        import zoneinfo
+
+        choices = sorted((tz, tz) for tz in zoneinfo.available_timezones())
+        self.fields["timezone"].choices = choices
 
 
 class CustomUserCreationForm(BaseUserCreationForm):
@@ -76,6 +86,15 @@ class CustomUserCreationForm(BaseUserCreationForm):
 
 
 class CustomUserChangeForm(BaseUserChangeForm):
+    timezone = forms.ChoiceField(choices=[])
+
     class Meta(BaseUserChangeForm.Meta):
         model = CustomUser
         fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        import zoneinfo
+
+        choices = sorted((tz, tz) for tz in zoneinfo.available_timezones())
+        self.fields["timezone"].choices = choices

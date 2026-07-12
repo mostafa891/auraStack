@@ -1,14 +1,34 @@
 <script setup lang="ts">
+import { watchEffect } from "vue";
+import { useI18n } from "@/composables/useI18n";
+
 interface Props {
   title: string;
   subtitle?: string;
 }
 
 defineProps<Props>();
+
+const { locale, toggleLocale } = useI18n();
+
+// Dynamic update of HTML attributes for RTL/LTR and language code
+watchEffect(() => {
+  document.documentElement.dir = locale.value === "ar" ? "rtl" : "ltr";
+  document.documentElement.lang = locale.value;
+});
 </script>
 
 <template>
   <div class="relative min-h-screen flex items-center justify-center px-4 py-16 bg-[var(--color-surface-muted)] overflow-hidden transition-colors duration-300">
+    <!-- Floating Language Switcher -->
+    <button
+      @click="toggleLocale"
+      class="absolute top-6 end-6 z-50 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-xs font-semibold hover:bg-[var(--color-surface-muted)] transition-all shadow-sm cursor-pointer select-none"
+    >
+      <span>🌐</span>
+      <span>{{ locale === 'ar' ? 'English' : 'العربية' }}</span>
+    </button>
+
     <!-- Glow Effects in Background -->
     <div class="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--color-primary)]/10 blur-[120px] pointer-events-none"></div>
     <div class="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--color-primary)]/15 blur-[120px] pointer-events-none"></div>

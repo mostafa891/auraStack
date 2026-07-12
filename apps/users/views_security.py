@@ -1,33 +1,31 @@
-import json
-
 from allauth.account.forms import ChangePasswordForm
 from allauth.account.internal.decorators import login_stage_required
+from allauth.account.views import (
+    PasswordResetDoneView as AllauthPasswordResetDoneView,
+)
+from allauth.account.views import (
+    PasswordResetFromKeyDoneView as AllauthPasswordResetFromKeyDoneView,
+)
+from allauth.account.views import (
+    PasswordResetFromKeyView as AllauthPasswordResetFromKeyView,
+)
+from allauth.account.views import (
+    PasswordResetView as AllauthPasswordResetView,
+)
 from allauth.mfa.adapter import get_adapter
 from allauth.mfa.base.forms import AuthenticateForm
-from allauth.mfa.models import Authenticator
 from allauth.mfa.stages import AuthenticateStage
 from allauth.mfa.totp.forms import ActivateTOTPForm, DeactivateTOTPForm
 from allauth.socialaccount.forms import DisconnectForm
-from allauth.socialaccount.models import SocialAccount
-from allauth.socialaccount.providers import registry
 from allauth.socialaccount.views import SignupView as AllauthSocialSignupView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from inertia import render, share
 
-
-def get_request_data(request) -> dict:
-    """استخراج بيانات الطلب سواء كانت JSON أو Form-Encoded بأمان لتوافق Inertia."""
-    if request.content_type == "application/json":
-        try:
-            return json.loads(request.body)
-        except json.JSONDecodeError:
-            return {}
-    return request.POST
-
+from common.utils.request import get_request_data
 
 # ==============================================================================
 # Password Change — تغيير كلمة المرور (Pure SPA)
@@ -71,7 +69,7 @@ class PasswordChangeView(LoginRequiredMixin, View):
                 mapped_errors["password_confirm"] = errors["password2"]
 
             share(request, errors=mapped_errors)
-            return redirect(reverse("auth:password_change"))
+            return render(request, "Security/PasswordChange")
 
 
 # ==============================================================================
@@ -83,15 +81,13 @@ class MfaListView(LoginRequiredMixin, View):
     """عرض وإدارة المصادقة الثنائية (2FA) عبر Inertia."""
 
     def get(self, request):
-        totp_active = Authenticator.objects.filter(
-            user=request.user, type=Authenticator.Type.TOTP
-        ).exists()
+        from apps.users.selectors import is_totp_active
 
         return render(
             request,
             "Security/MfaList",
             {
-                "totp_active": totp_active,
+                "totp_active": is_totp_active(request.user),
             },
         )
 
@@ -105,8 +101,10 @@ class TotpActivateView(LoginRequiredMixin, View):
     """تفعيل TOTP/2FA عبر Inertia."""
 
     def get(self, request):
+        from apps.users.selectors import is_totp_active
+
         # التحقق مما إذا كان مفعلاً بالفعل لتفادي التكرار
-        if Authenticator.objects.filter(user=request.user, type=Authenticator.Type.TOTP).exists():
+        if is_totp_active(request.user):
             return redirect(reverse("auth:mfa_list"))
 
         # إنشاء فورم Allauth الافتراضي لتوليد الـ secret تلقائياً
@@ -143,8 +141,18 @@ class TotpActivateView(LoginRequiredMixin, View):
             request.session.pop("totp_secret", None)
             return redirect(reverse("auth:mfa_list"))
         else:
+            adapter = get_adapter()
+            totp_url = adapter.build_totp_url(request.user, secret)
+            totp_svg = adapter.build_totp_svg(totp_url)
             share(request, errors=form.errors.get_json_data())
-            return redirect(reverse("auth:totp_activate"))
+            return render(
+                request,
+                "Security/TotpActivate",
+                {
+                    "totp_svg": totp_svg,
+                    "totp_key": secret,
+                },
+            )
 
 
 # ==============================================================================
@@ -156,7 +164,14 @@ class TotpDeactivateView(LoginRequiredMixin, View):
     """تعطيل TOTP/2FA عبر Inertia."""
 
     def get_authenticator(self, request):
-        return get_object_or_404(Authenticator, user=request.user, type=Authenticator.Type.TOTP)
+        from django.http import Http404
+
+        from apps.users.selectors import get_totp_authenticator
+
+        authenticator = get_totp_authenticator(request.user)
+        if not authenticator:
+            raise Http404("Authenticator not found")
+        return authenticator
 
     def get(self, request):
         self.get_authenticator(request)  # التحقق من الوجود
@@ -176,7 +191,7 @@ class TotpDeactivateView(LoginRequiredMixin, View):
             return redirect(reverse("auth:mfa_list"))
         else:
             share(request, errors=form.errors.get_json_data())
-            return redirect(reverse("auth:totp_deactivate"))
+            return render(request, "Security/TotpDeactivate")
 
 
 # ==============================================================================
@@ -206,7 +221,7 @@ class MfaAuthenticateView(View):
             return stage.exit()  # إنهاء عملية تسجيل الدخول وتوجيه المستخدم للداخل
         else:
             share(request, errors=form.errors.get_json_data())
-            return redirect(reverse("auth:mfa_authenticate"))
+            return render(request, "Security/MfaAuthenticate")
 
 
 # ==============================================================================
@@ -218,32 +233,23 @@ class SocialConnectionsView(LoginRequiredMixin, View):
     """إدارة الحسابات الاجتماعية المرتبطة عبر Inertia."""
 
     def get(self, request):
-        social_accounts = SocialAccount.objects.filter(user=request.user)
-        accounts = []
-        for account in social_accounts:
-            accounts.append(
-                {
-                    "id": account.id,
-                    "provider": account.provider,
-                    "uid": account.uid,
-                }
-            )
+        from apps.users.selectors import list_social_providers, list_user_social_accounts
 
-        providers = []
-        for provider_class in registry.get_class_list():
-            providers.append(
-                {
-                    "id": provider_class.id,
-                    "name": provider_class.name,
-                }
-            )
+        accounts = [
+            {
+                "id": account.id,
+                "provider": account.provider,
+                "uid": account.uid,
+            }
+            for account in list_user_social_accounts(request.user)
+        ]
 
         return render(
             request,
             "Security/SocialConnections",
             {
                 "accounts": accounts,
-                "providers": providers,
+                "providers": list_social_providers(),
             },
         )
 
@@ -255,8 +261,25 @@ class SocialConnectionsView(LoginRequiredMixin, View):
             form.save()
             return redirect(reverse("auth:social_connections"))
         else:
+            from apps.users.selectors import list_social_providers, list_user_social_accounts
+
+            accounts = [
+                {
+                    "id": account.id,
+                    "provider": account.provider,
+                    "uid": account.uid,
+                }
+                for account in list_user_social_accounts(request.user)
+            ]
             share(request, errors=form.errors.get_json_data())
-            return redirect(reverse("auth:social_connections"))
+            return render(
+                request,
+                "Security/SocialConnections",
+                {
+                    "accounts": accounts,
+                    "providers": list_social_providers(),
+                },
+            )
 
 
 # ==============================================================================
@@ -272,5 +295,130 @@ class SocialSignupView(AllauthSocialSignupView):
         return render(self.request, "Auth/SocialSignup", {"provider": provider})
 
     def form_invalid(self, form):
+        context = self.get_context_data(form=form)
+        provider = context.get("account").provider if context.get("account") else ""
         share(self.request, errors=form.errors.get_json_data())
-        return redirect(self.request.path)
+        return render(self.request, "Auth/SocialSignup", {"provider": provider})
+
+
+# ==============================================================================
+# Password Reset — استعادة كلمة المرور عبر البريد (Pure SPA)
+# ==============================================================================
+
+
+class PasswordResetView(AllauthPasswordResetView):
+    """صفحة طلب إعادة تعيين كلمة المرور."""
+
+    def render_to_response(self, context, **response_kwargs):
+        return render(self.request, "Security/PasswordReset")
+
+    def post(self, request, *args, **kwargs):
+        from allauth.account.forms import ResetPasswordForm
+
+        data = get_request_data(request)
+        form = ResetPasswordForm(data=data)
+        if form.is_valid():
+            form.save(request)
+            return redirect(reverse("account_reset_password_done"))
+        else:
+            share(request, errors=form.errors.get_json_data())
+            return render(request, "Security/PasswordReset")
+
+
+class PasswordResetDoneView(AllauthPasswordResetDoneView):
+    """صفحة إشعار إرسال بريد استعادة كلمة المرور."""
+
+    def get(self, request, *args, **kwargs):
+        return render(request, "Security/PasswordResetDone")
+
+
+class PasswordResetFromKeyView(AllauthPasswordResetFromKeyView):
+    """صفحة كتابة كلمة المرور الجديدة بعد الضغط على الرابط في الإيميل."""
+
+    def dispatch(self, request, uidb36, key, **kwargs):
+        is_inertia = (
+            request.headers.get("x-inertia") == "true"
+            or request.META.get("HTTP_X_INERTIA") == "true"
+        )
+        if is_inertia:
+            if key == self.reset_url_key:
+                # allauth stores the real token under "_password_reset_key"
+                key = request.session.get("_password_reset_key", "")
+
+            from allauth.account.forms import UserTokenForm
+
+            token_form = UserTokenForm(data={"uidb36": uidb36, "key": key})
+            if token_form.is_valid():
+                self.reset_user = token_form.reset_user
+                self.key = key
+                return super(AllauthPasswordResetFromKeyView, self).dispatch(
+                    request, uidb36, key, **kwargs
+                )
+            else:
+                self.reset_user = None
+                return self.render_to_response({"token_fail": True})
+
+        return super().dispatch(request, uidb36, key, **kwargs)
+
+    def render_to_response(self, context, **response_kwargs):
+        token_fail = context.get("token_fail", False)
+        return render(self.request, "Security/PasswordResetFromKey", {"token_fail": token_fail})
+
+    def get_form_kwargs(self) -> dict:
+        kwargs = super().get_form_kwargs()
+        if (
+            self.request.content_type and "application/json" in self.request.content_type
+        ) or self.request.headers.get("x-inertia") == "true":
+            data = get_request_data(self.request)
+            kwargs["data"] = {
+                "password1": data.get("password"),
+                "password2": data.get("password_confirm"),
+            }
+        return kwargs
+
+    def post(self, request, *args, **kwargs):
+        if not getattr(self, "reset_user", None):
+            return self.render_to_response({"token_fail": True})
+
+        form = self.get_form()
+        if form.is_valid():
+            form.save()
+            from allauth.account.internal import flows
+
+            resp = flows.password_reset.finalize_password_reset(request, self.reset_user)
+            if resp:
+                return resp
+            return redirect(reverse("account_reset_password_from_key_done"))
+        else:
+            errors = form.errors.get_json_data()
+            mapped_errors = {}
+            if "password1" in errors:
+                mapped_errors["password"] = errors["password1"]
+            if "password2" in errors:
+                mapped_errors["password_confirm"] = errors["password2"]
+            share(request, errors=mapped_errors)
+            return render(request, "Security/PasswordResetFromKey", {"token_fail": False})
+
+
+class PasswordResetFromKeyDoneView(AllauthPasswordResetFromKeyDoneView):
+    """صفحة تأكيد نجاح إعادة تعيين كلمة المرور."""
+
+    def get(self, request, *args, **kwargs):
+        return render(request, "Security/PasswordResetFromKeyDone")
+
+
+class SetLanguageView(View):
+    """تغيير لغة التطبيق وتخزينها في الكوكيز والجلسة."""
+
+    def post(self, request):
+        data = get_request_data(request)
+        lang = data.get("language", "en")
+        if lang in ["en", "ar"]:
+            from django.conf import settings
+
+            response = redirect(request.META.get("HTTP_REFERER", "/"))
+            response.set_cookie(settings.LANGUAGE_COOKIE_NAME, lang)
+            if hasattr(request, "session"):
+                request.session["_language"] = lang
+            return response
+        return redirect("/")

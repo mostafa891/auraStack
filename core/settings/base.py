@@ -32,11 +32,13 @@ THIRD_PARTY_APPS = [
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.github",
     "allauth.mfa",
+    "django_q",
 ]
 
 LOCAL_APPS = [
     "apps.users.apps.UsersConfig",
     "apps.teams.apps.TeamsConfig",
+    "apps.payments.apps.PaymentsConfig",
 ]
 
 INSTALLED_APPS = (
@@ -52,6 +54,7 @@ INSTALLED_APPS = (
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -90,13 +93,18 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "en"
+LANGUAGES = [
+    ("en", "English"),
+    ("ar", "Arabic"),
+]
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -119,10 +127,11 @@ AUTHENTICATION_BACKENDS = [
 
 # نسف وإسقاط حقل الـ username تماماً من خلايا الـ Backend
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 
 # المعيار الحديث لعام 2026: تحديد طرق الدخول كـ set صريحة
 ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_ADAPTER = "apps.users.adapters.allauth.CustomAccountAdapter"
 
 # سياسات الحصانة الفريدة للجلسات والمستخدمين
 ACCOUNT_UNIQUE_EMAIL = True
@@ -206,7 +215,7 @@ LOGGING = {
 # Social Account Providers — إعدادات تسجيل الدخول الاجتماعي
 # ==============================================================================
 
-SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_LOGIN_ON_GET = False
 SOCIALACCOUNT_AUTO_SIGNUP = True
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -240,3 +249,23 @@ SOCIALACCOUNT_PROVIDERS = {
 
 # كتم تحذير الانتقال لـ Django 6.0 وتفعيل معيار الـ HTTPS الافتراضي لحقول الروابط
 FORMS_URLFIELD_ASSUME_HTTPS = True
+
+# ==============================================================================
+# Django Q2 Cluster Settings
+# ==============================================================================
+Q_CLUSTER = {
+    "name": "auraflow_q",
+    "workers": 4,
+    "recycle": 500,
+    "timeout": 60,
+    "orm": "default",  # Use Django database ORM as the broker
+}
+
+# ==============================================================================
+# Stripe and Billing Settings
+# ==============================================================================
+STRIPE_PUBLISHABLE_KEY = env.str("STRIPE_PUBLISHABLE_KEY", default="")
+STRIPE_SECRET_KEY = env.str("STRIPE_SECRET_KEY", default="")
+STRIPE_WEBHOOK_SECRET = env.str("STRIPE_WEBHOOK_SECRET", default="")
+
+DEFAULT_PAYMENT_PROVIDER = env.str("DEFAULT_PAYMENT_PROVIDER", default="STRIPE")

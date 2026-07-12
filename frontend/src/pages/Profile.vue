@@ -1,11 +1,21 @@
 <script setup lang="ts">
-import { computed, watch, onMounted } from "vue";
+import { computed, watch, onMounted, watchEffect } from "vue";
 import { usePage, useForm, Link } from "@inertiajs/vue3";
 import type { SharedProps } from "@/types/inertia";
+import { useI18n } from "@/composables/useI18n";
+import { usePreferencesStore } from "@/stores/preferences";
 
 // استخراج البيانات المشتركة من الباك إند
 const page = usePage<SharedProps>();
 const user = computed(() => page.props.auth?.user);
+const preferencesStore = usePreferencesStore();
+
+const { t, locale, toggleLocale } = useI18n();
+
+watchEffect(() => {
+  document.documentElement.dir = locale.value === "ar" ? "rtl" : "ltr";
+  document.documentElement.lang = locale.value;
+});
 
 // فورم تحديث التفضيلات الشخصية
 const form = useForm({
@@ -21,12 +31,12 @@ const languages = [
   { value: "ar", label: "العربية" },
 ];
 
-// قائمة السمات
-const themes = [
-  { value: "LIGHT", label: "Light Mode / مضيء" },
-  { value: "DARK", label: "Dark Mode / مظلم" },
-  { value: "SYSTEM", label: "System Default / تلقائي" },
-];
+// قائمة السمات ديناميكياً بناء على اللغة
+const themes = computed(() => [
+  { value: "LIGHT", label: locale.value === "ar" ? "الوضع المضيء (Light)" : "Light Mode" },
+  { value: "DARK", label: locale.value === "ar" ? "الوضع المظلم (Dark)" : "Dark Mode" },
+  { value: "SYSTEM", label: locale.value === "ar" ? "تلقائي حسب النظام" : "System Default" },
+]);
 
 // قائمة موسعة من 70 منطقة زمنية عالمية مرتبة جغرافياً وأبجدياً
 const commonTimezones = [
@@ -101,37 +111,19 @@ const commonTimezones = [
   "Pacific/Honolulu",
 ];
 
-// دالة لتطبيق المظهر بصرياً في المتصفح فوراً
-const applyTheme = (themeName: string) => {
-  const root = document.documentElement;
-  if (themeName === "DARK") {
-    root.classList.add("dark");
-    root.style.setProperty("--color-surface", "#0f172a");
-    root.style.setProperty("--color-surface-muted", "#020617");
-    root.style.setProperty("--color-border", "#1e293b");
-    root.style.setProperty("--color-text", "#f8fafc");
-    root.style.setProperty("--color-text-muted", "#94a3b8");
-  } else if (themeName === "LIGHT") {
-    root.classList.remove("dark");
-    root.style.setProperty("--color-surface", "#ffffff");
-    root.style.setProperty("--color-surface-muted", "#f8fafc");
-    root.style.setProperty("--color-border", "#e2e8f0");
-    root.style.setProperty("--color-text", "#0f172a");
-    root.style.setProperty("--color-text-muted", "#64748b");
-  } else {
-    // SYSTEM
-    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    applyTheme(isDark ? "DARK" : "LIGHT");
-  }
-};
-
 // مراقبة وحفظ التفضيلات
 const savePreferences = () => {
   form.post("/auth/profile/update/", {
     preserveScroll: true,
     onSuccess: () => {
       if (user.value?.theme) {
-        applyTheme(user.value.theme);
+        preferencesStore.theme = user.value.theme as any;
+      }
+      if (user.value?.language) {
+        preferencesStore.language = user.value.language as any;
+      }
+      if (user.value?.timezone) {
+        preferencesStore.timezone = user.value.timezone;
       }
     },
   });
@@ -139,6 +131,9 @@ const savePreferences = () => {
 
 // إدارة رفع الصورة الرمزية (Direct Upload)
 import { ref as vueRef } from "vue";
+import { useToast } from "@/composables/useToast";
+
+const { toast } = useToast();
 
 const isUploadingAvatar = vueRef(false);
 const avatarInput = vueRef<HTMLInputElement | null>(null);
@@ -169,30 +164,49 @@ const handleAvatarUpload = async (event: Event) => {
     }
     formData.append("file", file);
 
-    // 3. الرفع المباشر إلى مساحة التخزين باستخدام fetch
+    // دالة استخراج توكن CSRF من الكوكيز (الاسم المخصص في إعدادات الباك إند هو XSRF-TOKEN)
+    const getCookie = (name: string) => {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    };
+    const csrfToken = getCookie("XSRF-TOKEN");
+
+    // 3. الرفع المباشر إلى مساحة التخزين باستخدام fetch مع تمرير التوكن المخصص X-XSRF-TOKEN
     const uploadResponse = await fetch(upload_url, {
       method: method,
       body: formData,
+      headers: {
+        "X-XSRF-TOKEN": csrfToken || "",
+      },
     });
-    if (!uploadResponse.ok) throw new Error("Upload failed");
+
+    if (!uploadResponse.ok) {
+      const errorData = await uploadResponse.json().catch(() => ({}));
+      throw new Error(errorData.error || "Upload failed");
+    }
     const uploadData = await uploadResponse.json();
 
     // 4. تعيين الرابط وحفظ التغييرات تلقائياً
     form.avatar_url = uploadData.avatar_url;
     savePreferences();
-  } catch (error) {
+    toast.success(locale.value === "ar" ? "تم رفع الصورة الشخصية بنجاح!" : "Avatar uploaded successfully!");
+  } catch (error: any) {
     console.error("Avatar upload failed:", error);
+    toast.error(error.message || (locale.value === "ar" ? "فشل رفع الصورة الشخصية." : "Failed to upload avatar."));
   } finally {
     isUploadingAvatar.value = false;
   }
 };
-
-// تطبيق المظهر المختار عند التحميل الأولي
-onMounted(() => {
-  if (user.value?.theme) {
-    applyTheme(user.value.theme);
-  }
-});
 
 // مراقبة تفضيلات المستخدم القادمة من السيرفر وتحديث الفورم تلقائياً
 watch(
@@ -220,19 +234,25 @@ watch(
             A
           </div>
           <div>
-            <h1 class="text-xl font-bold text-[var(--color-text)]">AuraFlow Boilerplate</h1>
-            <p class="text-sm text-[var(--color-text-muted)]">Secure Django + Inertia + Vue Starter</p>
+            <h1 class="text-xl font-bold text-[var(--color-text)]">{{ t('profile.nav_header') }}</h1>
+            <p class="text-sm text-[var(--color-text-muted)]">{{ t('profile.nav_subheader') }}</p>
           </div>
         </div>
         
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center gap-3">
+          <button
+            @click="toggleLocale"
+            class="inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-border)] transition-colors cursor-pointer select-none"
+          >
+            🌐 {{ locale === 'ar' ? 'English' : 'العربية' }}
+          </button>
           <a
             v-if="user?.is_staff || user?.is_superuser"
             href="/admin/"
             target="_blank"
             class="hidden sm:inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-border)] transition-colors cursor-pointer"
           >
-            Admin Panel 🛡️
+            {{ t('nav.admin_panel') }}
           </a>
           <Link
             href="/auth/logout/"
@@ -240,7 +260,7 @@ watch(
             as="button"
             class="px-4 py-2 rounded-xl text-sm font-medium bg-[var(--color-danger)] text-white hover:opacity-90 transition-opacity cursor-pointer"
           >
-            Logout
+            {{ t('nav.logout') }}
           </Link>
         </div>
       </div>
@@ -277,7 +297,7 @@ watch(
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span>{{ isUploadingAvatar ? 'Uploading...' : 'Change' }}</span>
+                <span>{{ isUploadingAvatar ? t('profile.uploading_avatar') : t('profile.change_avatar') }}</span>
               </button>
 
               <!-- حقل الرفع المخفي -->
@@ -291,19 +311,19 @@ watch(
             </div>
             
             <h2 class="text-lg font-bold text-[var(--color-text)] truncate">{{ user?.email }}</h2>
-            <p class="text-xs text-[var(--color-text-muted)] mb-4">Verified Member</p>
+            <p class="text-xs text-[var(--color-text-muted)] mb-4">{{ t('profile.verified_member') }}</p>
             
             <div class="pt-4 border-t border-[var(--color-border)] text-left space-y-2">
               <div class="flex justify-between text-xs">
-                <span class="text-[var(--color-text-muted)]">Language:</span>
+                <span class="text-[var(--color-text-muted)]">{{ t('profile.lang_label') }}:</span>
                 <span class="font-medium text-[var(--color-text)]">{{ user?.language === 'ar' ? 'العربية' : 'English' }}</span>
               </div>
               <div class="flex justify-between text-xs">
-                <span class="text-[var(--color-text-muted)]">Theme:</span>
+                <span class="text-[var(--color-text-muted)]">{{ t('profile.theme_label') }}:</span>
                 <span class="font-medium text-[var(--color-text)]">{{ user?.theme }}</span>
               </div>
               <div class="flex justify-between text-xs">
-                <span class="text-[var(--color-text-muted)]">Timezone:</span>
+                <span class="text-[var(--color-text-muted)]">{{ t('profile.timezone_label') }}:</span>
                 <span class="font-medium text-[var(--color-text)] truncate max-w-[120px]">{{ user?.timezone }}</span>
               </div>
             </div>
@@ -311,8 +331,8 @@ watch(
 
           <!-- Workspaces & Multi-tenancy Link -->
           <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 shadow-sm space-y-4">
-            <h3 class="text-sm font-bold text-[var(--color-text)] uppercase tracking-wider">Multi-tenancy / الفرق</h3>
-            <p class="text-xs text-[var(--color-text-muted)]">Manage teams and switch workspaces:</p>
+            <h3 class="text-sm font-bold text-[var(--color-text)] uppercase tracking-wider">{{ t('profile.workspaces') }}</h3>
+            <p class="text-xs text-[var(--color-text-muted)]">{{ locale === 'ar' ? 'إدارة الفرق والتبديل بين مساحات العمل:' : 'Manage teams and switch workspaces:' }}</p>
             
             <div class="space-y-2.5">
               <Link
@@ -321,7 +341,26 @@ watch(
               >
                 <div class="flex items-center gap-2.5">
                   <span class="text-base">🏢</span>
-                  <span class="text-xs font-semibold text-[var(--color-text)]">Manage Workspaces / مساحات العمل</span>
+                  <span class="text-xs font-semibold text-[var(--color-text)]">{{ t('profile.manage_workspaces') }}</span>
+                </div>
+                <span class="text-[var(--color-primary)] opacity-60 group-hover:opacity-100 transition-opacity">→</span>
+              </Link>
+            </div>
+          </div>
+
+          <!-- Billing & Subscriptions Link -->
+          <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 shadow-sm space-y-4">
+            <h3 class="text-sm font-bold text-[var(--color-text)] uppercase tracking-wider">{{ locale === 'ar' ? 'الاشتراكات والمدفوعات' : 'Billing & Subscriptions' }}</h3>
+            <p class="text-xs text-[var(--color-text-muted)]">{{ locale === 'ar' ? 'إدارة خطط الأسعار والترقية لمساحة العمل:' : 'Manage pricing plans and upgrade active workspace:' }}</p>
+            
+            <div class="space-y-2.5">
+              <Link
+                href="/billing/pricing/"
+                class="flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface-muted)] border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all group"
+              >
+                <div class="flex items-center gap-2.5">
+                  <span class="text-base">💳</span>
+                  <span class="text-xs font-semibold text-[var(--color-text)]">{{ locale === 'ar' ? 'خطط الأسعار والاشتراكات' : 'Pricing & Subscription Plans' }}</span>
                 </div>
                 <span class="text-[var(--color-primary)] opacity-60 group-hover:opacity-100 transition-opacity">→</span>
               </Link>
@@ -330,29 +369,29 @@ watch(
 
           <!-- Allauth Features Links -->
           <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 shadow-sm space-y-4">
-            <h3 class="text-sm font-bold text-[var(--color-text)] uppercase tracking-wider">Allauth Security Features</h3>
-            <p class="text-xs text-[var(--color-text-muted)]">Built-in authentication capabilities ready for exploration:</p>
+            <h3 class="text-sm font-bold text-[var(--color-text)] uppercase tracking-wider">{{ t('profile.allauth_security') }}</h3>
+            <p class="text-xs text-[var(--color-text-muted)]">{{ locale === 'ar' ? 'خيارات الأمان والمصادقة المدمجة بالموقع:' : 'Built-in authentication capabilities ready for exploration:' }}</p>
             
             <div class="space-y-2.5">
               <Link
-                href="/auth/password/change/"
+                href="/accounts/password/change/"
                 class="flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface-muted)] border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all group"
               >
-                <span class="text-xs font-medium text-[var(--color-text)]">Change Password</span>
+                <span class="text-xs font-medium text-[var(--color-text)]">{{ t('profile.change_password') }}</span>
                 <span class="text-[var(--color-primary)] opacity-60 group-hover:opacity-100 transition-opacity">→</span>
               </Link>
               <Link
-                href="/auth/mfa/"
+                href="/accounts/2fa/"
                 class="flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface-muted)] border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all group"
               >
-                <span class="text-xs font-medium text-[var(--color-text)]">Configure Two-Factor (2FA)</span>
+                <span class="text-xs font-medium text-[var(--color-text)]">{{ t('profile.configure_mfa') }}</span>
                 <span class="text-[var(--color-primary)] opacity-60 group-hover:opacity-100 transition-opacity">→</span>
               </Link>
               <Link
-                href="/auth/social/connections/"
+                href="/accounts/social/connections/"
                 class="flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface-muted)] border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all group"
               >
-                <span class="text-xs font-medium text-[var(--color-text)]">Linked Accounts (OAuth)</span>
+                <span class="text-xs font-medium text-[var(--color-text)]">{{ t('profile.social_accounts') }}</span>
                 <span class="text-[var(--color-primary)] opacity-60 group-hover:opacity-100 transition-opacity">→</span>
               </Link>
             </div>
@@ -362,14 +401,14 @@ watch(
         <!-- Form settings -->
         <div class="md:col-span-2 space-y-6">
           <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-8 shadow-sm">
-            <h2 class="text-xl font-bold text-[var(--color-text)] mb-6">User Preferences & Settings</h2>
+            <h2 class="text-xl font-bold text-[var(--color-text)] mb-6">{{ t('profile.preferences_title') }}</h2>
             
             <form @submit.prevent="savePreferences" class="space-y-6">
               
               <!-- Language Dropdown -->
               <div>
                 <label for="language" class="block text-sm font-medium text-[var(--color-text)] mb-2">
-                  Preferred Language / لغة التطبيق
+                  {{ t('profile.lang_label') }}
                 </label>
                 <select
                   id="language"
@@ -385,7 +424,7 @@ watch(
               <!-- Theme Dropdown -->
               <div>
                 <label for="theme" class="block text-sm font-medium text-[var(--color-text)] mb-2">
-                  Select Theme / مظهر الواجهة
+                  {{ t('profile.theme_label') }}
                 </label>
                 <select
                   id="theme"
@@ -401,7 +440,7 @@ watch(
               <!-- Timezone Dropdown -->
               <div>
                 <label for="timezone" class="block text-sm font-medium text-[var(--color-text)] mb-2">
-                  Local Timezone / المنطقة الزمنية
+                  {{ t('profile.timezone_label') }}
                 </label>
                 <select
                   id="timezone"
@@ -413,7 +452,7 @@ watch(
                   </option>
                 </select>
                 <p class="mt-2 text-xs text-[var(--color-text-muted)]">
-                  Used for aligning schedulers, logging auditing trails, and date formats.
+                  {{ t('profile.timezone_desc') }}
                 </p>
               </div>
 
@@ -424,8 +463,8 @@ watch(
                   :disabled="form.processing"
                   class="px-6 py-2.5 rounded-xl bg-[var(--color-primary)] text-white font-medium text-sm hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors shadow-md shadow-indigo-500/10 cursor-pointer"
                 >
-                  <span v-if="!form.processing">Save Preferences</span>
-                  <span v-else>Saving Changes...</span>
+                  <span v-if="!form.processing">{{ t('profile.save_btn') }}</span>
+                  <span v-else>{{ t('profile.saving') }}</span>
                 </button>
               </div>
             </form>

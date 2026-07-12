@@ -1,1 +1,1 @@
-# Diagnostic script. Safe to delete.
+# Deleted

@@ -18,10 +18,12 @@ class AuthService:
         }
 
     @classmethod
-    def login_user(cls, request: HttpRequest, cleaned_email: str, password: str) -> ServiceResult:
+    def login_user(
+        cls, request: HttpRequest, cleaned_email: str, password: str, remember: bool = False
+    ) -> ServiceResult:
         meta = cls._get_metadata(request)
         result = AllauthAdapter.authenticate_user(
-            request=request, email=cleaned_email, password=password
+            request=request, email=cleaned_email, password=password, remember=remember
         )
 
         if not result.success:
@@ -65,3 +67,22 @@ class AuthService:
             meta["ip"],
         )
         return result
+
+
+class UserService:
+    """طبقة خدمات المستخدم لإدارة وتحديث البيانات الشخصية والتفضيلات."""
+
+    @staticmethod
+    def update_profile_preferences(
+        user, language: str, theme: str, timezone: str, avatar_url: str = None
+    ) -> ServiceResult:
+        try:
+            user.language = language
+            user.theme = theme
+            user.timezone = timezone
+            if avatar_url is not None:
+                user.avatar_url = avatar_url
+            user.save()
+            return ServiceResult(success=True, data=user, message="Profile updated successfully")
+        except Exception as e:
+            return ServiceResult(success=False, message=f"Failed to update profile: {str(e)}")

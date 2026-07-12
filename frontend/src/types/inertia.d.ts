@@ -25,12 +25,23 @@ export interface AuthUser {
   is_superuser: boolean;
 }
 
+export interface WorkspaceSubscription {
+  plan_id: string;
+  status: string;
+  current_period_end?: string | null;
+  cancel_at_period_end: boolean;
+  is_locked: boolean;
+  max_members: number;
+  member_count: number;
+}
+
 export interface WorkspaceInfo {
   id: string;
   name: string;
   slug: string;
   role: string;
   role_display: string;
+  subscription?: WorkspaceSubscription | null;
 }
 
 /** كل الـ Shared Props اللي Inertia بيبعتها مع كل Response */

@@ -5,15 +5,18 @@ import { toTypedSchema } from "@/composables/zodSchema";
 import { z } from "zod";
 import AuthLayout from "@/layouts/AuthLayout.vue";
 import { useFormErrors } from "@/composables/useFormErrors";
+import { useI18n } from "@/composables/useI18n";
+
+const { t } = useI18n();
 
 // Zod validation for 6-digit TOTP code
 const authenticateSchema = toTypedSchema(
   z.object({
     code: z
       .string()
-      .min(6, "Code must be 6 digits.")
-      .max(6, "Code must be 6 digits.")
-      .regex(/^\d+$/, "Code must contain only numbers."),
+      .min(6, t("mfa.code_length"))
+      .max(6, t("mfa.code_length"))
+      .regex(/^\d+$/, t("mfa.code_digits")),
   })
 );
 
@@ -36,7 +39,7 @@ const onSubmit = handleSubmit((values) => {
 </script>
 
 <template>
-  <AuthLayout title="Two-Factor Authentication" subtitle="Enter the 6-digit verification code from your authenticator app to log in">
+  <AuthLayout :title="t('mfa.authenticate_title')" :subtitle="t('mfa.authenticate_subtitle')">
     <!-- General Error Alert -->
     <div
       v-if="hasGeneralError"
@@ -51,13 +54,13 @@ const onSubmit = handleSubmit((values) => {
           for="code"
           class="block text-sm font-medium text-[var(--color-text)] mb-1.5 text-center"
         >
-          Verification Code
+          {{ t('mfa.verify_code_label') }}
         </label>
         <input
           id="code"
           v-model="code"
           type="text"
-          placeholder="6-digit code"
+          :placeholder="t('mfa.code_placeholder')"
           required
           autocomplete="one-time-code"
           class="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)] px-4 py-2.5 text-center text-lg font-mono tracking-[0.5em] outline-none transition-colors focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
@@ -80,8 +83,8 @@ const onSubmit = handleSubmit((values) => {
                text-white transition-colors hover:bg-[var(--color-primary-hover)]
                disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md shadow-indigo-500/10"
       >
-        <span v-if="!inertiaForm.processing">Verify Code</span>
-        <span v-else>Verifying...</span>
+        <span v-if="!inertiaForm.processing">{{ t('mfa.verify_btn') }}</span>
+        <span v-else>{{ t('mfa.verifying') }}</span>
       </button>
     </form>
 
@@ -90,7 +93,7 @@ const onSubmit = handleSubmit((values) => {
         href="/auth/login/"
         class="font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors"
       >
-        ← Back to Login
+        {{ t('mfa.back_login') }}
       </Link>
     </template>
   </AuthLayout>

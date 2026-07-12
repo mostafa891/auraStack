@@ -5,24 +5,27 @@ import { toTypedSchema } from "@/composables/zodSchema";
 import { z } from "zod";
 import AuthLayout from "@/layouts/AuthLayout.vue";
 import { useFormErrors } from "@/composables/useFormErrors";
+import { useI18n } from "@/composables/useI18n";
+
+const { t } = useI18n();
 
 const registerSchema = toTypedSchema(
   z
     .object({
       email: z
         .string()
-        .min(1, "Email is required.")
-        .email("Please enter a valid email address."),
+        .min(1, t("password_reset.email_required"))
+        .email(t("password_reset.email_invalid")),
       password: z
         .string()
-        .min(8, "Password must be at least 8 characters.")
+        .min(8, t("password_reset_key.password_length"))
         .refine((val) => !/^\d+$/.test(val), "Password cannot be entirely numeric."),
       password_confirm: z
         .string()
-        .min(1, "Please confirm your password."),
+        .min(1, t("password_reset_key.confirm_required")),
     })
     .refine((data) => data.password === data.password_confirm, {
-      message: "Passwords do not match.",
+      message: t("password_reset_key.password_mismatch"),
       path: ["password_confirm"],
     })
     .refine(
@@ -54,6 +57,24 @@ const inertiaForm = useForm({
 });
 const { fieldErrors, hasGeneralError, generalError } = useFormErrors();
 
+const socialLogin = (provider: string) => {
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = `/accounts/${provider}/login/`;
+  
+  const csrfInput = document.createElement("input");
+  csrfInput.type = "hidden";
+  csrfInput.name = "csrfmiddlewaretoken";
+  const csrfToken = document.cookie.split("; ")
+    .find(row => row.startsWith("XSRF-TOKEN="))
+    ?.split("=")[1] || "";
+  csrfInput.value = decodeURIComponent(csrfToken);
+  
+  form.appendChild(csrfInput);
+  document.body.appendChild(form);
+  form.submit();
+};
+
 const onSubmit = handleSubmit((values) => {
   inertiaForm.email = values.email;
   inertiaForm.password = values.password;
@@ -63,7 +84,7 @@ const onSubmit = handleSubmit((values) => {
 </script>
 
 <template>
-  <AuthLayout title="Create your account" subtitle="Start building your SaaS platform in minutes">
+  <AuthLayout :title="t('auth.register_title')" :subtitle="t('auth.register_subtitle')">
     <!-- General Error Alert -->
     <div
       v-if="hasGeneralError"
@@ -82,24 +103,21 @@ const onSubmit = handleSubmit((values) => {
           for="email"
           class="block text-sm font-semibold text-[var(--color-text)] mb-1.5"
         >
-          Email address
+          {{ t('auth.email_label') }}
         </label>
         <input
           id="email"
           v-model="email"
           type="email"
           autocomplete="email"
-          class="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3 text-sm
-                 outline-none premium-input text-[var(--color-text)]"
-          :class="{
-            'border-[var(--color-danger)]': clientErrors.email || fieldErrors.email,
-          }"
-        />
-        <p
-          v-if="clientErrors.email || fieldErrors.email"
-          class="mt-1.5 text-xs text-[var(--color-danger)] font-medium"
+          class="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3 text-sm outline-none premium-input text-[var(--color-text)]"
+          :class="{ 'border-[var(--color-danger)] focus:border-[var(--color-danger)]': fieldErrors.email || clientErrors.email }"
         >
-          {{ clientErrors.email || fieldErrors.email }}
+        <p v-if="clientErrors.email" class="mt-1.5 text-xs font-semibold text-[var(--color-danger)]">
+          {{ clientErrors.email }}
+        </p>
+        <p v-else-if="fieldErrors.email" class="mt-1.5 text-xs font-semibold text-[var(--color-danger)]">
+          {{ fieldErrors.email[0] }}
         </p>
       </div>
 
@@ -109,24 +127,21 @@ const onSubmit = handleSubmit((values) => {
           for="password"
           class="block text-sm font-semibold text-[var(--color-text)] mb-1.5"
         >
-          Password
+          {{ t('auth.password_label') }}
         </label>
         <input
           id="password"
           v-model="password"
           type="password"
           autocomplete="new-password"
-          class="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3 text-sm
-                 outline-none premium-input text-[var(--color-text)]"
-          :class="{
-            'border-[var(--color-danger)]': clientErrors.password || fieldErrors.password,
-          }"
-        />
-        <p
-          v-if="clientErrors.password || fieldErrors.password"
-          class="mt-1.5 text-xs text-[var(--color-danger)] font-medium"
+          class="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3 text-sm outline-none premium-input text-[var(--color-text)]"
+          :class="{ 'border-[var(--color-danger)] focus:border-[var(--color-danger)]': fieldErrors.password || clientErrors.password }"
         >
-          {{ clientErrors.password || fieldErrors.password }}
+        <p v-if="clientErrors.password" class="mt-1.5 text-xs font-semibold text-[var(--color-danger)]">
+          {{ clientErrors.password }}
+        </p>
+        <p v-else-if="fieldErrors.password" class="mt-1.5 text-xs font-semibold text-[var(--color-danger)]">
+          {{ fieldErrors.password[0] }}
         </p>
       </div>
 
@@ -136,24 +151,21 @@ const onSubmit = handleSubmit((values) => {
           for="password_confirm"
           class="block text-sm font-semibold text-[var(--color-text)] mb-1.5"
         >
-          Confirm password
+          {{ t('auth.confirm_password_label') }}
         </label>
         <input
           id="password_confirm"
           v-model="passwordConfirm"
           type="password"
           autocomplete="new-password"
-          class="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3 text-sm
-                 outline-none premium-input text-[var(--color-text)]"
-          :class="{
-            'border-[var(--color-danger)]': clientErrors.password_confirm || fieldErrors.password_confirm,
-          }"
-        />
-        <p
-          v-if="clientErrors.password_confirm || fieldErrors.password_confirm"
-          class="mt-1.5 text-xs text-[var(--color-danger)] font-medium"
+          class="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3 text-sm outline-none premium-input text-[var(--color-text)]"
+          :class="{ 'border-[var(--color-danger)] focus:border-[var(--color-danger)]': fieldErrors.password_confirm || clientErrors.password_confirm }"
         >
-          {{ clientErrors.password_confirm || fieldErrors.password_confirm }}
+        <p v-if="clientErrors.password_confirm" class="mt-1.5 text-xs font-semibold text-[var(--color-danger)]">
+          {{ clientErrors.password_confirm }}
+        </p>
+        <p v-else-if="fieldErrors.password_confirm" class="mt-1.5 text-xs font-semibold text-[var(--color-danger)]">
+          {{ fieldErrors.password_confirm[0] }}
         </p>
       </div>
 
@@ -161,28 +173,31 @@ const onSubmit = handleSubmit((values) => {
       <button
         type="submit"
         :disabled="inertiaForm.processing"
-        class="w-full rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] py-3 text-sm font-semibold
-               text-white transition-all shadow-md shadow-indigo-500/10 hover:shadow-lg hover:shadow-indigo-500/20
-               disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-98"
+        class="w-full rounded-xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] py-3 text-sm font-semibold text-white transition-all shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer"
       >
-        <span v-if="!inertiaForm.processing">Create account</span>
-        <span v-else>Creating...</span>
+        <span v-if="inertiaForm.processing">{{ t('auth.creating_account') }}</span>
+        <span v-else>{{ t('auth.register_btn') }}</span>
       </button>
     </form>
 
     <!-- Divider -->
-    <div class="relative flex items-center justify-center my-6">
-      <div class="absolute w-full border-t border-[var(--color-border)]"></div>
-      <span class="relative px-3 bg-[var(--color-surface)] text-[10px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider">
-        Or register with
-      </span>
+    <div class="relative my-6">
+      <div class="absolute inset-0 flex items-center">
+        <div class="w-full border-t border-[var(--color-border)]" />
+      </div>
+      <div class="relative flex justify-center text-xs font-semibold uppercase">
+        <span class="bg-[var(--color-surface)] px-3 text-[var(--color-text-muted)]">
+          {{ t('auth.or_register_with') }}
+        </span>
+      </div>
     </div>
 
     <!-- Social Login Provider Buttons -->
     <div class="grid grid-cols-2 gap-3">
-      <a
-        href="/accounts/google/login/"
-        class="flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl border border-[var(--color-border)] hover:border-gray-300 dark:hover:border-gray-600 bg-[var(--color-surface)] text-[var(--color-text)] font-semibold text-xs transition-all shadow-sm active:scale-98"
+      <button
+        type="button"
+        @click="socialLogin('google')"
+        class="flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl border border-[var(--color-border)] hover:border-gray-300 dark:hover:border-gray-600 bg-[var(--color-surface)] text-[var(--color-text)] font-semibold text-xs transition-all shadow-sm active:scale-98 cursor-pointer"
       >
         <svg class="w-4 h-4" viewBox="0 0 24 24">
           <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.58 14.98 1 12 1 7.35 1 3.4 3.65 1.5 7.5l3.86 3C6.27 7.53 8.92 5.04 12 5.04z" />
@@ -191,26 +206,27 @@ const onSubmit = handleSubmit((values) => {
           <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.74-2.9c-1.1.74-2.51 1.18-4.22 1.18-3.08 0-5.73-2.49-6.64-5.46L1.5 16.12C3.4 19.95 7.35 22.6 12 23z" />
         </svg>
         <span>Google</span>
-      </a>
-      <a
-        href="/accounts/github/login/"
-        class="flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl border border-[var(--color-border)] hover:border-gray-300 dark:hover:border-gray-600 bg-[var(--color-surface)] text-[var(--color-text)] font-semibold text-xs transition-all shadow-sm active:scale-98"
+      </button>
+      <button
+        type="button"
+        @click="socialLogin('github')"
+        class="flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl border border-[var(--color-border)] hover:border-gray-300 dark:hover:border-gray-600 bg-[var(--color-surface)] text-[var(--color-text)] font-semibold text-xs transition-all shadow-sm active:scale-98 cursor-pointer"
       >
         <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
           <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482C19.138 20.197 22 16.44 22 12.017 22 6.484 17.522 2 12 2z" />
         </svg>
         <span>GitHub</span>
-      </a>
+      </button>
     </div>
 
     <!-- Footer -->
     <template #footer>
-      Already have an account?
+      {{ t('auth.already_have_account') }}
       <Link
         href="/auth/login/"
         class="font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors underline decoration-2 decoration-transparent hover:decoration-[var(--color-primary)]"
       >
-        Sign in
+        {{ t('common.sign_in') }}
       </Link>
     </template>
   </AuthLayout>

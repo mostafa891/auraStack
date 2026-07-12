@@ -1,5 +1,3 @@
-import json
-
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
@@ -9,17 +7,13 @@ from django.views import View
 from inertia import render, share
 
 from apps.teams.models import Workspace, WorkspaceInvitation, WorkspaceMember
+from apps.teams.selectors import (
+    get_workspace_membership,
+    list_workspace_members,
+    list_workspace_pending_invitations,
+)
 from apps.teams.services import WorkspaceService
-
-
-def get_request_data(request) -> dict:
-    """استخراج بيانات الطلب سواء كانت JSON أو Form-Encoded بأمان."""
-    if request.content_type == "application/json":
-        try:
-            return json.loads(request.body)
-        except json.JSONDecodeError:
-            return {}
-    return request.POST
+from common.utils.request import get_request_data
 
 
 class WorkspaceListView(LoginRequiredMixin, View):
@@ -36,7 +30,7 @@ class WorkspaceListView(LoginRequiredMixin, View):
 
         if not name:
             share(request, errors={"name": ["Workspace name is required"]})
-            return redirect(reverse("teams:workspace_list"))
+            return render(request, "Teams/WorkspaceList")
 
         result = WorkspaceService.create_workspace(name=name, user=request.user)
 
@@ -58,13 +52,13 @@ class WorkspaceSettingsView(LoginRequiredMixin, View):
     def get(self, request, slug):
         workspace = get_object_or_404(Workspace, slug=slug)
 
-        # التحقق من أن المستخدم عضو في مساحة العمل
-        membership = WorkspaceMember.objects.filter(workspace=workspace, user=request.user).first()
+        # التحقق من أن المستخدم عضو في مساحة العمل باستخدام الـ Selector
+        membership = get_workspace_membership(workspace, request.user)
         if not membership:
             messages.error(request, "You do not have access to this workspace.")
             return redirect(reverse("teams:workspace_list"))
 
-        # جلب الأعضاء والدعوات المعلقة
+        # جلب الأعضاء والدعوات المعلقة باستخدام الـ Selectors المخصصة والمنسقة
         members = [
             {
                 "id": str(m.id),
@@ -76,12 +70,13 @@ class WorkspaceSettingsView(LoginRequiredMixin, View):
                 "joined_at": m.created_at.strftime("%Y-%m-%d"),
                 "is_self": (m.user == request.user),
             }
-            for m in workspace.members.select_related("user").order_by("created_at")
+            for m in list_workspace_members(workspace)
         ]
 
         invitations = [
             {
                 "id": str(i.id),
+                "token": str(i.token),
                 "email": i.email,
                 "role": i.role,
                 "role_display": i.get_role_display(),
@@ -89,9 +84,7 @@ class WorkspaceSettingsView(LoginRequiredMixin, View):
                 "status_display": i.get_status_display(),
                 "expires_at": i.expires_at.strftime("%Y-%m-%d"),
             }
-            for i in workspace.invitations.filter(
-                status=WorkspaceInvitation.StatusChoices.PENDING
-            ).order_by("-created_at")
+            for i in list_workspace_pending_invitations(workspace)
         ]
 
         return render(
@@ -112,8 +105,8 @@ class WorkspaceSettingsView(LoginRequiredMixin, View):
     def post(self, request, slug):
         workspace = get_object_or_404(Workspace, slug=slug)
 
-        # التحقق من الصلاحيات (Owner/Admin فقط)
-        membership = WorkspaceMember.objects.filter(workspace=workspace, user=request.user).first()
+        # التحقق من الصلاحيات (Owner/Admin فقط) باستخدام الـ Selector
+        membership = get_workspace_membership(workspace, request.user)
         if not membership or membership.role not in [
             WorkspaceMember.RoleChoices.OWNER,
             WorkspaceMember.RoleChoices.ADMIN,
@@ -126,7 +119,46 @@ class WorkspaceSettingsView(LoginRequiredMixin, View):
 
         if not name:
             share(request, errors={"name": ["Workspace name is required"]})
-            return redirect(reverse("teams:workspace_settings", kwargs={"slug": slug}))
+            members = [
+                {
+                    "id": str(m.id),
+                    "email": m.user.email,
+                    "role": m.role,
+                    "role_display": m.get_role_display(),
+                    "avatar_url": m.user.avatar_url
+                    or f"https://ui-avatars.com/api/?name={m.user.email}&background=6366f1&color=fff",
+                    "joined_at": m.created_at.strftime("%Y-%m-%d"),
+                    "is_self": (m.user == request.user),
+                }
+                for m in list_workspace_members(workspace)
+            ]
+            invitations = [
+                {
+                    "id": str(i.id),
+                    "token": str(i.token),
+                    "email": i.email,
+                    "role": i.role,
+                    "role_display": i.get_role_display(),
+                    "status": i.status,
+                    "status_display": i.get_status_display(),
+                    "expires_at": i.expires_at.strftime("%Y-%m-%d"),
+                }
+                for i in list_workspace_pending_invitations(workspace)
+            ]
+            return render(
+                request,
+                "Teams/WorkspaceSettings",
+                props={
+                    "workspace": {
+                        "id": str(workspace.id),
+                        "name": workspace.name,
+                        "slug": workspace.slug,
+                        "role": membership.role,
+                    },
+                    "members": members,
+                    "invitations": invitations,
+                },
+            )
 
         try:
             workspace.name = name
@@ -211,19 +243,20 @@ class WorkspaceMemberDeleteView(LoginRequiredMixin, View):
     def post(self, request, slug, member_id):
         workspace = get_object_or_404(Workspace, slug=slug)
 
+        # جلب معرف المستخدم قبل حذفه من قاعدة البيانات لمعرفة ما إذا كان يغادر بنفسه
+        member_user_id = (
+            WorkspaceMember.objects.filter(id=member_id, workspace=workspace)
+            .values_list("user_id", flat=True)
+            .first()
+        )
+
         result = WorkspaceService.remove_member(
             workspace=workspace, member_id=member_id, operator=request.user
         )
 
         if result.success:
             messages.success(request, result.message)
-            # إذا غادر المستخدم نفسه مساحة العمل، نوجهه لقائمة المساحات
-            member_user_id = (
-                WorkspaceMember.objects.filter(id=member_id)
-                .values_list("user_id", flat=True)
-                .first()
-            )
-            if not member_user_id or member_user_id == request.user.id:
+            if member_user_id == request.user.id:
                 return redirect(reverse("teams:workspace_list"))
         else:
             messages.error(request, result.message)
@@ -296,8 +329,8 @@ class WorkspaceInvitationDeleteView(LoginRequiredMixin, View):
     def post(self, request, slug, invitation_id):
         workspace = get_object_or_404(Workspace, slug=slug)
 
-        # التحقق من الصلاحيات (Owner/Admin فقط)
-        membership = WorkspaceMember.objects.filter(workspace=workspace, user=request.user).first()
+        # التحقق من الصلاحيات (Owner/Admin فقط) باستخدام الـ Selector
+        membership = get_workspace_membership(workspace, request.user)
         if not membership or membership.role not in [
             WorkspaceMember.RoleChoices.OWNER,
             WorkspaceMember.RoleChoices.ADMIN,

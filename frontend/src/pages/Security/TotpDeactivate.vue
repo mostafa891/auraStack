@@ -5,10 +5,13 @@ import { toTypedSchema } from "@/composables/zodSchema";
 import { z } from "zod";
 import AuthLayout from "@/layouts/AuthLayout.vue";
 import { useFormErrors } from "@/composables/useFormErrors";
+import { useI18n } from "@/composables/useI18n";
+
+const { t } = useI18n();
 
 const deactivateSchema = toTypedSchema(
   z.object({
-    password: z.string().min(1, "Password is required to confirm deactivation."),
+    password: z.string().min(1, t("mfa.deactivate_password_required")),
   })
 );
 
@@ -31,7 +34,7 @@ const onSubmit = handleSubmit((values) => {
 </script>
 
 <template>
-  <AuthLayout title="Deactivate 2FA" subtitle="Are you sure you want to disable two-factor authentication?">
+  <AuthLayout :title="t('mfa.deactivate_title')" :subtitle="t('mfa.deactivate_subtitle')">
     <!-- General Error Alert -->
     <div
       v-if="hasGeneralError"
@@ -42,7 +45,7 @@ const onSubmit = handleSubmit((values) => {
 
     <div class="space-y-6">
       <p class="text-sm text-[var(--color-text-muted)] text-center leading-relaxed">
-        Disabling two-factor authentication removes the extra security layer from your account. You will only need your email and password to sign in.
+        {{ t('mfa.deactivate_desc') }}
       </p>
 
       <form @submit.prevent="onSubmit" class="space-y-4">
@@ -51,7 +54,7 @@ const onSubmit = handleSubmit((values) => {
             for="password"
             class="block text-sm font-medium text-[var(--color-text)] mb-1.5"
           >
-            Confirm Password
+            {{ t('mfa.deactivate_label') }}
           </label>
           <input
             id="password"
@@ -76,8 +79,8 @@ const onSubmit = handleSubmit((values) => {
           :disabled="inertiaForm.processing"
           class="w-full rounded-lg bg-[var(--color-danger)] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md shadow-red-500/10"
         >
-          <span v-if="!inertiaForm.processing">Confirm Deactivation</span>
-          <span v-else>Deactivating...</span>
+          <span v-if="!inertiaForm.processing">{{ t('mfa.confirm_deactivate_btn') }}</span>
+          <span v-else>{{ t('mfa.deactivating_btn') }}</span>
         </button>
       </form>
     </div>
@@ -87,7 +90,7 @@ const onSubmit = handleSubmit((values) => {
         href="/auth/mfa/"
         class="font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors"
       >
-        Cancel and return
+        {{ t('mfa.cancel_return') }}
       </Link>
     </template>
   </AuthLayout>

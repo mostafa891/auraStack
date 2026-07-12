@@ -1,11 +1,255 @@
 {
+  "_AuthLayout-OdmsZDE5.js": {
+    "file": "assets/AuthLayout-OdmsZDE5.js",
+    "name": "AuthLayout",
+    "imports": [
+      "src/main.ts",
+      "_useI18n-DPuz-IXH.js"
+    ]
+  },
+  "_preferences-CfgnMjeZ.js": {
+    "file": "assets/preferences-CfgnMjeZ.js",
+    "name": "preferences",
+    "imports": [
+      "src/main.ts"
+    ]
+  },
+  "_schemas-CT4UUQgt.js": {
+    "file": "assets/schemas-CT4UUQgt.js",
+    "name": "schemas",
+    "imports": [
+      "src/main.ts"
+    ]
+  },
+  "_useFormErrors-DgDu_sMa.js": {
+    "file": "assets/useFormErrors-DgDu_sMa.js",
+    "name": "useFormErrors",
+    "imports": [
+      "src/main.ts"
+    ]
+  },
+  "_useI18n-DPuz-IXH.js": {
+    "file": "assets/useI18n-DPuz-IXH.js",
+    "name": "useI18n",
+    "imports": [
+      "src/main.ts"
+    ]
+  },
   "src/main.ts": {
-    "file": "assets/main-nIB00-Ny.js",
+    "file": "assets/main-BIpQEcWJ.js",
     "name": "main",
     "src": "src/main.ts",
     "isEntry": true,
+    "dynamicImports": [
+      "src/pages/Auth/Login.vue",
+      "src/pages/Auth/Register.vue",
+      "src/pages/Auth/SocialSignup.vue",
+      "src/pages/Profile.vue",
+      "src/pages/Security/MfaAuthenticate.vue",
+      "src/pages/Security/MfaList.vue",
+      "src/pages/Security/PasswordChange.vue",
+      "src/pages/Security/PasswordReset.vue",
+      "src/pages/Security/PasswordResetDone.vue",
+      "src/pages/Security/PasswordResetFromKey.vue",
+      "src/pages/Security/PasswordResetFromKeyDone.vue",
+      "src/pages/Security/SocialConnections.vue",
+      "src/pages/Security/TotpActivate.vue",
+      "src/pages/Security/TotpDeactivate.vue",
+      "src/pages/Teams/WorkspaceList.vue",
+      "src/pages/Teams/WorkspaceSettings.vue"
+    ],
     "css": [
-      "assets/main-mg4pForI.css"
+      "assets/main-Cwfs9V-W.css"
+    ]
+  },
+  "src/pages/Auth/Login.vue": {
+    "file": "assets/Login-BiXBl__q.js",
+    "name": "Login",
+    "src": "src/pages/Auth/Login.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_schemas-CT4UUQgt.js",
+      "_useI18n-DPuz-IXH.js",
+      "_AuthLayout-OdmsZDE5.js",
+      "_useFormErrors-DgDu_sMa.js"
+    ]
+  },
+  "src/pages/Auth/Register.vue": {
+    "file": "assets/Register-CGPWzHbb.js",
+    "name": "Register",
+    "src": "src/pages/Auth/Register.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_schemas-CT4UUQgt.js",
+      "_useI18n-DPuz-IXH.js",
+      "_AuthLayout-OdmsZDE5.js",
+      "_useFormErrors-DgDu_sMa.js"
+    ]
+  },
+  "src/pages/Auth/SocialSignup.vue": {
+    "file": "assets/SocialSignup-hoHIxLMi.js",
+    "name": "SocialSignup",
+    "src": "src/pages/Auth/SocialSignup.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_schemas-CT4UUQgt.js",
+      "_AuthLayout-OdmsZDE5.js",
+      "_useFormErrors-DgDu_sMa.js"
+    ]
+  },
+  "src/pages/Profile.vue": {
+    "file": "assets/Profile-VofubQVo.js",
+    "name": "Profile",
+    "src": "src/pages/Profile.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_useI18n-DPuz-IXH.js",
+      "_preferences-CfgnMjeZ.js"
+    ]
+  },
+  "src/pages/Security/MfaAuthenticate.vue": {
+    "file": "assets/MfaAuthenticate-StkDS0H8.js",
+    "name": "MfaAuthenticate",
+    "src": "src/pages/Security/MfaAuthenticate.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_schemas-CT4UUQgt.js",
+      "_useI18n-DPuz-IXH.js",
+      "_AuthLayout-OdmsZDE5.js",
+      "_useFormErrors-DgDu_sMa.js"
+    ]
+  },
+  "src/pages/Security/MfaList.vue": {
+    "file": "assets/MfaList-CghPi5sJ.js",
+    "name": "MfaList",
+    "src": "src/pages/Security/MfaList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_useI18n-DPuz-IXH.js",
+      "_AuthLayout-OdmsZDE5.js"
+    ]
+  },
+  "src/pages/Security/PasswordChange.vue": {
+    "file": "assets/PasswordChange-BE6yry_2.js",
+    "name": "PasswordChange",
+    "src": "src/pages/Security/PasswordChange.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_schemas-CT4UUQgt.js",
+      "_AuthLayout-OdmsZDE5.js",
+      "_useFormErrors-DgDu_sMa.js"
+    ]
+  },
+  "src/pages/Security/PasswordReset.vue": {
+    "file": "assets/PasswordReset-DBh4g0lO.js",
+    "name": "PasswordReset",
+    "src": "src/pages/Security/PasswordReset.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_schemas-CT4UUQgt.js",
+      "_useI18n-DPuz-IXH.js",
+      "_AuthLayout-OdmsZDE5.js",
+      "_useFormErrors-DgDu_sMa.js"
+    ]
+  },
+  "src/pages/Security/PasswordResetDone.vue": {
+    "file": "assets/PasswordResetDone-re2liq72.js",
+    "name": "PasswordResetDone",
+    "src": "src/pages/Security/PasswordResetDone.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_useI18n-DPuz-IXH.js",
+      "_AuthLayout-OdmsZDE5.js"
+    ]
+  },
+  "src/pages/Security/PasswordResetFromKey.vue": {
+    "file": "assets/PasswordResetFromKey-rqtLdC9W.js",
+    "name": "PasswordResetFromKey",
+    "src": "src/pages/Security/PasswordResetFromKey.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_schemas-CT4UUQgt.js",
+      "_useI18n-DPuz-IXH.js",
+      "_AuthLayout-OdmsZDE5.js",
+      "_useFormErrors-DgDu_sMa.js"
+    ]
+  },
+  "src/pages/Security/PasswordResetFromKeyDone.vue": {
+    "file": "assets/PasswordResetFromKeyDone-EGanzEcv.js",
+    "name": "PasswordResetFromKeyDone",
+    "src": "src/pages/Security/PasswordResetFromKeyDone.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_useI18n-DPuz-IXH.js",
+      "_AuthLayout-OdmsZDE5.js"
+    ]
+  },
+  "src/pages/Security/SocialConnections.vue": {
+    "file": "assets/SocialConnections-CzpdJTSG.js",
+    "name": "SocialConnections",
+    "src": "src/pages/Security/SocialConnections.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_AuthLayout-OdmsZDE5.js",
+      "_useFormErrors-DgDu_sMa.js"
+    ]
+  },
+  "src/pages/Security/TotpActivate.vue": {
+    "file": "assets/TotpActivate-coj9j9uf.js",
+    "name": "TotpActivate",
+    "src": "src/pages/Security/TotpActivate.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_schemas-CT4UUQgt.js",
+      "_useI18n-DPuz-IXH.js",
+      "_AuthLayout-OdmsZDE5.js",
+      "_useFormErrors-DgDu_sMa.js"
+    ]
+  },
+  "src/pages/Security/TotpDeactivate.vue": {
+    "file": "assets/TotpDeactivate-BQ_-8m-w.js",
+    "name": "TotpDeactivate",
+    "src": "src/pages/Security/TotpDeactivate.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_schemas-CT4UUQgt.js",
+      "_useI18n-DPuz-IXH.js",
+      "_AuthLayout-OdmsZDE5.js",
+      "_useFormErrors-DgDu_sMa.js"
+    ]
+  },
+  "src/pages/Teams/WorkspaceList.vue": {
+    "file": "assets/WorkspaceList-BuJsk1GO.js",
+    "name": "WorkspaceList",
+    "src": "src/pages/Teams/WorkspaceList.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts"
+    ]
+  },
+  "src/pages/Teams/WorkspaceSettings.vue": {
+    "file": "assets/WorkspaceSettings-CFtdXYUS.js",
+    "name": "WorkspaceSettings",
+    "src": "src/pages/Teams/WorkspaceSettings.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "src/main.ts",
+      "_useI18n-DPuz-IXH.js",
+      "_preferences-CfgnMjeZ.js"
     ]
   }
 }

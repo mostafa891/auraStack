@@ -114,11 +114,21 @@ python manage.py runscript seed_data
 
 ```bash
 # تشغيل خادم دجانغو للباك إند (في نافذة طرفية أولى)
-python manage.py runserver
+.venv\Scripts\python manage.py runserver
 
 # تشغيل خادم Vite للفرونت إند (في نافذة طرفية ثانية)
 npm run dev
 ```
+
+### 4. التشغيل والتهيئة الاحترافية باستخدام Docker (الإنتاج)
+لتشغيل بيئة الإنتاج محلياً باستخدام Docker بأعلى معايير الأمان (مستخدم محدود وبدون صلاحيات root):
+
+```bash
+# بناء وتشغيل الحاويات بالكامل (Web + PostgreSQL)
+docker-compose up --build
+```
+*   سيقوم التطبيق بالبناء عبر Dockerfile متعدد المراحل (تجميع Vite أولاً ثم تشغيل Gunicorn).
+*   الحاوية مزودة بـ Healthcheck تلقائي للتحقق من سلامة عمل السيرفر.
 
 ---
 

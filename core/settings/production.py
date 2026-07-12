@@ -33,5 +33,8 @@ STORAGES = {
 
 # Production database (PostgreSQL by default)
 DATABASES = {
-    "default": env.db("DATABASE_URL"),
+    "default": {
+        **env.db("DATABASE_URL"),
+        "CONN_MAX_AGE": 60,
+    }
 }

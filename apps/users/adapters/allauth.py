@@ -1,5 +1,5 @@
 # apps/users/adapters/allauth.py
-from allauth.account.adapter import get_adapter
+from allauth.account.adapter import DefaultAccountAdapter, get_adapter
 from allauth.account.forms import LoginForm
 from allauth.account.utils import complete_signup
 from django.core.exceptions import ValidationError
@@ -9,12 +9,23 @@ from django.http import HttpRequest
 from common.results import AuthErrorCode, ServiceResult
 
 
+class CustomAccountAdapter(DefaultAccountAdapter):
+    def is_ajax(self, request: HttpRequest) -> bool:
+        if request.headers.get("x-inertia") or request.META.get("HTTP_X_INERTIA"):
+            return False
+        return super().is_ajax(request)
+
+
 class AllauthAdapter:
     """المحول المباشر لإدارة وتطويع الـ APIs المستقرة لـ django-allauth."""
 
     @staticmethod
-    def authenticate_user(request: HttpRequest, email: str, password: str) -> ServiceResult:
-        form = LoginForm(request=request, data={"login": email, "password": password})
+    def authenticate_user(
+        request: HttpRequest, email: str, password: str, remember: bool = False
+    ) -> ServiceResult:
+        form = LoginForm(
+            request=request, data={"login": email, "password": password, "remember": remember}
+        )
 
         if not form.is_valid():
             errors = form.errors.get_json_data()
@@ -25,8 +36,8 @@ class AllauthAdapter:
                         error_code = AuthErrorCode.ACCOUNT_INACTIVE
             return ServiceResult(success=False, errors=errors, code=error_code)
 
-        form.login(request)
-        return ServiceResult(success=True)
+        response = form.login(request)
+        return ServiceResult(success=True, data=response)
 
     @staticmethod
     def register_user(request: HttpRequest, email: str, password: str) -> ServiceResult:

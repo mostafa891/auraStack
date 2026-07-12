@@ -1,14 +1,10 @@
 import uuid
-import zoneinfo
 
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from common.models import TimeStampedModel
-
-# توليد قائمة المناطق الزمنية الرسمية والمعتمدة عالمياً من IANA مرة واحدة عند الإقلاع
-ZONEINFO_CHOICES = sorted((tz, tz) for tz in zoneinfo.available_timezones())
 
 
 class CustomUserManager(BaseUserManager):
@@ -74,7 +70,6 @@ class CustomUser(AbstractUser, TimeStampedModel):
     )
     timezone = models.CharField(
         max_length=100,
-        choices=ZONEINFO_CHOICES,
         default="UTC",
     )
 

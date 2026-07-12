@@ -5,6 +5,7 @@ import { toTypedSchema } from "@/composables/zodSchema";
 import { z } from "zod";
 import AuthLayout from "@/layouts/AuthLayout.vue";
 import { useFormErrors } from "@/composables/useFormErrors";
+import { useI18n } from "@/composables/useI18n";
 
 interface Props {
   totp_svg: string;
@@ -12,15 +13,16 @@ interface Props {
 }
 
 defineProps<Props>();
+const { t } = useI18n();
 
 // Zod validation for 6-digit TOTP code
 const activateSchema = toTypedSchema(
   z.object({
     code: z
       .string()
-      .min(6, "Code must be 6 digits.")
-      .max(6, "Code must be 6 digits.")
-      .regex(/^\d+$/, "Code must contain only numbers."),
+      .min(6, t("mfa.code_length"))
+      .max(6, t("mfa.code_length"))
+      .regex(/^\d+$/, t("mfa.code_digits")),
   })
 );
 
@@ -43,7 +45,7 @@ const onSubmit = handleSubmit((values) => {
 </script>
 
 <template>
-  <AuthLayout title="Enable 2FA" subtitle="Secure your account using two-factor authentication">
+  <AuthLayout :title="t('mfa.enable_title')" :subtitle="t('mfa.enable_subtitle')">
     <!-- General Error Alert -->
     <div
       v-if="hasGeneralError"
@@ -57,10 +59,10 @@ const onSubmit = handleSubmit((values) => {
       <div class="space-y-3">
         <div class="flex items-center space-x-2 text-sm font-semibold text-[var(--color-text)]">
           <span class="w-5 h-5 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center text-xs">1</span>
-          <span>Scan this QR Code</span>
+          <span>{{ t('mfa.scan_qr') }}</span>
         </div>
         <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">
-          Open your authenticator app (such as Google Authenticator, Authy, or 1Password) and scan the QR code below:
+          {{ t('mfa.scan_qr_desc') }}
         </p>
 
         <!-- QR Code Container -->
@@ -71,7 +73,7 @@ const onSubmit = handleSubmit((values) => {
 
       <!-- Key Fallback -->
       <div class="p-3 bg-[var(--color-surface-muted)] rounded-xl border border-[var(--color-border)] space-y-1">
-        <span class="text-[10px] uppercase font-semibold text-[var(--color-text-muted)] tracking-wider">Cannot scan? Enter key manually:</span>
+        <span class="text-[10px] uppercase font-semibold text-[var(--color-text-muted)] tracking-wider">{{ t('mfa.manual_key') }}</span>
         <code class="block text-xs font-mono text-[var(--color-primary)] select-all break-all">{{ totp_key }}</code>
       </div>
 
@@ -79,7 +81,7 @@ const onSubmit = handleSubmit((values) => {
       <div class="space-y-4 pt-5 border-t border-[var(--color-border)]">
         <div class="flex items-center space-x-2 text-sm font-semibold text-[var(--color-text)]">
           <span class="w-5 h-5 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center text-xs">2</span>
-          <span>Enter Verification Code</span>
+          <span>{{ t('mfa.enter_code') }}</span>
         </div>
 
         <form @submit.prevent="onSubmit" class="space-y-4">
@@ -88,7 +90,7 @@ const onSubmit = handleSubmit((values) => {
               id="code"
               v-model="code"
               type="text"
-              placeholder="6-digit code"
+              :placeholder="t('mfa.code_placeholder')"
               required
               autocomplete="one-time-code"
               class="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)] px-4 py-2.5 text-center text-lg font-mono tracking-[0.5em] outline-none transition-colors focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
@@ -111,8 +113,8 @@ const onSubmit = handleSubmit((values) => {
                    text-white transition-colors hover:bg-[var(--color-primary-hover)]
                    disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md shadow-indigo-500/10"
           >
-            <span v-if="!inertiaForm.processing">Activate 2FA</span>
-            <span v-else>Activating...</span>
+            <span v-if="!inertiaForm.processing">{{ t('mfa.activate_btn') }}</span>
+            <span v-else>{{ t('mfa.activating') }}</span>
           </button>
         </form>
       </div>
@@ -123,7 +125,7 @@ const onSubmit = handleSubmit((values) => {
         href="/auth/mfa/"
         class="font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors"
       >
-        ← Cancel and return
+        {{ t('mfa.cancel_return') }}
       </Link>
     </template>
   </AuthLayout>

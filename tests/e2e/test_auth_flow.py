@@ -43,7 +43,7 @@ def test_auth_and_preferences_flow(live_server, page: Page):
 
     # 4. تحديث المظهر للمظهر الداكن (Dark Mode) وحفظ التفضيلات
     page.select_option("#theme", "DARK")
-    page.click("button:has-text('Save Preferences')")
+    page.click("button:has-text('Save Settings')")
 
     # انتظار التحديث وحفظ قاعدة البيانات
     page.wait_for_timeout(1000)
