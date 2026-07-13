@@ -1,3 +1,5 @@
+import warnings
+
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
@@ -65,6 +67,13 @@ if REDIS_URL:
             "LOCATION": REDIS_URL,
         }
     }
+else:
+    warnings.warn(
+        "[AuraFlow] REDIS_URL is not set in production! "
+        "Rate limiting will NOT work correctly across multiple containers. "
+        "Set REDIS_URL in your .env to fix this.",
+        stacklevel=1,
+    )
 
 
 # Production database (PostgreSQL by default)
@@ -95,4 +104,4 @@ if EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
     EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", default="")
     EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 
-DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", default="webmaster@localhost")
+DEFAULT_FROM_EMAIL = env.str("DEFAULT_FROM_EMAIL", default="noreply@yourdomain.com")

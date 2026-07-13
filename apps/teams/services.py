@@ -67,7 +67,22 @@ class WorkspaceService:
                 success=False, message="An active invitation has already been sent to this email"
             )
 
-        # 4. إنشاء الدعوة
+        # 4. التحقق من حد الأعضاء وفقاً للخطة المدفوعة
+        from apps.payments.selectors import get_plan_limit
+
+        max_members = get_plan_limit(workspace, "max_members")
+        if max_members is not None:
+            current_count = workspace.members.count()
+            if current_count >= max_members:
+                return ServiceResult(
+                    success=False,
+                    message=(
+                        f"Your workspace has reached the maximum of {max_members} members "
+                        f"for your current plan. Upgrade to add more members."
+                    ),
+                )
+
+        # 5. إنشاء الدعوة
         from django.conf import settings
         from django.core.mail import send_mail
         from django.template.loader import render_to_string

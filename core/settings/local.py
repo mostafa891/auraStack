@@ -51,8 +51,10 @@ if DEBUG:
     # 2. إعداد nplusone لاكتشاف الاستعلامات الكسولة وتنبيهك بها
     INSTALLED_APPS.insert(0, "nplusone.ext.django")
     MIDDLEWARE.insert(0, "nplusone.ext.django.NPlusOneMiddleware")
-    NPLUSONE_LOGGER = "django"
-    NPLUSONE_LOG_LEVEL = "WARNING"
+    import logging
+
+    NPLUSONE_LOGGER = logging.getLogger("django")
+    NPLUSONE_LOG_LEVEL = logging.WARNING
     NPLUSONE_RAISE = (
         TESTING  # إيقاف الاختبار وإفشاله فوراً إذا تم رصد N+1، وطباعة تحذير فقط في التصفح المعتاد
     )

@@ -5,7 +5,7 @@ import AppHead from '../components/AppHead.vue'
 
 <template>
   <AppHead 
-    title="AuraStack - The Ultimate B2B SaaS Engine" 
+    title="AuraFlow - The Ultimate B2B SaaS Engine" 
     description="Build production-ready B2B SaaS applications in days with Django, Inertia.js, and Vue 3." 
   />
 
@@ -15,7 +15,7 @@ import AppHead from '../components/AppHead.vue'
       <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <span class="text-2xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            AuraStack
+            AuraFlow
           </span>
           <span class="bg-indigo-500/10 text-indigo-400 text-xs px-2.5 py-0.5 rounded-full font-medium border border-indigo-500/20">
             v1.0
@@ -26,6 +26,7 @@ import AppHead from '../components/AppHead.vue'
           <a href="#features" class="hover:text-slate-100 transition-colors">Features</a>
           <a href="#tech" class="hover:text-slate-100 transition-colors">Tech Stack</a>
           <a href="#pricing" class="hover:text-slate-100 transition-colors">Pricing</a>
+          <Link href="/blog/" class="hover:text-slate-100 transition-colors">Blog & Updates</Link>
         </nav>
 
         <div class="flex items-center space-x-4">
@@ -53,7 +54,7 @@ import AppHead from '../components/AppHead.vue'
         </h1>
         
         <p class="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed">
-          Stop writing auth, workspaces, payments, queues, and test configurations from scratch. AuraStack is a hardened, batteries-included boilerplate built on Django, Inertia, and Vue 3.
+          Stop writing auth, workspaces, payments, queues, and test configurations from scratch. AuraFlow is a hardened, batteries-included boilerplate built on Django, Inertia, and Vue 3.
         </p>
 
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -150,7 +151,7 @@ import AppHead from '../components/AppHead.vue'
             </div>
             <h3 class="text-xl font-bold mb-3">Hardened Pytest Suite</h3>
             <p class="text-slate-400 text-sm leading-relaxed">
-              48+ automated tests including Playwright E2E browser tests, N+1 query validation, workspace boundary isolation checks, and security scans.
+              70+ automated tests including Playwright E2E browser tests, N+1 query validation, workspace boundary isolation checks, and security scans.
             </p>
           </div>
         </div>
@@ -160,7 +161,7 @@ import AppHead from '../components/AppHead.vue'
     <!-- Footer -->
     <footer class="border-t border-slate-900 py-12 bg-slate-950/40">
       <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-slate-500">
-        <p>&copy; 2026 AuraStack. All rights reserved.</p>
+        <p>&copy; 2026 AuraFlow. All rights reserved.</p>
         <div class="flex space-x-6">
           <Link href="/auth/login/" class="hover:text-slate-300">Sign In</Link>
           <Link href="/auth/register/" class="hover:text-slate-300">Register</Link>

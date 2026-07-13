@@ -94,3 +94,28 @@ def paymob_webhook(request: HttpRequest):
         body = {}
     async_task("apps.payments.tasks.process_paymob_webhook", body, dict(request.GET.items()))
     return HttpResponse(status=200)
+
+
+@public_api.post("/billing/webhooks/lemonsqueezy")
+def lemonsqueezy_webhook(request: HttpRequest):
+    sig_header = request.headers.get("X-Signature")
+    if not sig_header:
+        return HttpResponse("Missing signature", status=400)
+    async_task("apps.payments.tasks.process_lemonsqueezy_webhook", request.body, sig_header)
+    return HttpResponse(status=200)
+
+
+@public_api.post("/billing/webhooks/paddle")
+def paddle_webhook(request: HttpRequest):
+    sig_header = request.headers.get("Paddle-Signature")
+    if not sig_header:
+        return HttpResponse("Missing Paddle-Signature header", status=400)
+    async_task("apps.payments.tasks.process_paddle_webhook", request.body, sig_header)
+    return HttpResponse(status=200)
+
+
+@public_api.post("/billing/webhooks/paypal")
+def paypal_webhook(request: HttpRequest):
+    sig_header = request.headers.get("Paypal-Transmission-Sig", "")
+    async_task("apps.payments.tasks.process_paypal_webhook", request.body, sig_header)
+    return HttpResponse(status=200)

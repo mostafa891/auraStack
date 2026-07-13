@@ -249,9 +249,6 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
-# كتم تحذير الانتقال لـ Django 6.0 وتفعيل معيار الـ HTTPS الافتراضي لحقول الروابط
-FORMS_URLFIELD_ASSUME_HTTPS = True
-
 REDIS_URL = env.str("REDIS_URL", default="")
 
 if REDIS_URL:
