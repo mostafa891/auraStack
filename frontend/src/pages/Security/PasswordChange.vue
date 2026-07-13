@@ -5,18 +5,21 @@ import { toTypedSchema } from "@/composables/zodSchema";
 import { z } from "zod";
 import AuthLayout from "@/layouts/AuthLayout.vue";
 import { useFormErrors } from "@/composables/useFormErrors";
+import { useI18n } from "@/composables/useI18n";
 
-// Zod validation schema
+const { t } = useI18n();
+
+// Zod validation schema using local translation helper
 const passwordChangeSchema = toTypedSchema(
   z.object({
-    old_password: z.string().min(1, "Current password is required."),
+    old_password: z.string().min(1, t("password_change.error_required_old")),
     password: z
       .string()
-      .min(8, "New password must be at least 8 characters.")
-      .refine((val) => !/^\d+$/.test(val), "Password cannot be entirely numeric."),
-    password_confirm: z.string().min(1, "Please confirm your new password."),
+      .min(8, t("password_change.error_length_new"))
+      .refine((val) => !/^\d+$/.test(val), t("password_change.error_numeric_new")),
+    password_confirm: z.string().min(1, t("password_change.error_confirm_required")),
   }).refine((data) => data.password === data.password_confirm, {
-    message: "New passwords do not match.",
+    message: t("password_change.error_mismatch"),
     path: ["password_confirm"],
   })
 );
@@ -46,7 +49,7 @@ const onSubmit = handleSubmit((values) => {
 </script>
 
 <template>
-  <AuthLayout title="Change Password" subtitle="Update your account credentials to keep it secure">
+  <AuthLayout :title="t('password_change.title')" :subtitle="t('password_change.subtitle')">
     <!-- General Error Alert -->
     <div
       v-if="hasGeneralError"
@@ -62,7 +65,7 @@ const onSubmit = handleSubmit((values) => {
           for="old_password"
           class="block text-sm font-medium text-[var(--color-text)] mb-1.5"
         >
-          Current Password
+          {{ t('password_change.current_password') }}
         </label>
         <input
           id="old_password"
@@ -89,7 +92,7 @@ const onSubmit = handleSubmit((values) => {
           for="password"
           class="block text-sm font-medium text-[var(--color-text)] mb-1.5"
         >
-          New Password
+          {{ t('password_change.new_password') }}
         </label>
         <input
           id="password"
@@ -116,7 +119,7 @@ const onSubmit = handleSubmit((values) => {
           for="password_confirm"
           class="block text-sm font-medium text-[var(--color-text)] mb-1.5"
         >
-          Confirm New Password
+          {{ t('password_change.confirm_new_password') }}
         </label>
         <input
           id="password_confirm"
@@ -145,8 +148,8 @@ const onSubmit = handleSubmit((values) => {
                text-white transition-colors hover:bg-[var(--color-primary-hover)]
                disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
-        <span v-if="!inertiaForm.processing">Change Password</span>
-        <span v-else>Updating Password...</span>
+        <span v-if="!inertiaForm.processing">{{ t('password_change.submit_btn') }}</span>
+        <span v-else>{{ t('password_change.updating_btn') }}</span>
       </button>
     </form>
 
@@ -155,7 +158,7 @@ const onSubmit = handleSubmit((values) => {
         href="/profile/"
         class="font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors"
       >
-        ← Back to Profile
+        {{ t('mfa.cancel_return') }}
       </Link>
     </template>
   </AuthLayout>

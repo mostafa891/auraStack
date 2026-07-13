@@ -150,5 +150,30 @@
     "verifying": "Verifying...",
     "back_login": "← Back to Login",
     "deactivate_password_required": "Password is required to confirm deactivation."
+  },
+  "password_change": {
+    "title": "Change Password",
+    "subtitle": "Update your account credentials to keep it secure",
+    "current_password": "Current Password",
+    "new_password": "New Password",
+    "confirm_new_password": "Confirm New Password",
+    "submit_btn": "Update Password",
+    "updating_btn": "Updating...",
+    "error_required_old": "Current password is required.",
+    "error_length_new": "New password must be at least 8 characters.",
+    "error_numeric_new": "Password cannot be entirely numeric.",
+    "error_confirm_required": "Please confirm your new password.",
+    "error_mismatch": "New passwords do not match."
+  },
+  "social_connections": {
+    "title": "Connected Accounts",
+    "subtitle": "Manage your social logins and linked accounts",
+    "active_connections": "Active Connections",
+    "active_desc": "You can use any of these connected accounts to log in:",
+    "disconnect_btn": "Disconnect",
+    "disconnect_confirm": "Are you sure you want to disconnect this account?",
+    "no_connections": "No social accounts connected yet.",
+    "add_connection": "Add New Connection",
+    "add_desc": "Connect your account to other services to enable quick login:"
   }
 }

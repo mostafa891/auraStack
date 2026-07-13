@@ -2,6 +2,7 @@
 import { useForm, Link } from "@inertiajs/vue3";
 import AuthLayout from "@/layouts/AuthLayout.vue";
 import { useFormErrors } from "@/composables/useFormErrors";
+import { useI18n } from "@/composables/useI18n";
 
 interface ConnectedAccount {
   id: number;
@@ -20,6 +21,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { t, locale } = useI18n();
 
 const { fieldErrors, hasGeneralError, generalError } = useFormErrors();
 
@@ -28,7 +30,7 @@ const inertiaForm = useForm({
 });
 
 const disconnectAccount = (accountId: number) => {
-  if (confirm("Are you sure you want to disconnect this account?")) {
+  if (confirm(t("social_connections.disconnect_confirm"))) {
     inertiaForm.account = String(accountId);
     inertiaForm.post("/auth/social/connections/");
   }
@@ -36,7 +38,7 @@ const disconnectAccount = (accountId: number) => {
 </script>
 
 <template>
-  <AuthLayout title="Connected Accounts" subtitle="Manage your social logins and linked accounts">
+  <AuthLayout :title="t('social_connections.title')" :subtitle="t('social_connections.subtitle')">
     <!-- General Error Alert -->
     <div
       v-if="hasGeneralError"
@@ -56,9 +58,11 @@ const disconnectAccount = (accountId: number) => {
     <div class="space-y-6">
       <!-- Currently Connected Accounts -->
       <div class="space-y-3">
-        <h3 class="text-sm font-semibold text-[var(--color-text)]">Active Connections</h3>
+        <h3 class="text-sm font-semibold text-[var(--color-text)]">
+          {{ t('social_connections.active_connections') }}
+        </h3>
         <p class="text-xs text-[var(--color-text-muted)]">
-          You can use any of these connected accounts to log in:
+          {{ t('social_connections.active_desc') }}
         </p>
 
         <div v-if="accounts.length > 0" class="space-y-2">
@@ -82,7 +86,7 @@ const disconnectAccount = (accountId: number) => {
               @click="disconnectAccount(account.id)"
               class="px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--color-danger)]/10 hover:bg-[var(--color-danger)]/20 text-[var(--color-danger)] transition-all cursor-pointer"
             >
-              Disconnect
+              {{ t('social_connections.disconnect_btn') }}
             </button>
           </div>
         </div>
@@ -91,36 +95,35 @@ const disconnectAccount = (accountId: number) => {
           v-else
           class="p-4 rounded-xl border border-dashed border-[var(--color-border)] text-center text-xs text-[var(--color-text-muted)]"
         >
-          No social accounts connected yet.
+          {{ t('social_connections.no_connections') }}
         </div>
       </div>
 
       <!-- Add new connections -->
       <div class="space-y-3 pt-5 border-t border-[var(--color-border)]">
-        <h3 class="text-sm font-semibold text-[var(--color-text)]">Add New Connection</h3>
-        <p class="text-xs text-[var(--color-text-muted)]">
-          Link another social account to your profile:
+        <h3 class="text-sm font-semibold text-[var(--color-text)]">
+          {{ t('social_connections.add_connection') }}
+        </h3>
+        <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">
+          {{ t('social_connections.add_desc') }}
         </p>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div class="flex flex-wrap gap-3">
           <a
-            v-for="provider in providers.filter(p => !accounts.some(a => a.provider === p.id))"
+            v-for="provider in providers"
             :key="provider.id"
             :href="`/accounts/${provider.id}/login/?process=connect`"
-            class="flex items-center space-x-3 p-3 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all text-[var(--color-text)] hover:bg-[var(--color-primary)]/5"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] text-xs font-bold transition-all shadow-xs cursor-pointer capitalize"
           >
-            <div class="w-8 h-8 rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center font-bold text-xs uppercase">
-              {{ provider.name.substring(0, 2) }}
-            </div>
-            <span class="text-xs font-semibold">Connect {{ provider.name }}</span>
+            <span>🔗</span>
+            <span>{{ provider.name }}</span>
           </a>
         </div>
-
         <div
           v-if="providers.filter(p => !accounts.some(a => a.provider === p.id)).length === 0"
           class="p-3 rounded-xl bg-[var(--color-surface-muted)] text-center text-xs text-[var(--color-text-muted)]"
         >
-          All available providers are already connected.
+          {{ locale === 'ar' ? 'جميع الخدمات المتاحة مرتبطة بالفعل.' : 'All available providers are already connected.' }}
         </div>
       </div>
     </div>
@@ -130,7 +133,7 @@ const disconnectAccount = (accountId: number) => {
         href="/profile/"
         class="font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors"
       >
-        ← Back to Profile
+        {{ t('mfa.cancel_return') }}
       </Link>
     </template>
   </AuthLayout>
