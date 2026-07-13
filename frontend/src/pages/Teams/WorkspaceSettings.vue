@@ -131,6 +131,16 @@ const copyInviteLink = (token: string, inviteId: string) => {
     }, 2000);
   });
 };
+
+// 7. حذف مساحة العمل (الحذف الناعم)
+const deleteWorkspace = () => {
+  const confirmMsg = locale.value === 'ar'
+    ? 'هل أنت متأكد من حذف مساحة العمل هذه؟ سيتم أرشفتها ويمكنك استعادتها لاحقاً.'
+    : 'Are you sure you want to delete this workspace? It will be archived and can be restored later.';
+  if (confirm(confirmMsg)) {
+    router.post(`/workspaces/${props.workspace.slug}/delete/`);
+  }
+};
 </script>
 
 <template>
@@ -305,6 +315,26 @@ const copyInviteLink = (token: string, inviteId: string) => {
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+          <!-- Danger Zone (OWNER only) -->
+          <div v-if="isOwner" class="bg-[var(--color-surface)] border border-red-200 dark:border-red-950/50 rounded-2xl p-6 md:p-8 shadow-sm space-y-4">
+            <h2 class="text-lg font-bold text-red-600 dark:text-red-500">{{ locale === 'ar' ? 'منطقة الخطر' : 'Danger Zone' }}</h2>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl bg-red-50/50 dark:bg-red-950/10 border border-red-100 dark:border-red-900/30">
+              <div>
+                <h3 class="text-sm font-bold text-[var(--color-text)]">
+                  {{ locale === 'ar' ? 'أرشفة / حذف مساحة العمل' : 'Archive / Delete Workspace' }}
+                </h3>
+                <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                  {{ locale === 'ar' ? 'سيتم تعطيل مساحة العمل وإخفائها من لوحة التحكم، ويمكن لمالك الحساب استعادتها لاحقاً.' : 'This will temporarily archive the workspace, hiding it from all members. It can be restored later.' }}
+                </p>
+              </div>
+              <button
+                @click="deleteWorkspace"
+                class="px-5 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-xs font-semibold transition-colors cursor-pointer select-none"
+              >
+                {{ locale === 'ar' ? 'حذف مساحة العمل' : 'Delete Workspace' }}
+              </button>
             </div>
           </div>
 

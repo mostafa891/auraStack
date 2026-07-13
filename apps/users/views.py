@@ -8,12 +8,21 @@ from django.core.files.storage import default_storage
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.views import View
+from django_ratelimit.decorators import ratelimit
 from inertia import render, share
 
 from apps.users.forms import AuraLoginForm, AuraRegisterForm, ProfileUpdateForm
 from apps.users.services import AuthService
 from common.utils.request import get_request_data
+
+
+class LandingView(View):
+    """عرض صفحة الهبوط العامة للقالب."""
+
+    def get(self, request):
+        return render(request, "Landing")
 
 
 class LoginView(View):
@@ -24,7 +33,9 @@ class LoginView(View):
             return redirect(reverse("profile"))
         return render(request, "Auth/Login")
 
+    @method_decorator(ratelimit(key="ip", rate="10/m", method="POST", block=True))
     def post(self, request):
+
         if request.user.is_authenticated:
             return redirect(reverse("profile"))
 
@@ -65,6 +76,7 @@ class RegisterView(View):
             return redirect(reverse("profile"))
         return render(request, "Auth/Register")
 
+    @method_decorator(ratelimit(key="ip", rate="10/m", method="POST", block=True))
     def post(self, request):
         if request.user.is_authenticated:
             return redirect(reverse("profile"))

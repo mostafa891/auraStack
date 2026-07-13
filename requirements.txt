@@ -35,3 +35,9 @@ pytest-xdist>=3.6,<4.0
 # أدوات كشف وتتبع استعلامات N+1 وقاعدة البيانات
 django-querycount>=0.8.3
 nplusone>=0.2.1
+
+django-anymail[resend]>=12.0,<13.0
+django-storages[boto3]>=1.14,<2.0
+django-ratelimit>=4.1.0,<5.0
+sentry-sdk>=2.0.0,<3.0
+bandit>=1.7.0,<2.0.0

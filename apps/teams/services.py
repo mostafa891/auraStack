@@ -68,17 +68,43 @@ class WorkspaceService:
             )
 
         # 4. إنشاء الدعوة
+        from django.conf import settings
+        from django.core.mail import send_mail
+        from django.template.loader import render_to_string
+
         expires_at = timezone.now() + timedelta(days=7)
         try:
-            invitation = WorkspaceInvitation.objects.create(
-                workspace=workspace,
-                email=email_clean,
-                role=role,
-                invited_by=invited_by,
-                expires_at=expires_at,
-            )
-            # هنا نقوم بمحاكاة إرسال البريد الإلكتروني (يمكن كتابتها للـ logs)
-            # send_mail(...)
+            with transaction.atomic():
+                invitation = WorkspaceInvitation.objects.create(
+                    workspace=workspace,
+                    email=email_clean,
+                    role=role,
+                    invited_by=invited_by,
+                    expires_at=expires_at,
+                )
+
+                # تجميع ورسالة البريد الإلكتروني
+                site_url = getattr(settings, "SITE_URL", "http://localhost:8000")
+                invite_url = f"{site_url}/workspaces/invitations/{invitation.token}/accept/"
+
+                context = {
+                    "inviter": invited_by.email,
+                    "workspace_name": workspace.name,
+                    "invite_url": invite_url,
+                }
+                html_message = render_to_string("emails/workspace_invite.html", context)
+
+                send_mail(
+                    subject=f"Invitation to join team {workspace.name} on AuraStack",
+                    message=(
+                        f"You have been invited by {invited_by.email} to join the "
+                        f"{workspace.name} workspace. Accept here: {invite_url}"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email_clean],
+                    html_message=html_message,
+                )
+
             return ServiceResult(
                 success=True,
                 data=invitation,
@@ -266,3 +292,55 @@ class WorkspaceService:
             data=member,
             message=f"Role updated to {member.get_role_display()} successfully",
         )
+
+    @staticmethod
+    def delete_workspace(workspace: Workspace, operator) -> ServiceResult:
+        """حذف مساحة العمل حذفاً ناعماً والتحقق من صلاحية المالك (OWNER)."""
+        operator_member = WorkspaceMember.objects.filter(workspace=workspace, user=operator).first()
+        if not operator_member or operator_member.role != WorkspaceMember.RoleChoices.OWNER:
+            return ServiceResult(
+                success=False, message="Access denied. Only the Owner can delete this workspace."
+            )
+        try:
+            with transaction.atomic():
+                # الحذف الناعم لمساحة العمل
+                workspace.delete()
+                # الحذف الناعم لجميع الأعضاء المنتسبين إليها لكي يختفوا من لوحات التحكم
+                WorkspaceMember.objects.filter(workspace=workspace).delete()
+            return ServiceResult(success=True, message="Workspace archived successfully.")
+        except Exception as e:
+            return ServiceResult(success=False, message=f"Failed to delete workspace: {str(e)}")
+
+    @staticmethod
+    def restore_workspace(workspace_id: str, operator) -> ServiceResult:
+        """استرجاع مساحة العمل المحذوفة ناعماً والتحقق من الصلاحيات."""
+        try:
+            # جلب مساحة العمل المحذوفة ناعماً عبر Manager المخصص
+            workspace = Workspace.all_objects.filter(
+                id=workspace_id, deleted_at__isnull=False
+            ).first()
+            if not workspace:
+                return ServiceResult(success=False, message="Workspace not found or not archived.")
+
+            # التحقق من أن المنفذ هو من أنشأ مساحة العمل أو كان المالك
+            operator_member = WorkspaceMember.all_objects.filter(
+                workspace=workspace, user=operator, role=WorkspaceMember.RoleChoices.OWNER
+            ).first()
+            if not operator_member:
+                return ServiceResult(
+                    success=False,
+                    message="Access denied. Only the Owner can restore this workspace.",
+                )
+
+            with transaction.atomic():
+                # إلغاء الحذف الناعم لمساحة العمل
+                workspace.deleted_at = None
+                workspace.save(update_fields=["deleted_at"])
+                # استعادة عضويات جميع الأعضاء
+                WorkspaceMember.all_objects.filter(workspace=workspace).update(deleted_at=None)
+
+            return ServiceResult(
+                success=True, data=workspace, message="Workspace restored successfully."
+            )
+        except Exception as e:
+            return ServiceResult(success=False, message=f"Failed to restore workspace: {str(e)}")

@@ -15,6 +15,9 @@ def test_workspace_permissions_and_invite_acceptance_e2e(live_server, page: Page
     owner_password = "Password123!"
     User.objects.create_user(email=owner_email, password=owner_password)
 
+    page.on("console", lambda msg: print(f"[Browser Console Perm] {msg.text}"))
+    page.on("pageerror", lambda err: print(f"[Browser PageError Perm] {err}"))
+
     page.goto(live_server.url + "/auth/login/")
     page.wait_for_selector("#email", timeout=5000)
     page.fill("#email", owner_email)

@@ -42,3 +42,14 @@ def list_workspace_pending_invitations(workspace: Workspace) -> list[WorkspaceIn
             "-created_at"
         )
     )
+
+
+def list_deleted_user_workspaces(user) -> list[Workspace]:
+    """جلب قائمة مساحات العمل المحذوفة ناعماً والتي أنشأها المستخدم."""
+    if not user or not user.is_authenticated:
+        return []
+    return list(
+        Workspace.all_objects.filter(created_by=user, deleted_at__isnull=False).order_by(
+            "-deleted_at"
+        )
+    )

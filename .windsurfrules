@@ -1,0 +1,24 @@
+# AuraStack Windsurf Cascade Guidelines
+
+This configuration guides the Cascade agent's code generation to maintain alignment with the AuraStack architecture.
+
+## 1. Project Overview & Tech Stack
+* Backend: Django (Python 3.13)
+* Frontend: Vue 3 (Vite, TypeScript, Tailwind CSS)
+* Bridge: Inertia.js (Inertia-django)
+* Queue: Django Q2 (Hybrid DB/Redis setup)
+* Database: SQLite (local) / PostgreSQL (production)
+
+## 2. Directory Layout & Standards
+* Backend: Use selectors (`selectors.py`) for data reads and services (`services.py`) returning `ServiceResult` for data writes. Do not put query or database mutation logic in Django views.
+* Frontend: Use `<script setup lang="ts">` for Vue components.
+* Styling: Use CSS variables from `app.css` (e.g. `var(--color-primary)`, `var(--color-surface)`) and utility classes (`.glass-panel`, `.premium-input`, `.btn-premium`).
+* RTL/LTR: Use Tailwind logical properties (e.g. `ms-*`, `pe-*`, `text-start`, `inset-inline-start-*`) instead of physical directions (`ml-*`, `pr-*`, `text-left`, `left-*`) to support RTL/LTR layout mirroring dynamically.
+* Multi-Tenancy: Always filter queries by `request.active_workspace` (attached by `ShareUserDataMiddleware`).
+* Django Ninja: Private client endpoints must use `private_api` router with `django_auth` check. Public endpoints (such as Stripe/Paymob webhooks) must use `public_api` and be secured at the method level. Always use Pydantic `Schema` for request/response serialization.
+* Webhooks: Verify Paymob webhook payloads using HMAC-SHA512 with the exact alphabetical order of keys:
+  `amount_cents || created_at || currency || has_parent_transaction || id || integration_id || is_3d_secure || is_auth || is_capture || is_voided || is_refunded || is_standalone_payment || order_id || owner || pending || source_data.pan || source_data.sub_type || source_data.type || success`
+
+## 3. Testing Protocols
+* To run the test suite: `.venv\Scripts\python.exe -m pytest` or `.venv\Scripts\python.exe verify_all.py`
+* E2E tests: Set `DJANGO_ALLOW_ASYNC_UNSAFE=true` in the environment before running. Use `page.context.clear_cookies()` in playwright tests between different login flows to avoid session caching issues.

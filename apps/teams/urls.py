@@ -2,12 +2,14 @@ from django.urls import path
 
 from apps.teams.views import (
     WorkspaceActiveSwitchView,
+    WorkspaceDeleteView,
     WorkspaceInvitationAcceptView,
     WorkspaceInvitationDeleteView,
     WorkspaceInviteView,
     WorkspaceListView,
     WorkspaceMemberDeleteView,
     WorkspaceMemberUpdateView,
+    WorkspaceRestoreView,
     WorkspaceSettingsView,
 )
 
@@ -38,4 +40,6 @@ urlpatterns = [
         WorkspaceInvitationAcceptView.as_view(),
         name="accept_invitation",
     ),
+    path("<str:slug>/delete/", WorkspaceDeleteView.as_view(), name="workspace_delete"),
+    path("<uuid:workspace_id>/restore/", WorkspaceRestoreView.as_view(), name="workspace_restore"),
 ]

@@ -1,0 +1,67 @@
+---
+description: Rules for writing frontend Vue 3 components, styles, design tokens, and translations
+globs: frontend/src/**/*.vue, frontend/src/**/*.ts
+---
+# Vue 3 & Frontend Standards for AuraStack
+
+You MUST follow these frontend coding standards and design systems when editing or creating Vue components.
+
+## 1. Composition API & TypeScript
+* Always use `<script setup lang="ts">`.
+* Type all props and emits using TypeScript compile-time macros:
+  ```ts
+  defineProps<{
+    title: string;
+    description?: string;
+  }>()
+  ```
+* Bypasses the need for global state management like Pinia unless explicitly requested. Rely on page props for state where possible.
+
+---
+
+## 2. Design System & CSS Variables (app.css)
+To maintain the premium look of the template, you MUST use the CSS variables defined in [app.css](file:///a:/auraflow/frontend/src/app.css). Never use raw CSS colors or ad-hoc custom Tailwind colors.
+
+### CSS variables available:
+* Primary Action: `var(--color-primary)` (default hover is `var(--color-primary-hover)`)
+* Glow/Shadows: `var(--color-primary-glow)`
+* Surfaces: `var(--color-surface)` (muted background is `var(--color-surface-muted)`)
+* Borders: `var(--color-border)`
+* Text colors: `var(--color-text)` (muted text is `var(--color-text-muted)`)
+* Indicators: `var(--color-danger)` and `var(--color-success)`
+
+### Custom Classes:
+* **Glass Panel:** `.glass-panel` (applies backdrop-filter blur, border, and light/dark theme transparency). Use for containers, cards, and modals.
+* **Inputs:** `.premium-input` (applies smooth cubic-bezier outline transitions on focus).
+* **Buttons:** `.btn-premium` (adds overlay gradient highlight and hover animations).
+
+---
+
+## 3. Localization (i18n) & Bidirectional Layouts (RTL)
+* **Translating Texts:** Always wrap user-facing texts inside the translation helper `t` from the custom composable `useI18n()`:
+  ```ts
+  import { useI18n } from "@/composables/useI18n";
+  const { t, locale } = useI18n();
+  ```
+* **Dynamic Direction:** Layout directions are dynamically computed based on `locale.value`:
+  `document.documentElement.dir = locale.value === "ar" ? "rtl" : "ltr";`
+* **Tailwind Logical Properties:** To avoid UI layout breaks when changing languages, NEVER use physical position margins, paddings, or text alignment. Use logical alternatives:
+  * Replace `ml-*` / `mr-*` with `ms-*` (margin-start) and `me-*` (margin-end).
+  * Replace `pl-*` / `pr-*` with `ps-*` (padding-start) and `pe-*` (padding-end).
+  * Replace `left-*` / `right-*` with `inset-inline-start-*` and `inset-inline-end-*`.
+  * Replace `text-left` / `text-right` with `text-start` and `text-end`.
+
+---
+
+## 4. Inertia.js Page Integration
+* **Data Retrieval:** Access authenticated user details and active workspace state directly from the page props:
+  ```ts
+  import { usePage } from '@inertiajs/vue3'
+  const page = usePage()
+  const user = computed(() => page.props.auth?.user)
+  const activeWorkspace = computed(() => page.props.auth?.active_workspace)
+  ```
+* **SEO Components:** Ensure `<AppHead>` is included at the top of every page component to inject correct page title and metadata:
+  ```html
+  <AppHead :title="t('profile.title')" :description="t('profile.description')" />
+  ```

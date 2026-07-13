@@ -71,6 +71,7 @@ def test_password_reset_e2e_flow(live_server, page: Page):
     assert page.locator("h1:has-text('Password Reset Complete')").is_visible()
 
     # 8. تجربة تسجيل الدخول بكلمة المرور الجديدة
+    page.context.clear_cookies()
     page.goto(live_server.url + "/auth/login/")
     page.wait_for_selector("#email", timeout=5000)
     page.fill("#email", email)

@@ -1,0 +1,99 @@
+---
+description: Rules for writing backend Django, models, selectors, services, and tests
+globs: apps/**/*.py, core/**/*.py, common/**/*.py, tests/**/*.py
+---
+# Django Backend Standards for AuraStack
+
+You MUST adhere to these strict architectural patterns when modifying or creating backend python files.
+
+## 1. Directory Structure & File Placements
+* **`core/settings/`**: Contains configuration files (`base.py`, `local.py`, `production.py`).
+* **`apps/<app_name>/`**: Standard Django applications. Follow modular separation:
+  * `models.py`: Database models only.
+  * `selectors.py`: Data querying, sorting, and fetching.
+  * `services.py`: Database mutation (creation, deletion, updates) and external services logic.
+  * `views.py`: Handle requests and return Inertia renders. Thin controllers only.
+  * `urls.py`: URL mappings using namespaces matching the app name.
+* **`common/`**: Shared utilities, custom middleware, health checkers.
+* **`templates/`**: HTML base templates and email templates (`templates/emails/`).
+
+---
+
+## 2. Coding Patterns (Selectors & Services)
+* **Never write query filters directly in views.** Always delegate to `selectors.py`:
+  ```python
+  # CORRECT (in apps/users/selectors.py)
+  def get_user_by_email(email: str) -> CustomUser | None:
+      try:
+          return CustomUser.objects.get(email=email)
+      except CustomUser.DoesNotExist:
+          return None
+  ```
+* **Never call `.save()`, `.create()`, or `.delete()` directly in views.** Always delegate to `services.py`.
+* **Services must return `common.results.ServiceResult`**:
+  ```python
+  # CORRECT (in apps/teams/services.py)
+  from common.results import ServiceResult
+  
+  @staticmethod
+  def create_workspace(name: str, user) -> ServiceResult:
+      if not name:
+          return ServiceResult(success=False, message="Workspace name cannot be empty")
+      try:
+          with transaction.atomic():
+              workspace = Workspace.objects.create(name=name, created_by=user)
+              # ... additional logic
+          return ServiceResult(success=True, data=workspace)
+      except Exception as e:
+          return ServiceResult(success=False, message=str(e))
+  ```
+
+---
+
+## 3. Multi-Tenant Workspace Isolation (BOLA Protection)
+* **Global Access Constraint:** Every model scoped under a workspace MUST filter queries using `request.active_workspace` (attached by `ShareUserDataMiddleware`):
+  ```python
+  # CORRECT (in view or selector)
+  user_projects = Project.objects.filter(workspace=request.active_workspace)
+  ```
+* **Route Protection:** Ensure any view handling a resource checks if the active workspace matches the resource's workspace.
+
+---
+
+## 4. Financial Integrations & Webhook HMAC Verification
+* **HMAC Paymob Webhook Formula:** Paymob webhook payload signatures MUST be verified using the exact order of keys:
+  `amount_cents || created_at || currency || has_parent_transaction || id || integration_id || is_3d_secure || is_auth || is_capture || is_voided || is_refunded || is_standalone_payment || order_id || owner || pending || source_data.pan || source_data.sub_type || source_data.type || success`
+* **Stripe Webhook Processing:** Webhooks must be verified using Stripe's native SDK signature verification, then processed asynchronously in background tasks using `django-q2` to prevent response timeouts.
+
+---
+
+## 5. Django Ninja API Development
+* **Authentication Split:**
+  * For frontend client APIs, use `private_api` (`from apps.payments.api import private_api`), which applies `django_auth` automatically.
+  * For third-party or webhook endpoints, use `public_api`.
+* **Type Safety & Schemas:**
+  * Define all payload and response structures using Pydantic `Schema`.
+  * Define endpoints using type-hinted parameters. Django Ninja will automatically generate Swagger documentation.
+* **Error and Exception Responses:**
+  * Ensure standard errors return unified JSON response shapes (e.g. `{"message": "Error details"}`).
+
+---
+
+## 6. Testing & Verification Guidelines
+* **Database Access:** Every test querying the database must be decorated with `@pytest.mark.django_db`.
+* **E2E Playwright Tests:**
+  * Must be marked with `@pytest.mark.django_db(transaction=True)`.
+  * Must import `Page` from `playwright.sync_api`.
+  * **Async Protection:** Since Playwright uses an event loop, you MUST enable `DJANGO_ALLOW_ASYNC_UNSAFE=true` in the execution context.
+  * **Session Persistence:** When logging in multiple times or testing different credentials, call `page.context.clear_cookies()` to clear previous active sessions and avoid auto-redirects from the middleware.
+  ```python
+  # Correct E2E test template
+  @pytest.mark.django_db(transaction=True)
+  def test_auth_flow(live_server, page: Page):
+      page.goto(live_server.url + "/auth/login/")
+      page.fill("#email", "user@example.com")
+      page.fill("#password", "Password123!")
+      page.click("button[type='submit']")
+      page.wait_for_url("**/profile/")
+  ```
+

@@ -33,12 +33,14 @@ THIRD_PARTY_APPS = [
     "allauth.socialaccount.providers.github",
     "allauth.mfa",
     "django_q",
+    "anymail",
 ]
 
 LOCAL_APPS = [
     "apps.users.apps.UsersConfig",
     "apps.teams.apps.TeamsConfig",
     "apps.payments.apps.PaymentsConfig",
+    "apps.blog.apps.BlogConfig",
 ]
 
 INSTALLED_APPS = (
@@ -250,16 +252,27 @@ SOCIALACCOUNT_PROVIDERS = {
 # كتم تحذير الانتقال لـ Django 6.0 وتفعيل معيار الـ HTTPS الافتراضي لحقول الروابط
 FORMS_URLFIELD_ASSUME_HTTPS = True
 
-# ==============================================================================
-# Django Q2 Cluster Settings
-# ==============================================================================
-Q_CLUSTER = {
-    "name": "auraflow_q",
-    "workers": 4,
-    "recycle": 500,
-    "timeout": 60,
-    "orm": "default",  # Use Django database ORM as the broker
-}
+REDIS_URL = env.str("REDIS_URL", default="")
+
+if REDIS_URL:
+    Q_CLUSTER = {
+        "name": "auraflow_q",
+        "workers": 4,
+        "recycle": 500,
+        "timeout": 60,
+        "redis": REDIS_URL,
+    }
+else:
+    Q_CLUSTER = {
+        "name": "auraflow_q",
+        "workers": 2,
+        "recycle": 100,
+        "timeout": 60,
+        "sleep": 1,  # فحص هادئ لتجنب إجهاد الـ CPU لقاعدة البيانات محلياً
+        "save_limit": 0,  # مسح المهام الناجحة فوراً لمنع التضخم
+        "orm": "default",
+    }
+
 
 # ==============================================================================
 # Stripe and Billing Settings
@@ -269,3 +282,27 @@ STRIPE_SECRET_KEY = env.str("STRIPE_SECRET_KEY", default="")
 STRIPE_WEBHOOK_SECRET = env.str("STRIPE_WEBHOOK_SECRET", default="")
 
 DEFAULT_PAYMENT_PROVIDER = env.str("DEFAULT_PAYMENT_PROVIDER", default="STRIPE")
+
+# ==============================================================================
+# Anymail (Resend) Settings
+# ==============================================================================
+ANYMAIL = {
+    "RESEND_API_KEY": env.str("RESEND_API_KEY", default=""),
+}
+
+# ==============================================================================
+# Cache Settings (Required for django-ratelimit)
+# ==============================================================================
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}
+
+# ==============================================================================
+# Unfold Admin Panel Settings
+# ==============================================================================
+UNFOLD = {
+    "DASHBOARD_CALLBACK": "common.admin_dashboard.admin_dashboard_callback",
+}

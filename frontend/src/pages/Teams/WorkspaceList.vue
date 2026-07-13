@@ -3,10 +3,23 @@ import { ref, computed } from "vue";
 import { usePage, useForm, Link, router } from "@inertiajs/vue3";
 import type { SharedProps } from "@/types/inertia";
 
+const props = defineProps<{
+  deleted_workspaces: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    deleted_at: string;
+  }>;
+}>();
+
 const page = usePage<SharedProps>();
 const user = computed(() => page.props.auth?.user);
 const workspaces = computed(() => page.props.auth?.workspaces || []);
 const activeWorkspace = computed(() => page.props.auth?.active_workspace);
+
+const restoreWorkspace = (workspaceId: string) => {
+  router.post(`/workspaces/${workspaceId}/restore/`);
+};
 
 // فورم إنشاء مساحة عمل جديدة
 const form = useForm({
@@ -151,6 +164,37 @@ const switchActiveWorkspace = (workspaceId: string) => {
               >
                 ⚙ Settings
               </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Archived/Deleted Workspaces (Soft Deleted) -->
+      <div v-if="deleted_workspaces && deleted_workspaces.length > 0" class="space-y-4 pt-6 border-t border-[var(--color-border)]">
+        <h2 class="text-lg font-bold text-red-600 dark:text-red-500">
+          Archived Workspaces / مساحات العمل المؤرشفة ({{ deleted_workspaces.length }})
+        </h2>
+        <div class="grid gap-4 md:grid-cols-2">
+          <div
+            v-for="ws in deleted_workspaces"
+            :key="ws.id"
+            class="bg-[var(--color-surface)] border border-red-200 dark:border-red-950/40 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-4"
+          >
+            <div>
+              <h3 class="font-bold text-base text-[var(--color-text)] truncate max-w-[200px]" :title="ws.name">
+                {{ ws.name }}
+              </h3>
+              <p class="text-[10px] text-[var(--color-text-muted)] mt-1">
+                Archived on / تمت الأرشفة في: {{ ws.deleted_at }}
+              </p>
+            </div>
+            <div class="flex items-center gap-2 pt-4 border-t border-[var(--color-border)]/50">
+              <button
+                @click="restoreWorkspace(ws.id)"
+                class="flex-1 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-500/20 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-all cursor-pointer text-center"
+              >
+                Restore / استعادة
+              </button>
             </div>
           </div>
         </div>

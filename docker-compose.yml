@@ -16,6 +16,19 @@ services:
       db:
         condition: service_healthy
 
+  worker:
+    build: .
+    command: python manage.py qcluster
+    env_file:
+      - .env
+    environment:
+      - DEBUG=False
+      - DJANGO_SETTINGS_MODULE=core.settings.production
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/auraflow
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     image: postgres:16-alpine
     volumes:

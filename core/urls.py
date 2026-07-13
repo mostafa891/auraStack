@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 
 from apps.payments.api import private_api, public_api
-from apps.users.views import ProfileView
+from apps.users.views import LandingView, ProfileView
 from apps.users.views_security import (
     MfaAuthenticateView,
     MfaListView,
@@ -18,8 +18,10 @@ from apps.users.views_security import (
     TotpActivateView,
     TotpDeactivateView,
 )
+from common.views.health import health_check
 
 urlpatterns = [
+    path("", LandingView.as_view(), name="landing"),
     path("admin/", admin.site.urls),
     # نقاط الـ API الخاصة بالاشتراكات والمدفوعات
     path("api/v1/private/", private_api.urls),
@@ -30,6 +32,8 @@ urlpatterns = [
     path("auth/", include("apps.users.urls", namespace="auth")),
     # مسارات إدارة الفرق ومساحات العمل (Multi-tenancy)
     path("workspaces/", include("apps.teams.urls", namespace="teams")),
+    # مسارات تطبيق المدونة والتحديثات
+    path("blog/", include("apps.blog.urls", namespace="blog")),
     # صفحة تفضيلات الملف الشخصي الرئيسي
     path("profile/", ProfileView.as_view(), name="profile"),
     # تجاوز مسارات allauth الافتراضية بمسارات Inertia المخصصة على المستوى العام
@@ -62,6 +66,8 @@ urlpatterns = [
     path("accounts/social/signup/", SocialSignupView.as_view(), name="socialaccount_signup"),
     # تضمين مسارات django-allauth بالكامل للوصول لروابط المزايا الأمنية المتقدمة
     path("accounts/", include("allauth.urls")),
+    # مسار فحص صحة النظام
+    path("health/", health_check, name="health_check"),
 ]
 
 # تمكين خدمة ملفات الميديا محلياً في بيئة التطوير

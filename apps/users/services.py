@@ -59,6 +59,24 @@ class AuthService:
             )
             return result
 
+        # إرسال البريد الترحيبي
+        from django.conf import settings
+        from django.core.mail import send_mail
+        from django.template.loader import render_to_string
+
+        try:
+            site_url = getattr(settings, "SITE_URL", "http://localhost:8000")
+            html_message = render_to_string("emails/welcome.html", {"site_url": site_url})
+            send_mail(
+                subject="Welcome to AuraStack!",
+                message="Welcome to AuraStack! Your account is now active.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[cleaned_email],
+                html_message=html_message,
+            )
+        except Exception as e:
+            security_logger.error("Failed to send welcome email: %s", str(e))
+
         user_id = getattr(result.data, "id", "Unknown")
         security_logger.info(
             "Security Event: New account created [%s] - UserID: %s - IP: %s",

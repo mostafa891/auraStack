@@ -56,3 +56,6 @@ if DEBUG:
     NPLUSONE_RAISE = (
         TESTING  # إيقاف الاختبار وإفشاله فوراً إذا تم رصد N+1، وطباعة تحذير فقط في التصفح المعتاد
     )
+
+# تعطيل محدد معدل الطلبات أثناء الاختبارات لمنع حظر اختبارات E2E والـ Live Server
+RATELIMIT_ENABLE = not TESTING

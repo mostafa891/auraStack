@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from apps.teams.models import Workspace
-from common.models import TimeStampedModel
+from common.models import SoftDeleteModel, TimeStampedModel
 
 
 class ProviderChoices(models.TextChoices):
@@ -24,7 +24,7 @@ class SubscriptionStatusChoices(models.TextChoices):
     INACTIVE = "inactive", _("Inactive")
 
 
-class PaymentCustomer(TimeStampedModel):
+class PaymentCustomer(SoftDeleteModel, TimeStampedModel):
     """ربط مساحة العمل بمعرّف العميل الخارجي لدى بوابة الدفع."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -52,7 +52,7 @@ class PaymentCustomer(TimeStampedModel):
         return f"{self.workspace.name} ({self.provider})"
 
 
-class Subscription(TimeStampedModel):
+class Subscription(SoftDeleteModel, TimeStampedModel):
     """تتبع حالة خطة الاشتراك الحالية لمساحة العمل."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -9,6 +9,7 @@ from inertia import render, share
 from apps.teams.models import Workspace, WorkspaceInvitation, WorkspaceMember
 from apps.teams.selectors import (
     get_workspace_membership,
+    list_deleted_user_workspaces,
     list_workspace_members,
     list_workspace_pending_invitations,
 )
@@ -22,7 +23,18 @@ class WorkspaceListView(LoginRequiredMixin, View):
     login_url = "auth:login"
 
     def get(self, request):
-        return render(request, "Teams/WorkspaceList")
+        deleted_workspaces = [
+            {
+                "id": str(w.id),
+                "name": w.name,
+                "slug": w.slug,
+                "deleted_at": w.deleted_at.strftime("%Y-%m-%d"),
+            }
+            for w in list_deleted_user_workspaces(request.user)
+        ]
+        return render(
+            request, "Teams/WorkspaceList", props={"deleted_workspaces": deleted_workspaces}
+        )
 
     def post(self, request):
         data = get_request_data(request)
@@ -30,7 +42,18 @@ class WorkspaceListView(LoginRequiredMixin, View):
 
         if not name:
             share(request, errors={"name": ["Workspace name is required"]})
-            return render(request, "Teams/WorkspaceList")
+            deleted_workspaces = [
+                {
+                    "id": str(w.id),
+                    "name": w.name,
+                    "slug": w.slug,
+                    "deleted_at": w.deleted_at.strftime("%Y-%m-%d"),
+                }
+                for w in list_deleted_user_workspaces(request.user)
+            ]
+            return render(
+                request, "Teams/WorkspaceList", props={"deleted_workspaces": deleted_workspaces}
+            )
 
         result = WorkspaceService.create_workspace(name=name, user=request.user)
 
@@ -342,3 +365,43 @@ class WorkspaceInvitationDeleteView(LoginRequiredMixin, View):
         invitation.delete()
         messages.success(request, "Invitation revoked successfully.")
         return redirect(reverse("teams:workspace_settings", kwargs={"slug": slug}))
+
+
+class WorkspaceDeleteView(LoginRequiredMixin, View):
+    """حذف مساحة العمل حذفاً ناعماً."""
+
+    login_url = "auth:login"
+
+    def post(self, request, slug):
+        workspace = get_object_or_404(Workspace, slug=slug)
+        result = WorkspaceService.delete_workspace(workspace=workspace, operator=request.user)
+
+        if result.success:
+            messages.success(request, result.message)
+            # إذا تم حذف مساحة العمل النشطة، نقوم بإزالتها من الجلسة
+            if str(workspace.id) == request.session.get("active_workspace_id"):
+                request.session.pop("active_workspace_id", None)
+            return redirect(reverse("teams:workspace_list"))
+        else:
+            messages.error(request, result.message)
+            return redirect(reverse("teams:workspace_settings", kwargs={"slug": slug}))
+
+
+class WorkspaceRestoreView(LoginRequiredMixin, View):
+    """استرجاع مساحة العمل المحذوفة ناعماً."""
+
+    login_url = "auth:login"
+
+    def post(self, request, workspace_id):
+        result = WorkspaceService.restore_workspace(
+            workspace_id=workspace_id, operator=request.user
+        )
+
+        if result.success:
+            messages.success(request, result.message)
+            workspace = result.data
+            request.session["active_workspace_id"] = str(workspace.id)
+            return redirect(reverse("teams:workspace_settings", kwargs={"slug": workspace.slug}))
+        else:
+            messages.error(request, result.message)
+            return redirect(reverse("teams:workspace_list"))

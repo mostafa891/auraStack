@@ -9,6 +9,7 @@ class ShareUserDataMiddleware:
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest):
+        request.active_workspace = None
         # في بيئة Inertia، نقوم بنشر الحساب والمعلومات المشتركة في كل استجابة
         if request.user and request.user.is_authenticated:
             user_lang = request.user.language
@@ -49,6 +50,7 @@ class ShareUserDataMiddleware:
             if active_workspace_id:
                 active_mem = get_active_workspace(request.user, active_workspace_id)
                 if active_mem:
+                    request.active_workspace = active_mem.workspace
                     # جلب تفاصيل الاشتراك الحالية
                     sub = Subscription.objects.filter(workspace_id=active_workspace_id).first()
                     if sub:
@@ -96,6 +98,7 @@ class ShareUserDataMiddleware:
             # إذا لم تكن هناك مساحة نشطة، نختار مساحة العمل الأولى تلقائياً
             if not active_workspace and memberships:
                 first_mem = memberships[0]
+                request.active_workspace = first_mem.workspace
                 request.session["active_workspace_id"] = str(first_mem.workspace.id)
                 sub = Subscription.objects.filter(workspace_id=str(first_mem.workspace.id)).first()
                 if sub:

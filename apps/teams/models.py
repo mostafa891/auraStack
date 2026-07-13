@@ -5,10 +5,10 @@ from django.db import models
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
-from common.models import TimeStampedModel
+from common.models import SoftDeleteModel, TimeStampedModel
 
 
-class Workspace(TimeStampedModel):
+class Workspace(SoftDeleteModel, TimeStampedModel):
     """يمثل مساحة العمل أو المستأجر (Tenant) الرئيسي في المنصة."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -54,7 +54,7 @@ class Workspace(TimeStampedModel):
         return self.name
 
 
-class WorkspaceMember(TimeStampedModel):
+class WorkspaceMember(SoftDeleteModel, TimeStampedModel):
     """يربط المستخدمين بمساحات العمل مع تحديد رتبهم وصلاحياتهم."""
 
     class RoleChoices(models.TextChoices):
