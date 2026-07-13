@@ -3,6 +3,7 @@ import { computed, ref, watchEffect } from "vue";
 import { usePage, Link } from "@inertiajs/vue3";
 import type { SharedProps } from "@/types/inertia";
 import { useI18n } from "@/composables/useI18n";
+import { useToast } from "@/composables/useToast";
 
 interface Props {
   stripe_publishable_key: string;
@@ -16,6 +17,7 @@ defineProps<Props>();
 const page = usePage<SharedProps>();
 const activeWorkspace = computed(() => page.props.auth?.active_workspace);
 const { locale, toggleLocale } = useI18n();
+const { toast } = useToast();
 
 const isRedirecting = ref(false);
 const selectedGateway = ref("stripe");
@@ -54,7 +56,7 @@ const handleSubscribe = async (planId: string) => {
       window.location.href = data.checkout_url;
     }
   } catch (error: any) {
-    alert(error.message);
+    toast.error(error.message);
     isRedirecting.value = false;
   }
 };
@@ -174,23 +176,52 @@ const getCookie = (name: string) => {
             </div>
 
             <!-- Gateway Selector -->
-            <div class="bg-[var(--color-surface-muted)] border border-[var(--color-border)] rounded-2xl p-3 flex gap-2">
-              <button
-                type="button"
-                @click="selectedGateway = 'stripe'"
-                :class="selectedGateway === 'stripe' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)]'"
-                class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center cursor-pointer"
-              >
-                Stripe (Credit Card)
-              </button>
-              <button
-                type="button"
-                @click="selectedGateway = 'paymob'"
-                :class="selectedGateway === 'paymob' ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)]'"
-                class="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center cursor-pointer"
-              >
-                Paymob (Wallets / Fawry)
-              </button>
+            <div class="space-y-2">
+              <label class="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
+                {{ locale === 'ar' ? 'اختر بوابة الدفع المفضلة' : 'Select Payment Gateway' }}
+              </label>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  @click="selectedGateway = 'stripe'"
+                  :class="selectedGateway === 'stripe' ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)] shadow-sm' : 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:border-[var(--color-border-hover)]'"
+                  class="py-2.5 px-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  💳 Stripe
+                </button>
+                <button
+                  type="button"
+                  @click="selectedGateway = 'paymob'"
+                  :class="selectedGateway === 'paymob' ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)] shadow-sm' : 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:border-[var(--color-border-hover)]'"
+                  class="py-2.5 px-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  📱 Paymob
+                </button>
+                <button
+                  type="button"
+                  @click="selectedGateway = 'paypal'"
+                  :class="selectedGateway === 'paypal' ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)] shadow-sm' : 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:border-[var(--color-border-hover)]'"
+                  class="py-2.5 px-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  🅿 PayPal
+                </button>
+                <button
+                  type="button"
+                  @click="selectedGateway = 'paddle'"
+                  :class="selectedGateway === 'paddle' ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)] shadow-sm' : 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:border-[var(--color-border-hover)]'"
+                  class="py-2.5 px-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  🏓 Paddle
+                </button>
+                <button
+                  type="button"
+                  @click="selectedGateway = 'lemonsqueezy'"
+                  :class="selectedGateway === 'lemonsqueezy' ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)] shadow-sm' : 'border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:border-[var(--color-border-hover)]'"
+                  class="col-span-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  🍋 LemonSqueezy
+                </button>
+              </div>
             </div>
 
             <div class="border-t border-[var(--color-border)] pt-6 space-y-4">

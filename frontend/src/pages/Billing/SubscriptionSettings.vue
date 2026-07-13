@@ -3,11 +3,13 @@ import { computed, ref, watchEffect } from "vue";
 import { usePage, Link } from "@inertiajs/vue3";
 import type { SharedProps } from "@/types/inertia";
 import { useI18n } from "@/composables/useI18n";
+import { useToast } from "@/composables/useToast";
 
 const page = usePage<SharedProps>();
 const activeWorkspace = computed(() => page.props.auth?.active_workspace);
 const subscription = computed(() => activeWorkspace.value?.subscription);
 const { locale, toggleLocale } = useI18n();
+const { toast } = useToast();
 
 const isRedirecting = ref(false);
 
@@ -37,7 +39,7 @@ const handleManageBilling = async () => {
       window.location.href = data.portal_url;
     }
   } catch (error: any) {
-    alert(error.message);
+    toast.error(error.message);
     isRedirecting.value = false;
   }
 };
