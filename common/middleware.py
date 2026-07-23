@@ -44,15 +44,15 @@ class ShareUserDataMiddleware:
             active_workspace_id = request.session.get("active_workspace_id")
             active_workspace = None
 
-            from apps.payments.models import Subscription, SubscriptionStatusChoices
+            from apps.payments.models import SubscriptionStatusChoices
             from apps.payments.plans import PLANS
 
             if active_workspace_id:
                 active_mem = get_active_workspace(request.user, active_workspace_id)
                 if active_mem:
                     request.active_workspace = active_mem.workspace
-                    # جلب تفاصيل الاشتراك الحالية
-                    sub = Subscription.objects.filter(workspace_id=active_workspace_id).first()
+                    # جلب تفاصيل الاشتراك الحالية من الكائن المحمل مسبقاً (select_related)
+                    sub = getattr(active_mem.workspace, "subscription", None)
                     if sub:
                         plan_id = sub.plan_id
                         sub_status = sub.status
@@ -100,7 +100,8 @@ class ShareUserDataMiddleware:
                 first_mem = memberships[0]
                 request.active_workspace = first_mem.workspace
                 request.session["active_workspace_id"] = str(first_mem.workspace.id)
-                sub = Subscription.objects.filter(workspace_id=str(first_mem.workspace.id)).first()
+                # جلب تفاصيل الاشتراك الحالية من الكائن المحمل مسبقاً (select_related)
+                sub = getattr(first_mem.workspace, "subscription", None)
                 if sub:
                     plan_id = sub.plan_id
                     sub_status = sub.status

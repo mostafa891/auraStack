@@ -68,11 +68,11 @@ The application routes are registered under the `/workspaces/` path prefix:
 
 ## 🧪 Testing
 
-1. **Unit & Integration Tests**: Located in [test_teams.py](file:///a:/auraflow/apps/teams/tests/test_teams.py). Tests slug generation, services constraints, and basic view flow redirections. Run with:
+1. **Unit & Integration Tests**: Located in [test_teams.py](../../apps/teams/tests/test_teams.py). Tests slug generation, services constraints, and basic view flow redirections. Run with:
    ```bash
    pytest apps/teams/tests/
    ```
-2. **E2E Browser Tests**: Located in [test_teams_flow.py](file:///a:/auraflow/tests/e2e/test_teams_flow.py). Tests registration, workspace creation, settings page, and invitation workflows. Run with:
+2. **E2E Browser Tests**: Located in [test_teams_flow.py](../../tests/e2e/test_teams_flow.py). Tests registration, workspace creation, settings page, and invitation workflows. Run with:
    ```bash
    pytest tests/e2e/
    ```

@@ -151,20 +151,11 @@ const handleAvatarUpload = async (event: Event) => {
 
   try {
     // 1. طلب رابط موقع للرفع السحابي (Presigned URL)
-    const presignResponse = await fetch("/auth/profile/avatar/presign/");
+    const presignResponse = await fetch("/auth/profile/avatar/presign/", { credentials: "same-origin" });
     if (!presignResponse.ok) throw new Error("Failed to get presigned URL");
     const { upload_url, method, fields } = await presignResponse.json();
 
-    // 2. تجهيز كائن البيانات الثنائية
-    const formData = new FormData();
-    if (fields) {
-      Object.entries(fields).forEach(([key, value]) => {
-        formData.append(key, value as string);
-      });
-    }
-    formData.append("file", file);
-
-    // دالة استخراج توكن CSRF من الكوكيز (الاسم المخصص في إعدادات الباك إند هو XSRF-TOKEN)
+    // دالة استخراج توكن CSRF من الكوكيز
     const getCookie = (name: string) => {
       let cookieValue = null;
       if (document.cookie && document.cookie !== '') {
@@ -179,14 +170,28 @@ const handleAvatarUpload = async (event: Event) => {
       }
       return cookieValue;
     };
-    const csrfToken = getCookie("XSRF-TOKEN");
+
+    const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]') as HTMLInputElement;
+    const csrfToken = csrfInput?.value || getCookie("XSRF-TOKEN") || getCookie("csrftoken") || "";
+
+    // 2. تجهيز كائن البيانات الثنائية
+    const formData = new FormData();
+    if (fields) {
+      Object.entries(fields).forEach(([key, value]) => {
+        formData.append(key, value as string);
+      });
+    }
+    formData.append("file", file);
+    formData.append("csrfmiddlewaretoken", csrfToken);
 
     // 3. الرفع المباشر إلى مساحة التخزين باستخدام fetch مع تمرير التوكن المخصص X-XSRF-TOKEN
     const uploadResponse = await fetch(upload_url, {
       method: method,
       body: formData,
+      credentials: "same-origin",
       headers: {
-        "X-XSRF-TOKEN": csrfToken || "",
+        "X-XSRF-TOKEN": csrfToken,
+        "X-CSRFToken": csrfToken,
       },
     });
 
@@ -198,8 +203,12 @@ const handleAvatarUpload = async (event: Event) => {
 
     // 4. تعيين الرابط وحفظ التغييرات تلقائياً
     form.avatar_url = uploadData.avatar_url;
-    savePreferences();
-    toast.success(locale.value === "ar" ? "تم رفع الصورة الشخصية بنجاح!" : "Avatar uploaded successfully!");
+    form.post("/auth/profile/update/", {
+      preserveScroll: true,
+      onSuccess: () => {
+        toast.success(locale.value === "ar" ? "تم رفع الصورة الشخصية بنجاح!" : "Avatar uploaded successfully!");
+      },
+    });
   } catch (error: any) {
     console.error("Avatar upload failed:", error);
     toast.error(error.message || (locale.value === "ar" ? "فشل رفع الصورة الشخصية." : "Failed to upload avatar."));

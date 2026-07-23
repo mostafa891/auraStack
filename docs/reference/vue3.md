@@ -23,7 +23,7 @@ The frontend code resides in the `/frontend/` workspace directory:
 AuraFlow integrates client-side schema validation (Zod) and server-side Django Form error parsing.
 
 ### 1. Zod v4 Schema Adapter (`zodSchema.ts`)
-Since standard validation adapters like `@vee-validate/zod` may lag behind the latest Zod v4 specs, AuraFlow implements a custom schema bridge in [zodSchema.ts](file:///a:/auraflow/frontend/src/composables/zodSchema.ts).
+Since standard validation adapters like `@vee-validate/zod` may lag behind the latest Zod v4 specs, AuraFlow implements a custom schema bridge in [zodSchema.ts](../../frontend/src/composables/zodSchema.ts).
 - `toTypedSchema(zodSchema)`: Standardizes validation responses so Zod issues are piped directly to VeeValidate's form state.
 
 ### 2. Django Error Parser (`useFormErrors.ts`)
@@ -33,7 +33,7 @@ Django form validation returns nested error dictionaries:
   "email": [{"message": "Email address is required.", "code": "required"}]
 }
 ```
-The [useFormErrors](file:///a:/auraflow/frontend/src/composables/useFormErrors.ts) composable converts this server format to simple field-to-message mapping:
+The [useFormErrors](../../frontend/src/composables/useFormErrors.ts) composable converts this server format to simple field-to-message mapping:
 ```json
 {
   "email": "Email address is required."
@@ -59,12 +59,12 @@ All pages are built using the Vue 3 `<script setup lang="ts">` Composition API:
 
 ## 🔔 Premium Toast Notification System
 AuraFlow includes a lightweight, beautiful, reactive toast notification system that requires zero heavy third-party dependencies:
-1. **Toast Store (`useToast.ts`)**: Located in [useToast.ts](file:///a:/auraflow/frontend/src/composables/useToast.ts), this composable exposes a global ref list of active toasts. It supports standard utility methods:
+1. **Toast Store (`useToast.ts`)**: Located in [useToast.ts](../../frontend/src/composables/useToast.ts), this composable exposes a global ref list of active toasts. It supports standard utility methods:
    - `toast.success("Message")`
    - `toast.error("Message")`
    - `toast.info("Message")`
    - `toast.warning("Message")`
-2. **Toast Container (`ToastContainer.vue`)**: Located in [ToastContainer.vue](file:///a:/auraflow/frontend/src/layouts/ToastContainer.vue), this layout component is mounted globally in the Inertia setup wrapper in [main.ts](file:///a:/auraflow/frontend/src/main.ts). It includes a slide-in transition group, automatic dismiss durations, custom status icons, and responsive styling.
+2. **Toast Container (`ToastContainer.vue`)**: Located in [ToastContainer.vue](../../frontend/src/layouts/ToastContainer.vue), this layout component is mounted globally in the Inertia setup wrapper in [main.ts](../../frontend/src/main.ts). It includes a slide-in transition group, automatic dismiss durations, custom status icons, and responsive styling.
 3. **Auto-Triggering from Backend**: The container automatically watches:
-   - `page.props.flash`: Shares Django's native request messages (e.g. password changed successfully) piped via [ShareUserDataMiddleware](file:///a:/auraflow/common/middleware.py).
+   - `page.props.flash`: Shares Django's native request messages (e.g. password changed successfully) piped via [ShareUserDataMiddleware](../../common/middleware.py).
    - `page.props.errors` and `page.props.error_code`: Triggers red error toasts automatically for invalid logins, deactivated accounts, and other general non-field errors.

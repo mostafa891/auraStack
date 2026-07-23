@@ -4,7 +4,7 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --prefer-offline --no-audit
 COPY frontend/ ./frontend/
 COPY static/ ./static/
 RUN npm run build
@@ -54,10 +54,10 @@ USER appuser
 # Collect static files (needs a dummy DATABASE_URL to pass Django settings checks during build)
 RUN DATABASE_URL=postgres://dummy:dummy@localhost:5432/dummy python manage.py collectstatic --noinput
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD curl --fail http://localhost:${PORT}/auth/login/ || exit 1
+# Health check with proper endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl --fail http://localhost:${PORT}/health/ || exit 1
 
-# Run application using gunicorn
+# Run application using gunicorn with dynamic worker scaling & graceful shutdown
 EXPOSE 8000
-CMD ["sh", "-c", "python manage.py migrate && gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logformat '%(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s \"%(f)s\" \"%(a)s\"'"]
+CMD ["sh", "-c", "python manage.py migrate && gunicorn core.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_WORKERS:-4} --threads ${WEB_THREADS:-2} --timeout 60 --graceful-timeout 30 --access-logformat '%(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s \"%(f)s\" \"%(a)s\"'"]

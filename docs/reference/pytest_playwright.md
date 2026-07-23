@@ -18,7 +18,7 @@ addopts = --reuse-db
 ```
 
 ### Shared Fixtures (`conftest.py`)
-Located in [conftest.py](file:///a:/auraflow/apps/users/tests/conftest.py), this file defines common elements and global test environment settings:
+Located in [conftest.py](../../apps/users/tests/conftest.py), this file defines common elements and global test environment settings:
 - **Async Safety**: `os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"` enables querying the Django ORM inside async testing contexts.
 - **`client`**: Standard Django mock request client.
 - **`test_user`**: Populates the test database with a user preconfigured with preferences.
@@ -39,7 +39,7 @@ Tests `AuthService` registration logic, duplicate email rejection, and audit tra
 Verifies page status codes, checks redirects for unauthenticated users, and tests profile updates.
 
 ### 4. Browser Integration testing (`test_auth_flow.py`)
-Located in [test_auth_flow.py](file:///a:/auraflow/tests/e2e/test_auth_flow.py), this E2E test runs Chromium using **Playwright** to test full user sessions:
+Located in [test_auth_flow.py](../../tests/e2e/test_auth_flow.py), this E2E test runs Chromium using **Playwright** to test full user sessions:
 1. **Sign-up Flow**: Enters user credentials and confirms password matching on `/auth/register/`.
 2. **Redirect Validation**: Asserts that registration redirects the browser to the `/profile/` dashboard.
 3. **Theme Visual test**: Modifies the theme setting to `DARK`, submits the form, and asserts that the root document DOM class list dynamically updates:

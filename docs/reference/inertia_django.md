@@ -13,7 +13,7 @@ Registered in `base.py`:
   CSRF_HEADER_NAME = "HTTP_X_XSRF_TOKEN"
   CSRF_COOKIE_NAME = "XSRF-TOKEN"
   ```
-- **Root Layout**: `INERTIA_LAYOUT = "base.html"`. The root template is located at [base.html](file:///a:/auraflow/templates/base.html) and contains the `{% block inertia %}` tag where the Vue app mounts.
+- **Root Layout**: `INERTIA_LAYOUT = "base.html"`. The root template is located at [base.html](../../templates/base.html) and contains the `{% block inertia %}` tag where the Vue app mounts.
 
 ---
 
@@ -22,7 +22,7 @@ Registered in `base.py`:
 Global variables are shared automatically across all Vue 3 pages through Django middleware.
 
 ### User Context
-In [middleware.py](file:///a:/auraflow/common/middleware.py), user attributes are shared with every request:
+In [middleware.py](../../common/middleware.py), user attributes are shared with every request:
 ```python
 share(
     request,

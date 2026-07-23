@@ -110,7 +110,7 @@ class WorkspaceService:
                 html_message = render_to_string("emails/workspace_invite.html", context)
 
                 send_mail(
-                    subject=f"Invitation to join team {workspace.name} on AuraStack",
+                    subject=f"Invitation to join team {workspace.name} on AuraFlow",
                     message=(
                         f"You have been invited by {invited_by.email} to join the "
                         f"{workspace.name} workspace. Accept here: {invite_url}"

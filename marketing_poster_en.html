@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AuraStack — The SaaS Boilerplate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@700;900&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #050810;
+      --glass:        rgba(255,255,255,0.028);
+      --glass-border: rgba(255,255,255,0.06);
+      --grad:         linear-gradient(130deg, #6366f1, #8b5cf6 45%, #ec4899);
+      --grad-text:    linear-gradient(130deg, #818cf8, #c084fc 50%, #f472b6);
+      --soft-purple:  rgba(99,102,241,0.12);
+      --muted:        #94a3b8;
+      --text:         #f1f5f9;
+      --green:        #10b981;
+    }
+
+    /* ── PAGE ─────────────────────────────────── */
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ambient glow blobs */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 55vw; height: 55vw;
+      top: -15%; left: -10%;
+      background: radial-gradient(circle, rgba(99,102,241,.18) 0%, transparent 70%);
+      animation: drift1 22s infinite alternate ease-in-out;
+    }
+    body::after {
+      width: 45vw; height: 45vw;
+      bottom: -10%; right: -8%;
+      background: radial-gradient(circle, rgba(236,72,153,.13) 0%, transparent 70%);
+      animation: drift2 28s infinite alternate ease-in-out;
+    }
+    @keyframes drift1 { to { transform: translate(6%, 8%) scale(1.12); } }
+    @keyframes drift2 { to { transform: translate(-6%, -6%) scale(.9);  } }
+
+    /* ── POSTER SHELL ─────────────────────────── */
+    .poster {
+      position: relative;
+      z-index: 1;
+      width: 820px;
+      max-width: 100%;
+      background: var(--glass);
+      border: 1.5px solid var(--glass-border);
+      border-radius: 40px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: 56px 52px 48px;
+      box-shadow: 0 40px 80px -20px rgba(0,0,0,.75),
+                  inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    /* subtle grid texture */
+    .poster::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background-image:
+        linear-gradient(rgba(255,255,255,.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.015) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    /* ── HEADER ───────────────────────────────── */
+    .poster-head {
+      text-align: center;
+      margin-bottom: 44px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--soft-purple);
+      border: 1px solid rgba(99,102,241,.3);
+      color: #a5b4fc;
+      padding: 5px 16px;
+      border-radius: 100px;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+    .status-pill .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 1.6s infinite alternate;
+    }
+    @keyframes blink { to { opacity: .4; transform: scale(.7); } }
+
+    h1 {
+      font-family: 'Outfit', 'Inter', sans-serif;
+      font-size: 3.6rem;
+      font-weight: 900;
+      background: var(--grad-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+      margin-bottom: 14px;
+    }
+
+    .tagline {
+      font-size: 1.05rem;
+      color: var(--muted);
+      font-weight: 400;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.65;
+    }
+    .tagline strong { color: var(--text); font-weight: 600; }
+
+    /* ── STAT STRIP ───────────────────────────── */
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 44px;
+    }
+    .stat-box {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 22px;
+      padding: 22px 14px;
+      text-align: center;
+      transition: border-color .25s, transform .25s;
+    }
+    .stat-box:hover {
+      border-color: rgba(139,92,246,.35);
+      transform: translateY(-3px);
+    }
+    .stat-num {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 900;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-label { font-size: .8rem; font-weight: 600; color: var(--muted); }
+
+    /* ── DIVIDER ──────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
+      margin-bottom: 40px;
+    }
+
+    /* ── TWO-COL GRID ─────────────────────────── */
+    .body-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+    @media (max-width: 700px) {
+      .body-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 2.4rem; }
+      .poster { padding: 36px 24px; }
+    }
+
+    /* ── SECTION HEADING ──────────────────────── */
+    .sec-title {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: #818cf8;
+      margin-bottom: 20px;
+    }
+
+    /* ── FEATURE LIST ─────────────────────────── */
+    .feat-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+    .feat-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid transparent;
+      transition: all .3s;
+    }
+    .feat-item:hover {
+      background: rgba(99,102,241,.04);
+      border-color: rgba(99,102,241,.12);
+      transform: translateX(4px);
+    }
+    .feat-icon {
+      width: 40px; height: 40px;
+      min-width: 40px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+    .feat-body h3 {
+      font-size: .93rem;
+      font-weight: 700;
+      margin-bottom: 3px;
+      color: var(--text);
+    }
+    .feat-body p {
+      font-size: .78rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* ── TECH CHIPS ───────────────────────────── */
+    .chip-grid { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 28px; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--glass-border);
+      padding: 7px 13px;
+      border-radius: 12px;
+      font-size: .78rem;
+      font-weight: 600;
+      transition: all .25s;
+    }
+    .chip:hover {
+      background: rgba(99,102,241,.08);
+      border-color: rgba(99,102,241,.25);
+      transform: translateY(-2px);
+    }
+
+    /* ── SPEC TABLE ───────────────────────────── */
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+    .spec-table tr { border-bottom: 1px solid rgba(255,255,255,.03); }
+    .spec-table tr:last-child { border-bottom: none; }
+    .spec-table td { padding: 11px 14px; font-size: .78rem; vertical-align: top; }
+    .spec-table .k { color: var(--muted); font-weight: 600; white-space: nowrap; padding-right: 20px; }
+    .spec-table .v { font-weight: 700; color: var(--text); }
+    .spec-table .v .tag {
+      display: inline-block;
+      background: var(--soft-purple);
+      color: #a5b4fc;
+      font-size: .7rem;
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-right: 4px;
+    }
+
+    /* ── CTA FOOTER ───────────────────────────── */
+    .cta {
+      text-align: center;
+      padding-top: 36px;
+      border-top: 1px solid var(--glass-border);
+    }
+    .cta h2 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      background: var(--grad-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cta p {
+      font-size: .88rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .btn-row { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 13px 30px;
+      border-radius: 14px;
+      font-size: .9rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all .3s;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--grad);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(99,102,241,.35);
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 34px rgba(99,102,241,.5);
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1.5px solid var(--glass-border);
+    }
+    .btn-outline:hover {
+      background: rgba(255,255,255,.04);
+      border-color: rgba(255,255,255,.14);
+      transform: translateY(-3px);
+    }
+
+    /* ── WATERMARK ────────────────────────────── */
+    .watermark {
+      margin-top: 28px;
+      text-align: center;
+      font-size: .72rem;
+      color: rgba(255,255,255,.18);
+      letter-spacing: .5px;
+    }
+    .watermark strong { color: rgba(255,255,255,.3); }
+  </style>
+</head>
+<body>
+<div class="poster">
+
+  <!-- ── HEADER ── -->
+  <div class="poster-head">
+    <div class="status-pill"><span class="dot"></span> Production-Ready · 2026</div>
+    <h1>AuraStack</h1>
+    <p class="tagline">
+      The <strong>all-in-one SaaS boilerplate</strong> that ships authentication, billing,
+      multi-tenancy, and a full CI pipeline out of the box — so you can focus on
+      <strong>building your product</strong>, not plumbing.
+    </p>
+  </div>
+
+  <!-- ── STAT STRIP ── -->
+  <div class="stat-strip">
+    <div class="stat-box">
+      <div class="stat-num">Zero</div>
+      <div class="stat-label">Configuration overhead to get started</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">70+</div>
+      <div class="stat-label">Automated tests (Pytest + Playwright)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">5+</div>
+      <div class="stat-label">Payment gateways pre-integrated</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ── BODY GRID ── -->
+  <div class="body-grid">
+
+    <!-- LEFT · Features -->
+    <div>
+      <p class="sec-title">Core Features</p>
+      <ul class="feat-list">
+
+        <li class="feat-item">
+          <div class="feat-icon">🛡️</div>
+          <div class="feat-body">
+            <h3>B2B Multi-Tenancy & Workspace Isolation</h3>
+            <p>Full data isolation with BOLA-safe queries, team invitations, and role-based access (Owner / Admin / Member) scoped to subscription limits.</p>
+          </div>
+        </li>
+
+        <li class="feat-item">
+          <div class="feat-icon">🔐</div>
+          <div class="feat-body">
+            <h3>SOC2-Grade Security & Auth</h3>
+            <p>Social login (OAuth), TOTP 2FA, brute-force lockout, CSRF & XSS hardening, secure-cookie sessions, and allauth integration out of the box.</p>
+          </div>
+        </li>
+
+        <li class="feat-item">
+          <div class="feat-icon">💳</div>
+          <div class="feat-body">
+            <h3>Subscriptions & Multi-Gateway Billing</h3>
+            <p>Stripe, Paymob, and PayPal support with HMAC-verified webhooks, plan enforcement, upgrade/downgrade flows, and invoice generation.</p>
+          </div>
+        </li>
+
+        <li class="feat-item">
+          <div class="feat-icon">⚙️</div>
+          <div class="feat-body">
+            <h3>Async Task Queue & Job Scheduling</h3>
+            <p>Django Q2 hybrid worker handles background jobs on DB or Redis, with automatic success-record pruning and retry policies built in.</p>
+          </div>
+        </li>
+
+        <li class="feat-item">
+          <div class="feat-icon">📝</div>
+          <div class="feat-body">
+            <h3>Markdown Blog with Unicode Slugs</h3>
+            <p>A fully-featured content engine with collision-safe slug generation supporting Arabic, CJK, and all Unicode character sets.</p>
+          </div>
+        </li>
+
+      </ul>
+    </div>
+
+    <!-- RIGHT · Stack + Specs -->
+    <div>
+      <p class="sec-title">Tech Stack</p>
+      <div class="chip-grid">
+        <div class="chip">🐍 Django 5.2</div>
+        <div class="chip">🥷 Django Ninja</div>
+        <div class="chip">🟢 Vue 3</div>
+        <div class="chip">🌉 Inertia.js</div>
+        <div class="chip">⚡ Vite 8</div>
+        <div class="chip">🎨 Tailwind v4</div>
+        <div class="chip">🐋 Docker</div>
+        <div class="chip">🧪 Pytest</div>
+        <div class="chip">🎭 Playwright</div>
+        <div class="chip">🔁 GitHub Actions</div>
+      </div>
+
+      <p class="sec-title" style="margin-top:28px;">Architecture Specs</p>
+      <table class="spec-table">
+        <tr>
+          <td class="k">Frontend Bridge</td>
+          <td class="v">Inertia.js <span class="tag">SPA — no Node backend</span></td>
+        </tr>
+        <tr>
+          <td class="k">Backend Pattern</td>
+          <td class="v">Services + Selectors layered architecture</td>
+        </tr>
+        <tr>
+          <td class="k">API Layer</td>
+          <td class="v">Django Ninja <span class="tag">Pydantic v2</span></td>
+        </tr>
+        <tr>
+          <td class="k">Input Validation</td>
+          <td class="v">Zod v4 + VeeValidate (frontend)</td>
+        </tr>
+        <tr>
+          <td class="k">Dev Environment</td>
+          <td class="v">Docker Compose <span class="tag">zero-config</span></td>
+        </tr>
+        <tr>
+          <td class="k">Code Quality</td>
+          <td class="v">Ruff Linter / Formatter + Pre-commit</td>
+        </tr>
+        <tr>
+          <td class="k">CI Pipeline</td>
+          <td class="v">GitHub Actions — test, lint, build</td>
+        </tr>
+      </table>
+    </div>
+
+  </div><!-- /body-grid -->
+
+  <!-- ── CTA ── -->
+  <div class="cta">
+    <h2>Ship your SaaS in days, not months.</h2>
+    <p>Clone the repo, spin up Docker, and you're live. Every hard part is already solved.</p>
+    <div class="btn-row">
+      <a href="https://github.com" class="btn btn-primary">🚀 Get Started for Free</a>
+      <a href="#" class="btn btn-outline">📄 View Documentation</a>
+    </div>
+  </div>
+
+  <div class="watermark">Built with precision · <strong>AuraStack</strong> · 2026</div>
+
+</div>
+</body>
+</html>

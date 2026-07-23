@@ -40,7 +40,7 @@ DJANGO_VITE = {
 
 ## 🛠️ Vite Configuration (`vite.config.ts`)
 
-Located at [vite.config.ts](file:///a:/auraflow/frontend/vite.config.ts), Vite is configured to process the assets in `frontend/`:
+Located at [vite.config.ts](../../frontend/vite.config.ts), Vite is configured to process the assets in `frontend/`:
 - **Plugins**: Uses Vue and Tailwind CSS plugins.
 - **Root Directory**: Mapped to the root directory `frontend/`.
 - **Base Path**: `/static/dist/` matches Django's static files setup.
@@ -51,7 +51,7 @@ Located at [vite.config.ts](file:///a:/auraflow/frontend/vite.config.ts), Vite i
 
 ## 🏷️ Asset Injection in Django Templates
 
-In [base.html](file:///a:/auraflow/templates/base.html), Vite assets are injected using custom Django tags:
+In [base.html](../../templates/base.html), Vite assets are injected using custom Django tags:
 ```html
 {% load django_vite %}
 

@@ -23,7 +23,7 @@ AuraFlow separates configurations logically under the `core/settings/` directory
 Instead of Django's default `username`-based model, AuraFlow implements a modern, secure, `email`-based custom user model in `apps/users/models.py`.
 
 ### Model: `CustomUser`
-The [CustomUser](file:///a:/auraflow/apps/users/models.py) class inherits from Django's `AbstractUser` and `TimeStampedModel` from `common/models.py`.
+The [CustomUser](../../apps/users/models.py) class inherits from Django's `AbstractUser` and `TimeStampedModel` from `common/models.py`.
 
 Key architecture choices:
 1. **Primary Key**: Uses `UUIDField` (`uuid.uuid4`) for security and predictability in distributed contexts.
@@ -60,7 +60,7 @@ MIDDLEWARE = [
 ```
 
 ### Custom Middleware: `ShareUserDataMiddleware`
-Located in [common/middleware.py](file:///a:/auraflow/common/middleware.py), this middleware shares key user metadata and workspace state with Vue:
+Located in [common/middleware.py](../../common/middleware.py), this middleware shares key user metadata and workspace state with Vue:
 - **`auth.user`**: Authenticated user details (`id`, `email`, `language`, `theme`, `timezone`, etc.).
 - **`auth.workspaces`**: List of all workspaces the authenticated user belongs to (with their membership roles: `OWNER`, `ADMIN`, `MEMBER`).
 - **`auth.active_workspace`**: The currently selected/active workspace from the session, defaulting to the first workspace if not set.

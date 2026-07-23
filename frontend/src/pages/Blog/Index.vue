@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { watchEffect } from "vue";
 import { Link, router } from '@inertiajs/vue3'
 import AppHead from '../../components/AppHead.vue'
+import { useI18n } from "@/composables/useI18n";
 
 interface Tag { name: string; slug: string }
 interface Post {
@@ -19,6 +21,14 @@ const props = defineProps<{
   total_pages: number
 }>()
 
+const { t, locale, toggleLocale } = useI18n();
+
+// Dynamic update of HTML attributes for RTL/LTR and language code
+watchEffect(() => {
+  document.documentElement.dir = locale.value === "ar" ? "rtl" : "ltr";
+  document.documentElement.lang = locale.value;
+});
+
 function filterByTag(slug: string) {
   const tag = props.current_tag === slug ? '' : slug
   router.get('/blog/', tag ? { tag } : {}, { preserveState: true })
@@ -32,8 +42,8 @@ function goToPage(page: number) {
 
 <template>
   <AppHead
-    title="Blog & Product Updates"
-    description="Read the latest announcements, guides, and updates about building SaaS with AuraFlow."
+    :title="t('blog.title')"
+    :description="t('blog.subtitle')"
   />
 
   <div class="min-h-screen bg-slate-950 text-slate-100 font-sans">
@@ -43,22 +53,35 @@ function goToPage(page: number) {
         <Link href="/" class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
           AuraFlow
         </Link>
-        <nav class="flex items-center gap-6">
-          <Link href="/blog/" class="text-sm text-indigo-400 font-semibold">Blog</Link>
-          <Link href="/auth/login/" class="text-sm font-medium text-slate-300 hover:text-white transition-colors">Sign In →</Link>
-        </nav>
+        <div class="flex items-center gap-6">
+          <Link href="/blog/" class="text-sm text-indigo-400 font-semibold">{{ locale === 'ar' ? 'المدونة' : 'Blog' }}</Link>
+          
+          <!-- Language Switcher -->
+          <button
+            @click="toggleLocale"
+            class="inline-flex items-center justify-center px-3 py-1.5 rounded-xl border border-slate-850 bg-slate-900/60 text-slate-200 text-xs font-semibold hover:bg-slate-800 transition-colors cursor-pointer select-none"
+          >
+            🌐 {{ locale === 'ar' ? 'English' : 'العربية' }}
+          </button>
+          
+          <Link href="/auth/login/" class="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+            {{ t('blog.sign_in') }}
+          </Link>
+        </div>
       </div>
     </header>
 
     <main class="max-w-6xl mx-auto px-6 py-16">
       <!-- Hero -->
       <div class="mb-14 text-center">
-        <span class="inline-block px-3 py-1 text-xs font-semibold tracking-widest text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 rounded-full mb-4 uppercase">Journal</span>
+        <span class="inline-block px-3 py-1 text-xs font-semibold tracking-widest text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 rounded-full mb-4 uppercase">
+          {{ t('blog.journal') }}
+        </span>
         <h1 class="text-5xl font-extrabold tracking-tight mb-4 bg-gradient-to-br from-white to-slate-400 bg-clip-text text-transparent">
-          Blog & Updates
+          {{ t('blog.title') }}
         </h1>
         <p class="text-slate-400 text-lg max-w-2xl mx-auto">
-          Tips, tutorials, and product updates for builders using the AuraFlow SaaS stack.
+          {{ t('blog.subtitle') }}
         </p>
       </div>
 
@@ -72,7 +95,7 @@ function goToPage(page: number) {
               ? 'bg-indigo-600 border-indigo-600 text-white'
               : 'border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
           ]"
-        >All</button>
+        >{{ t('blog.all_tags') }}</button>
         <button
           v-for="tag in tags"
           :key="tag.slug"
@@ -89,7 +112,9 @@ function goToPage(page: number) {
       <!-- Empty state -->
       <div v-if="posts.length === 0" class="text-center py-20">
         <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-800/60 flex items-center justify-center text-3xl">📝</div>
-        <p class="text-slate-400 text-lg">No posts yet{{ current_tag ? ' for this tag' : '' }}. Stay tuned!</p>
+        <p class="text-slate-400 text-lg">
+          {{ current_tag ? t('blog.no_posts_tag') : t('blog.no_posts') }}
+        </p>
       </div>
 
       <!-- Posts grid -->
@@ -135,7 +160,7 @@ function goToPage(page: number) {
               <span>{{ post.published_at }}</span>
               <div class="flex items-center gap-3">
                 <span v-if="post.author" class="text-slate-500">{{ post.author }}</span>
-                <span class="flex items-center gap-1">⏱ {{ post.reading_time }} min read</span>
+                <span class="flex items-center gap-1">⏱ {{ post.reading_time }} {{ t('blog.min_read') }}</span>
               </div>
             </div>
           </div>
@@ -148,19 +173,25 @@ function goToPage(page: number) {
           @click="goToPage(current_page - 1)"
           :disabled="!has_previous"
           class="px-4 py-2 rounded-lg border border-slate-700 text-sm font-medium text-slate-300 hover:border-indigo-500 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-        >← Previous</button>
-        <span class="text-sm text-slate-500">Page {{ current_page }} of {{ total_pages }}</span>
+        >
+          {{ locale === 'ar' ? '← السابق' : '← Previous' }}
+        </button>
+        <span class="text-sm text-slate-500">
+          {{ locale === 'ar' ? `صفحة ${current_page} من ${total_pages}` : `Page ${current_page} of ${total_pages}` }}
+        </span>
         <button
           @click="goToPage(current_page + 1)"
           :disabled="!has_next"
           class="px-4 py-2 rounded-lg border border-slate-700 text-sm font-medium text-slate-300 hover:border-indigo-500 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-        >Next →</button>
+        >
+          {{ locale === 'ar' ? 'التالي →' : 'Next →' }}
+        </button>
       </div>
     </main>
 
     <!-- Footer -->
     <footer class="border-t border-slate-800/60 mt-16 py-8 text-center text-sm text-slate-600">
-      <p>Built with AuraFlow · <Link href="/" class="hover:text-slate-400 transition-colors">Go to App</Link></p>
+      <p>{{ t('blog.built_with') }} AuraFlow · <Link href="/" class="hover:text-slate-400 transition-colors">{{ t('blog.back_to_app') }}</Link></p>
     </footer>
   </div>
 </template>

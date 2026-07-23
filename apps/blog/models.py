@@ -23,7 +23,22 @@ class Tag(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            base_slug = slugify(self.name, allow_unicode=True)
+            if not base_slug:
+                base_slug = f"tag-{uuid.uuid4().hex[:6]}"
+
+            slug = base_slug
+            counter = 1
+            queryset = Tag.objects.all()
+            if self.pk:
+                queryset = queryset.exclude(pk=self.pk)
+
+            while queryset.filter(slug=slug).exists():
+                max_len = 60 - len(str(counter)) - 1
+                slug = f"{base_slug[:max_len]}-{counter}"
+                counter += 1
+
+            self.slug = slug
         super().save(*args, **kwargs)
 
 
@@ -60,7 +75,22 @@ class Post(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.title)
+            base_slug = slugify(self.title, allow_unicode=True)
+            if not base_slug:
+                base_slug = f"post-{uuid.uuid4().hex[:6]}"
+
+            slug = base_slug
+            counter = 1
+            queryset = Post.objects.all()
+            if self.pk:
+                queryset = queryset.exclude(pk=self.pk)
+
+            while queryset.filter(slug=slug).exists():
+                max_len = 255 - len(str(counter)) - 1
+                slug = f"{base_slug[:max_len]}-{counter}"
+                counter += 1
+
+            self.slug = slug
         super().save(*args, **kwargs)
 
     @property

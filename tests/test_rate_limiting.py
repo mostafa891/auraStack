@@ -1,9 +1,10 @@
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 from django_ratelimit.core import is_ratelimited
 
 from apps.users.views import LoginView, RegisterView
 
 
+@override_settings(RATELIMIT_ENABLE=True)
 def test_ratelimit_core_logic():
     """التحقق من عمل الخوارزمية الأساسية للـ Rate Limiting مع محاكاة الطلبات المتكررة."""
     factory = RequestFactory()

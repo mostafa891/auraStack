@@ -128,7 +128,7 @@ const getCookie = (name: string) => {
 
             <div class="flex items-baseline">
               <span class="text-4xl font-extrabold text-[var(--color-text)]">$0</span>
-              <span class="text-sm text-[var(--color-text-muted)] ms-2">/ {{ locale === 'ar' ? 'شريحة العمر' : 'forever' }}</span>
+              <span class="text-xs text-[var(--color-text-muted)] ms-2">/ {{ locale === 'ar' ? 'للأبد' : 'forever' }}</span>
             </div>
 
             <div class="border-t border-[var(--color-border)] pt-6 space-y-4">

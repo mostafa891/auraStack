@@ -1,3 +1,4 @@
+
 {
   "common": {
     "save": "Save Changes",
@@ -121,8 +122,8 @@
     "app_title": "Authenticator App (TOTP)",
     "app_desc": "Generate one-time verification codes using mobile applications like Google Authenticator, Microsoft Authenticator, or 1Password.",
     "status": "Status:",
-    "active": "Active / مفعل",
-    "inactive": "Inactive / معطل",
+    "active": "Active",
+    "inactive": "Inactive",
     "deactivate_btn": "Deactivate",
     "setup_btn": "Set Up 2FA",
     "back_profile": "← Back to Profile",
@@ -175,5 +176,42 @@
     "no_connections": "No social accounts connected yet.",
     "add_connection": "Add New Connection",
     "add_desc": "Connect your account to other services to enable quick login:"
+  },
+  "landing": {
+    "title_prefix": "The Production Spine for Your",
+    "title_suffix": "Next B2B SaaS",
+    "subtitle": "Stop writing auth, workspaces, payments, queues, and test configurations from scratch. AuraFlow is a hardened, batteries-included boilerplate built on Django, Inertia, and Vue 3.",
+    "cta_primary": "Clone & Build Your App",
+    "cta_secondary": "Explore Features",
+    "features_title": "Hardened Infrastructure Ready to Scale",
+    "features_subtitle": "Everything you need to launch a B2B product that businesses are willing to pay for.",
+    "feature_tenancy_title": "Multi-Tenant Workspaces",
+    "feature_tenancy_desc": "Full workspace isolation with roles (Owner, Admin, Member), invitations flow, and automated permissions checks to prevent BOLA vulnerabilities.",
+    "feature_billing_title": "5 Payment Gateways",
+    "feature_billing_desc": "Pre-wired billing with Stripe, LemonSqueezy, PayPal, Paddle, and Paymob. Set up subscription checkouts, portals, and HMAC secure webhooks in minutes.",
+    "feature_rtl_title": "Native RTL & Localization",
+    "feature_rtl_desc": "Built-in bidirectional styling (LTR/RTL) with Arabic and English localization. Dominate Middle Eastern markets out of the box.",
+    "feature_queue_title": "Hybrid Task Broker (Q2)",
+    "feature_queue_desc": "Use DB ORM for zero-install local setup, and seamlessly scale to Redis in production. Automatically cleans up success logs to prevent database bloat.",
+    "feature_security_title": "Hardened Security",
+    "feature_security_desc": "Session-based auth with MFA/TOTP (Google Authenticator) enforcement, IP-based rate limiting, CSRF protection, and hardened security headers (CSP, HSTS).",
+    "feature_testing_title": "Hardened Pytest Suite",
+    "feature_testing_desc": "70+ automated tests including Playwright E2E browser tests, N+1 query validation, workspace boundary isolation checks, and security scans.",
+    "footer_text": "All rights reserved."
+  },
+  "blog": {
+    "title": "Blog & Updates",
+    "subtitle": "Tips, tutorials, and product updates for builders using the AuraFlow SaaS stack.",
+    "journal": "Journal",
+    "all_tags": "All",
+    "no_posts": "No posts yet. Stay tuned!",
+    "no_posts_tag": "No posts yet for this tag. Stay tuned!",
+    "min_read": "min read",
+    "back_to_blog": "Back to Blog",
+    "back_to_app": "Go to App",
+    "all_posts": "All Posts",
+    "share": "Share",
+    "built_with": "Built with",
+    "sign_in": "Sign In"
   }
 }

@@ -1,173 +1,174 @@
-# 🌌 AuraFlow SaaS Boilerplate
+# 🌌 AuraFlow SaaS Boilerplate & Internal Tools Engine
 
-بنية تحتية احترافية وهيكل متكامل لبدء وتطوير تطبيقات SaaS البرمجية بسرعة فائقة باستخدام تقنيات الويب الحديثة لعام 2026.
+Production-grade, modular Full-Stack SaaS Boilerplate & Internal Platform Engine engineered with modern 2026 web architecture.
 
----
-
-## 🛠️ التقنيات الأساسية (Tech Stack)
-
-يتكون القالب من مزيج متجانس يجمع بين أمان واستقرار بيئة الباك إند وسرعة وديناميكية الواجهة الأمامية:
-
-*   **الباك إند (Backend):** [Django](https://www.djangoproject.com/) (نسخة مستقرة).
-*   **الواجهة الأمامية (Frontend):** [Vue 3](https://vuejs.org/) (Composition API) مع [Vite](https://vitejs.dev/) كمحرك للبناء السريع.
-*   **بروتوكول الربط (Bridge):** [Inertia.js](https://inertiajs.com/) (لربط الباك إند بالفرونت إند مباشرة دون الحاجة لبناء APIs منفصلة).
-*   **التنسيق والتصميم (Styling):** [Tailwind CSS v4](https://tailwindcss.com/) مع سمات تصميم مرنة (Design Tokens).
-*   **نظام الهوية والأمان (Identity & Auth):** [django-allauth](https://django-allauth.readthedocs.io/en/latest/) (إدارة الحسابات، التحقق، والمصادقة الثنائية).
-*   **لوحة الإدارة (Admin Panel):** [django-unfold](https://github.com/unfoldadmin/django-unfold) (لوحة تحكم عصرية تدعم المظهر الداكن).
+![Python](https://img.shields.io/badge/Python-3.13-blue?style=for-the-badge&logo=python)
+![Django](https://img.shields.io/badge/Django-5.1-092E20?style=for-the-badge&logo=django)
+![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=for-the-badge&logo=vuedotjs)
+![Inertia.js](https://img.shields.io/badge/Inertia.js-0.6-9553E9?style=for-the-badge&logo=inertia)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?style=for-the-badge&logo=tailwindcss)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript)
+![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions)
 
 ---
 
-## 📂 هيكلية المجلدات والمشروع (Project Structure)
+## 🛠️ Core Technology Stack
 
-تم تنظيم الكود وتوزيع الملفات بهيكل نموذجي قابل للنمو (Modular App Structure):
+AuraFlow leverages a modern hybrid architecture combining robust backend security with rich, dynamic Single Page Application (SPA) reactive user experiences:
+
+* **Backend Engine:** [Django 5](https://www.djangoproject.com/) (LTS release).
+* **Frontend SPA:** [Vue 3](https://vuejs.org/) (Composition API with `<script setup lang="ts">`) powered by [Vite](https://vitejs.dev/).
+* **Protocol Bridge:** [Inertia.js](https://inertiajs.com/) (Direct server-driven SPA routing without full-page reloads or unnecessary REST API boilerplate).
+* **Design & Styling:** [Tailwind CSS v4](https://tailwindcss.com/) (CSS-first configuration with dynamic dark mode design tokens).
+* **Identity & Security:** [django-allauth](https://django-allauth.readthedocs.io/) (Custom adapters, username-less email authentication, TOTP/MFA, and OAuth2 connections).
+* **Admin Dashboard:** [django-unfold](https://github.com/unfoldadmin/django-unfold) (Sleek dark-mode-first administration panel).
+* **Task Queues & Webhooks:** Django-Q2 background worker clusters and signature-verified webhook handlers.
+
+---
+
+## 📂 Project Architecture & Directory Structure
+
+Organized following domain-driven, modular application standards:
 
 ```text
 auraflow/
 │
-├── apps/                    # مجلد التطبيقات الفرعية (Local Apps)
-│   └── users/               # تطبيق الهوية والتفضيلات والمستخدمين
-│       ├── adapters/        # محولات allauth للتحقق والتسجيل
-│       ├── migrations/      # هجرات قاعدة البيانات لنموذج المستخدم
-│       ├── tests/           # ملفات الاختبار الخاصة بـ pytest
-│       ├── admin.py         # تسجيل النموذج وتخصيص Unfold
-│       ├── apps.py          # تعريف التطبيق بالـ namespace الجديد
-│       ├── forms.py         # نماذج التحقق من المدخلات (Forms)
-│       ├── models.py        # نموذج المستخدم المخصص (CustomUser)
-│       ├── urls.py          # روابط الهوية وتسجيل الخروج والتحديث
-│       └── views.py         # واجهات التحكم ومستقبلات Inertia
+├── apps/                    # Domain-driven modular local applications
+│   ├── users/               # Custom User model, security views, MFA, adapters
+│   ├── teams/               # Multi-tenancy workspaces, RBAC, member invitations
+│   ├── payments/            # Gateway webhooks, plan limits, subscription tracking
+│   └── blog/                # Content and internal publishing management
 │
-├── common/                  # المكونات والأدوات المشتركة للتطبيق
-│   ├── middleware.py        # كود وسيط لمشاركة بيانات الجلسة (Inertia Shared Props)
-│   ├── logger.py            # سجلات الأحداث الأمنية والـ Audit Trail
-│   ├── results.py           # كائن الاستجابة الموحد للخدمات (ServiceResult)
-│   └── utils/               # دوال عامة مساعدة (مثل تطبيع البريد)
+├── common/                  # Shared cross-cutting concerns & utilities
+│   ├── middleware.py        # Inertia global shared state (auth, active workspace)
+│   ├── logger.py            # Audit logging & security tracking
+│   ├── results.py           # Standardized ServiceResult response container
+│   └── utils/               # General normalization and helper functions
 │
-├── core/                    # إعدادات وتكوينات المشروع الرئيسي
-│   ├── settings/            # ملفات الإعدادات (base, local, production)
-│   ├── urls.py              # مسارات التوجيه الرئيسية وتضمين allauth
-│   └── wsgi.py / asgi.py    # بوابات تشغيل الخوادم
+├── core/                    # Core settings, WSGI/ASGI gateways, & root URLs
+│   ├── settings/            # Modular settings (base, local, production)
+│   ├── urls.py              # Root routing table & global security view overrides
+│   └── wsgi.py / asgi.py    # Production gateway entry points
 │
-├── frontend/                # كود الواجهة الأمامية بالكامل (Vue 3 + Vite)
+├── frontend/                # Complete SPA frontend (Vue 3 + TypeScript + Vite)
 │   ├── src/
-│   │   ├── pages/           # صفحات Inertia (Login, Register, Profile)
-│   │   ├── layouts/         # القوالب المشتركة (AuthLayout)
-│   │   ├── composables/     # الكومبوزابلز (مثل استخراج أخطاء السيرفر)
-│   │   ├── types/           # تعريفات الأنواع لـ TypeScript
-│   │   └── main.ts          # نقطة دخول التطبيق وتهيئة Inertia
-│   └── vite.config.ts       # إعدادات Vite ومزامنتها مع django-vite
+│   │   ├── pages/           # Inertia page views (Auth, Security, Workspaces)
+│   │   ├── layouts/         # Shared wrappers & Toast notification containers
+│   │   ├── composables/     # Vue hooks (Form error parser, Zod schema adapter)
+│   │   ├── types/           # TypeScript interface definitions
+│   │   └── main.ts          # Application entry point & Inertia initialization
+│   └── vite.config.ts       # Vite build setup synced with django-vite
 │
-├── scripts/                 # سكربتات التهيئة والمهام التجريبية
-│   └── seed_data.py         # سكربت توليد حسابات تجريبية فورية
+├── scripts/                 # Automation & seed data generation scripts
+│   └── seed_data.py         # Instant demo account population script
 │
-├── pytest.ini               # تهيئة محرك الاختبارات pytest
-├── requirements.txt         # الحزم والمكتبات المطلوبة لـ Python
-├── ruff.toml                # إعدادات فحص جودة الكود والتنسيق
-└── .pre-commit-config.yaml  # حارس الجودة قبل الـ Git Commit
+├── pytest.ini               # Pytest suite configuration
+├── requirements.txt         # Python dependencies specification
+├── ruff.toml                # Code quality & linter configuration
+└── .pre-commit-config.yaml  # Pre-commit quality gates
 ```
 
 ---
 
-## 🔒 حزمة الهوية والأمان (django-allauth Integration)
+## 🔒 Security & Identity Architecture
 
-تم توفير الدعم الكامل لمزايا `django-allauth` وفتح مساراتها بالكامل تحت النطاق `/accounts/` لتسهيل دمج المزايا الأمنية التالية في الـ SaaS الخاص بك:
+Full integration with `django-allauth` wrapped entirely within Inertia Vue 3 views:
 
-1.  **المصادقة الثنائية (Two-Factor Authentication / 2FA):** متوفرة وتعمل بكفاءة عبر المسار `/accounts/2fa/` أو `/accounts/mfa/list/` (تولد رمز QR ثنائي الأبعاد بمساعدة حزمة `qrcode` لتطبيقات مثل Google Authenticator).
-2.  **تغيير كلمة المرور للداخلين:** متوفرة عبر `/accounts/password/change/`.
-3.  **استعادة الحساب وكلمات المرور المنسية:** متوفرة وتدعم إرسال روابط الاستعادة عبر البريد من خلال المسار `/accounts/password/reset/`.
-4.  **ربط الحسابات الاجتماعية (Social Connections):** إمكانية ربط حسابات Google أو GitHub وإدارتها عبر المسار `/accounts/social/connections/`.
+1. **Multi-Factor Authentication (MFA/2FA):** TOTP authentication via Google Authenticator with active QR code generation and recovery codes (`/accounts/mfa/list/`).
+2. **Username-less Auth:** Clean `email` primary key login with server-side Django password complexity validators mapped directly to Vue field inputs.
+3. **Password Recovery & Password Change:** Automated password reset links and authenticated password change flows.
+4. **OAuth Social Connections:** One-click Google and GitHub social logins with glassmorphic signup onboarding.
 
 ---
 
-## 🚀 خطوات التهيئة والتشغيل المحلي (Setup & Run Guide)
+## 🚀 Setup & Local Execution Guide
 
-### 1. إعداد البيئة البرمجية وتثبيت المكتبات
+### 1. Environment & Dependencies Installation
 ```bash
-# إنشاء بيئة افتراضية لـ Python
+# Create Python virtual environment
 python -m venv .venv
 
-# تفعيل البيئة (Windows)
+# Activate environment (Windows)
 .venv\Scripts\activate
-# تفعيل البيئة (Linux / macOS)
+# Activate environment (Linux / macOS)
 source .venv/bin/activate
 
-# تثبيت الحزم المطلوبة
+# Install Python requirements
 pip install -r requirements.txt
 
-# تثبيت متصفحات Playwright المطلوبة للاختبارات
+# Install Playwright browser drivers for E2E testing
 playwright install
 ```
 
-### 2. تجهيز قاعدة البيانات والبيانات التجريبية
+### 2. Database Migration & Seed Data
 ```bash
-# تشغيل هجرات قاعدة البيانات
+# Run database migrations
 python manage.py migrate
 
-# تشغيل سكربت التهيئة الفوري لتوليد حسابات للتجربة
+# Seed instant test accounts
 python manage.py runscript seed_data
 ```
-> **الحسابات التجريبية المنشأة:**
-> *   **حساب المدير الخارق:** `admin@auraflow.com` | كلمة المرور: `AdminPass123!`
-> *   **حساب المستخدم العادي:** `user@auraflow.com` | كلمة المرور: `UserPass123!`
+> **Pre-populated Demo Accounts:**
+> *   **Superadmin User:** `admin@auraflow.com` | Password: `AdminPass123!`
+> *   **Standard User:** `user@auraflow.com` | Password: `UserPass123!`
 
-### 3. تشغيل خوادم التطوير
-لتشغيل التطبيق، تحتاج إلى تشغيل خادم الباك إند وخادم الفرونت إند بالتوازي:
+### 3. Running Development Servers
+To run locally, execute the backend and frontend development servers concurrently:
 
 ```bash
-# تشغيل خادم دجانغو للباك إند (في نافذة طرفية أولى)
-.venv\Scripts\python manage.py runserver
+# Terminal 1: Run Django Backend Server
+python manage.py runserver
 
-# تشغيل خادم Vite للفرونت إند (في نافذة طرفية ثانية)
+# Terminal 2: Run Vite Frontend Dev Server
 npm run dev
 ```
 
-### 4. التشغيل والتهيئة الاحترافية باستخدام Docker (الإنتاج)
-لتشغيل بيئة الإنتاج محلياً باستخدام Docker بأعلى معايير الأمان (مستخدم محدود وبدون صلاحيات root):
+---
+
+## 🐳 Docker Production Setup
+
+Run the entire stack (Gunicorn + Vite production bundle + PostgreSQL + Django-Q Worker) in isolated non-root containers:
 
 ```bash
-# بناء وتشغيل الحاويات بالكامل (Web + PostgreSQL)
+# Build and run containers
 docker-compose up --build
 ```
-*   سيقوم التطبيق بالبناء عبر Dockerfile متعدد المراحل (تجميع Vite أولاً ثم تشغيل Gunicorn).
-*   الحاوية مزودة بـ Healthcheck تلقائي للتحقق من سلامة عمل السيرفر.
+* Multi-stage build (`Node 20 Alpine` builds frontend assets, `Python 3.13 Slim` executes Gunicorn).
+* Non-privileged security user (`appuser`, UID 10000) for OWASP compliance.
+* Built-in container healthchecks.
 
 ---
 
-## 🧪 فحص جودة الكود والاختبارات (QA & Testing)
+## 🧪 QA & Testing Strategy
 
-### 1. جودة وتنسيق الكود (Ruff & Pre-Commit)
-يحتوي القالب على حارس جودة مؤتمت لمنع دخول كود غير منظم:
+### 1. Automated Quality Gates (Ruff)
 ```bash
-# تفعيل خطافات pre-commit قبل الكوميت
-pre-commit install
-
-# لتشغيل الفحص التلقائي والتنسيق يدوياً في أي وقت
+# Run Linter & Formatter checks
 ruff check --fix
 ruff format
 ```
 
-### 2. تشغيل الاختبارات المؤتمتة (Pytest & Playwright)
-يحتوي المشروع على اختبارات شاملة للباك إند وتكامل الـ E2E:
+### 2. Pytest & Playwright E2E Suite
 ```bash
-# لتشغيل كامل بيئة الاختبارات
+# Run complete test suite
 pytest
 ```
-*   تقوم الاختبارات بفحص نموذج المستخدم المخصص وصحة الصلاحيات.
-*   تقوم واجهات Playwright بتشغيل متصفح حقيقي بالخلفية لفتح صفحة التسجيل والدخول وتغيير التفضيلات الشخصية (Theme) والتأكد من تطبيق السمة داكن/فاتح بصرياً والتأكد من نجاح تسجيل الخروج.
+* **Backend Tests:** Verifies custom user model, tenant isolation, workspace lockout, N+1 query limits, and webhook security.
+* **E2E Playwright Tests:** Launches real Chromium instances to execute end-to-end user journeys (Registration, Login, MFA verification, workspace role management, and dynamic Dark/Light theme switching).
 
 ---
 
-## 📚 التوثيقات التقنية المرجعية (Technical Reference Docs)
+## 📚 Technical Reference Documentation
 
-للمراجعة السريعة والتفصيلية للتقنيات والـ APIs المستخدمة في المشروع محلياً، يمكنك قراءة الأدلة التالية المدمجة في مجلد التوثيق:
+Detailed architectural and technical guides are available in the `docs/` directory:
 
-1.  **[دليل Django Core](file:///a:/auraflow/docs/reference/django_core.md):** إعدادات دجانغو الأساسية، نماذج البيانات (ORM) والـ Lifecycle ومكونات الباك إند.
-2.  **[دليل Django Allauth](file:///a:/auraflow/docs/reference/django_allauth.md):** الإعدادات الأساسية، وبنية الـ Adapters وتعديلها، والروابط والـ API المدمجة.
-3.  **[دليل Inertia-Django](file:///a:/auraflow/docs/reference/inertia_django.md):** كيفية رندرة الصفحات، ومشاركة البيانات (`share`) والروابط والـ Middleware.
-4.  **[دليل Django Vite](file:///a:/auraflow/docs/reference/django_vite.md):** نظام تجميع الملفات وعملها في التطوير والإنتاج والوسوم المخصصة.
-5.  **[دليل Django Unfold](file:///a:/auraflow/docs/reference/django_unfold.md):** لوحة التحكم الإدارية وتصميمها والتحكم بقوائمها وخياراتها.
-6.  **[دليل Vue 3 Composition API](file:///a:/auraflow/docs/reference/vue3.md):** هيكل المكونات الفردية (SFC)، التفاعل (Props & Emits)، وإدارة الحالة التفاعلية.
-7.  **[دليل Tailwind CSS v4](file:///a:/auraflow/docs/reference/tailwind_v4.md):** نمط التنسيق CSS-First وتعديل السمات (Dark Mode) وتوليد الكلاسات المخصصة.
-8.  **[دليل Pytest & Playwright](file:///a:/auraflow/docs/reference/pytest_playwright.md):** كتابة وتوزيع اختبارات الباك إند وتكامل الـ E2E ومحاكاة سلوك العميل.
-9.  **[دليل حزم دجانغو المساعدة](file:///a:/auraflow/docs/reference/django_packages.md):** توثيق مكتبات `django-environ`, `django-lifecycle`, `django-money`, و `django-cleanup`.
-10. **[دليل إدارة الفرق وتعدد المستأجرين](file:///a:/auraflow/docs/reference/django_multi_tenancy.md):** معمارية مساحات العمل (Workspaces) ونظام الصلاحيات (OWNER, ADMIN, MEMBER) وإدارة الدعوات والـ Slugs الفريدة.
-
+1. **[Django Core Guide](docs/reference/django_core.md):** Base configurations, custom user model, lifecycle middleware.
+2. **[Django Allauth Integration](docs/reference/django_allauth.md):** Authentication adapters, MFA, dual password validation.
+3. **[Inertia-Django Architecture](docs/reference/inertia_django.md):** Page rendering, shared state props, views setup.
+4. **[Django Vite Integration](docs/reference/django_vite.md):** HMR setup, production asset manifest parsing.
+5. **[Django Unfold Admin](docs/reference/django_unfold.md):** Modern administrative panel customization.
+6. **[Vue 3 Composition API Guide](docs/reference/vue3.md):** SFC structures, Zod v4 validation adapter, toast store.
+7. **[Tailwind CSS v4 Guide](docs/reference/tailwind_v4.md):** CSS-first design tokens, dynamic dark mode switching.
+8. **[Pytest & Playwright Guide](docs/reference/pytest_playwright.md):** Backend unit tests, async fixtures, E2E browser testing.
+9. **[Django Helper Packages](docs/reference/django_packages.md):** Environ, lifecycle, storages, cleanup.
+10. **[Multi-Tenancy & Teams Guide](docs/reference/django_multi_tenancy.md):** Workspaces, RBAC permissions, invitation flows.

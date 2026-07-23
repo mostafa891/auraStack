@@ -1,119 +1,116 @@
-# 🌌 التوثيق التقني الشامل لمنصة AuraFlow
+# 🌌 Comprehensive Technical Architecture Document — AuraFlow Engine
 
-تركز هذه الوثيقة على شرح البنية البرمجية، وتكامل التقنيات المستخدمة في منصة **AuraFlow**، وكيفية تفاعل المكونات المختلفة لتوفير تجربة تطوير سريعة وآمنة.
+This document details the software architecture, technical integrations, data flows, and design decisions of the **AuraFlow** SaaS Boilerplate & Internal Tools Engine.
 
 ---
 
-## 🏛️ الهيكل الفني للمشروع (Architecture Overview)
+## 🏛️ System Architecture Overview
 
-يعتمد مشروع AuraFlow على نمط الهجين الحديث (Modern Hybrid) الذي يجمع بين قوة أمان الباك إند في دجانغو، وديناميكية الفرونت إند في Vue 3 باستخدام **Inertia.js** كوسيط، بدون الحاجة لبناء خادم API مستقل (مثل REST أو GraphQL).
+AuraFlow follows a **Modern Hybrid Architecture** that pairs Django's enterprise-grade backend security and ORM capabilities with Vue 3's reactive Single Page Application (SPA) frontend user experience using **Inertia.js** as a direct protocol bridge—eliminating the need for separate REST API boilerplate or JWT token management overhead.
 
 ```mermaid
 graph TD
-    Browser[متصفح العميل Vue 3] <-->|Inertia.js Request/Response| Django[خادم دجانغو الباك إند]
-    Django <-->|ORM| SQLite[قاعدة البيانات SQLite/Postgres]
-    Vite[خادم Vite للتطوير] -.->|HMR / Assets| Browser
+    Browser["Client Browser (Vue 3 SPA)"] <-->|Inertia.js Protocol JSON/Props| Django["Django Backend Server"]
+    Django <-->|Django ORM / Query Optimization| Database[("PostgreSQL / SQLite")]
+    Vite["Vite Build Server"] -.->|HMR Assets / Production Manifest| Browser
+    Worker["Django-Q2 Task Cluster"] <-->|Async Tasks / Webhook Retries| Database
 ```
 
 ---
 
-## 🔧 المكونات التقنية بالتفصيل
+## 🔧 Technical Components Breakdown
 
-### 1. دجانغو (Django 5.2.x LTS)
-يمثل نواة النظام والمسؤول عن:
-*   **إدارة الهوية والتأمين:** التحقق من الهجمات (CSRF, SQL Injection, XSS) وجلسات العمل المؤمنة عبر الكوكيز (Secure Session Cookies).
-*   **قاعدة البيانات (ORM):** نموذج المستخدم المخصص `CustomUser` الممتد لإضافة التفضيلات الشخصية (المظهر واللغة والمنطقة الزمنية).
-*   **django-allauth:** توفير النظام الأمني الخلفي للتسجيل وتغيير كلمات المرور، ودعم التحقق الثنائي (MFA).
+### 1. Backend Nucleus (Django 5.1 LTS)
+Serves as the system core responsible for:
+* **Identity & Security Guardrails:** Protection against OWASP top threats (CSRF, SQL Injection, XSS) using secure session cookies.
+* **Database & Custom User ORM:** Custom `CustomUser` model inheriting from `AbstractUser` and `TimeStampedModel`, utilizing UUID primary keys and username-less email authentication.
+* **django-allauth Integration:** Underpins account lifecycle, password resets, social connections, and Time-based One-Time Password (TOTP) Multi-Factor Authentication (MFA).
 
-### 2. إينيرشيا (Inertia.js)
-جسر الربط الذكي الذي يسمح لك ببناء تطبيق Single Page App (SPA) كامل دون تعقيدات:
-*   يقستقبل الـ Requests من العميل ويرسل ردوداً بصيغة JSON تحتوي على البيانات (`props`) واسم المكون (`component`).
-*   يقوم تلقائياً بتحميل وتحديث المكونات في المتصفح دون إعادة تحميل الصفحة (Full Page Reload)، مع الحفاظ على الـ Routing وحالة التطبيق.
+### 2. Protocol Bridge (Inertia.js)
+The smart data-bridge enabling a full SPA experience powered by server-side routing:
+* Intercepts standard HTTP requests and returns JSON payloads containing reactive `props` and target Vue `component` declarations.
+* Handles page transitions dynamically without full page reloads while maintaining browser history state and URL routing.
 
-### 3. فيو (Vue 3 - Composition API)
-لإدارة الواجهات وتفاعل المستخدم:
-*   كتابة المكونات بنظام Single File Components (`.vue`).
-*   استخدام **VeeValidate** بالتكامل مع **Zod v4** للتحقق من صحة المدخلات في المتصفح فورياً (Client-side Validation).
+### 3. Reactive Frontend (Vue 3 Composition API)
+* Single File Components (`.vue`) engineered with `<script setup lang="ts">`.
+* Client-side validation powered by **Zod v4** integrated into **VeeValidate**.
+* Global state management via **Pinia** and reactive toast notifications via `useToast`.
 
-### 4. تايلوند (Tailwind CSS v4)
-تنسيق فخم وعصري بأحدث جيل من Tailwind:
-*   الاعتماد على إعدادات CSS-first بالكامل (بدون الحاجة لملف `tailwind.config.js`).
-*   تطبيق فوري للسمات (المظهر الداكن والخفيف) باستخدام متغيرات CSS المتناغمة مع كلاس `.dark` في وسم `<html>`.
+### 4. Styling Engine (Tailwind CSS v4)
+* Modern CSS-first architecture eliminating legacy `tailwind.config.js` configurations.
+* Dynamic Dark/Light mode theme switching driven by native CSS variables and `.dark` HTML root class toggles.
 
-### 5. أداة التجميع (Vite 8 & django-vite)
-*   **في التطوير (Development):** تشغيل خادم محلي على منفذ `5173` لتوفير ميزة التحديث الفوري للأكواد (HMR).
-*   **في الإنتاج والاختبارات (Production/Testing):** قراءة ملف المانيفست المجمع `static/dist/.vite/manifest.json` لحقن الملفات المضغوطة ذاتياً دون الحاجة لتشغيل خادم إضافي.
+### 5. Bundler & Asset Pipeline (Vite 8 & django-vite)
+* **Development Mode:** Runs on port `5173` providing instant Hot Module Replacement (HMR).
+* **Production Mode:** Reads `static/dist/.vite/manifest.json` asset manifests to inject optimized JS/CSS bundles directly into Django root layout templates.
 
 ---
 
-## 🔄 دورة حياة البيانات والتسجيل (Data Lifecycle)
+## 🔄 User Registration & Data Lifecycle
 
-عند قيام مستخدم بإنشاء حساب جديد، تمر البيانات بالخطوات التالية:
+When a user initiates account registration, the data flows through the following pipeline:
 
 ```mermaid
 sequenceDiagram
-    participant C as العميل (Vue 3)
-    participant V as متحقق المدخلات (Zod)
-    participant D as دجانغو (Views)
-    participant S as طبقة الخدمات (AuthService)
-    participant A as محول الهوية (Allauth)
+    participant C as Client (Vue 3 SPA)
+    participant V as Form Validator (Zod Schema)
+    participant D as Django Router (Views)
+    participant S as Service Layer (AuthService)
+    participant A as Security Adapter (AllauthAdapter)
 
-    C->>V: إدخال البيانات والضغط على Submit
-    V-->>C: التحقق من الصيغة وتطابق كلمة المرور
-    C->>D: POST /auth/register/ (Inertia Request)
-    D->>S: استدعاء AuthService.register_user()
-    S->>A: تمرير الطلب لـ AllauthAdapter
-    A-->>S: التحقق من فرادة البريد وقوة كلمة المرور
-    S-->>D: نتيجة العملية (نجاح / فشل)
-    D-->>C: Redirect لـ /profile/ (في حال النجاح) أو مشاركة الأخطاء
+    C->>V: User enters input & submits form
+    V-->>C: Validates client constraints (email format, password rules)
+    C->>D: POST /auth/register/ (Inertia JSON Request)
+    D->>S: Calls AuthService.register_user()
+    S->>A: Delegates creation to AllauthAdapter
+    A-->>S: Validates email uniqueness & server password policies
+    S-->>D: Returns ServiceResult (Success / Validation Failure)
+    D-->>C: Redirects to /profile/ (Success) or passes field errors
 ```
 
 ---
 
-## 🧪 استراتيجية الاختبارات الجودة (QA & Testing)
+## 🧪 Quality Assurance & Test Engineering
 
-يحتوي المشروع على بيئة اختبار متكاملة وقوية تضمن استقرار الكود قبل الرفع:
+AuraFlow features an extensive testing suite covering unit, integration, and E2E browser behavior:
 
-### 1. الاختبارات الفردية واختبارات الخدمات (Pytest)
-*   اختبارات النموذج والموديل لتأكيد الحقول الافتراضية.
-*   اختبارات الخدمات (`AuthService`) للتأكد من تتبع البيانات الأمنية (Audit Logs) وتصنيف الأخطاء بدقة.
-*   تم ضبط معالج عدم التزامن `DJANGO_ALLOW_ASYNC_UNSAFE = "true"` لتمكين فحص قاعدة البيانات بأمان.
+### 1. Backend & Unit Testing (Pytest)
+* Model tests verifying custom constraints, UUID generation, and soft-delete behaviors.
+* Service tests (`AuthService`, `WorkspaceService`) verifying audit trail logging and role assignment.
+* Security tests targeting N+1 query detection, tenant isolation, workspace lockout states, and webhook signature verifications.
 
-### 2. الاختبارات الشاملة (E2E Playwright)
-*   تشغيل متصفح Chromium حقيقي آلياً.
-*   محاكاة كتابة البيانات، الضغط على الأزرار، والتحقق من التوجيه التلقائي للملف الشخصي.
-*   التحقق من تفعيل المظهر الداكن بصرياً في المتصفح عبر قراءة كود الـ DOM والـ CSS الفعلي.
-*   تتكامل تلقائياً مع ملفات الإنتاج المبنية لضمان مطابقتها لما سيراه المستخدم النهائي.
+### 2. End-to-End Browser Automation (Playwright)
+* Automated Chromium execution simulating authentic end-user sessions.
+* Verifies registration, login, profile updates, and dynamic DOM theme updates (`.dark` CSS verification).
 
 ---
 
-## 📂 سجل القرارات المعمارية (Architectural Decision Records - ADRs)
+## 📂 Architectural Decision Records (ADRs)
 
-### [ADR-01] استخدام معمارية Inertia.js لربط الواجهة الأمامية بالخلفية
-- **القرار**: ربط دجانغو بـ Vue 3 باستخدام **Inertia.js** بدلاً من بناء خوادم API منفصلة (REST/GraphQL).
-- **السبب**: يجمع هذا النمط بين سرعة تطوير خوادم Django التقليدية وسرعة وتفاعل تطبيقات الصفحة الواحدة (SPA)، مع الحفاظ على أمان الجلسات وحماية الـ CSRF بشكل افتراضي دون تعقيدات إضافية.
+### [ADR-01] Adoption of Inertia.js Monolith-SPA Bridge
+- **Decision:** Connect Django and Vue 3 using Inertia.js instead of building separate REST/GraphQL endpoints.
+- **Rationale:** Combines the rapid development velocity and robust session security of Django with the rich interactivity of a Vue SPA, avoiding double-definition of API schemas and token storage security risks.
 
-### [ADR-02] تحويل كافة واجهات المصادقة والأمان إلى مكونات Vue 3
-- **القرار**: تحويل صفحات الأمان والمصادقة الثنائية الخاصة بـ `django-allauth` من قوالب HTML التقليدية إلى مكونات Vue 3 تُرندر بالكامل عبر Inertia.
-- **السبب**: يمنع هذا القرار حدوث أي إعادة تحميل كامل للمتصفح (Full Page Reload) أثناء إدارة تفضيلات الحساب وتغيير كلمات المرور، مما يضمن تجربة مستخدم موحدة (Pure SPA Experience) بنسبة 100%.
+### [ADR-02] Vue 3 Wrappers for All Security & Auth Views
+- **Decision:** Convert all `django-allauth` HTML template views into Vue 3 SPA components rendered via Inertia.
+- **Rationale:** Prevents full-page browser reloads during authentication, MFA onboarding, and password changes, maintaining a 100% pure SPA user experience.
 
-### [ADR-03] بناء محوّل مخصص لتكامل Zod v4 مع VeeValidate
-- **القرار**: كتابة محول مخصص `zodSchema.ts` لربط Zod v4 بمكتبة VeeValidate بدلاً من استخدام `@vee-validate/zod`.
-- **السبب**: لتسريع تبني أحدث إصدارات Zod v4 في عام 2026 وتلافي عدم توافقية المكتبات الجانبية، مع الحفاظ على كود الفحص خفيفاً وسهلاً للصيانة.
+### [ADR-03] Custom Zod v4 VeeValidate Schema Adapter
+- **Decision:** Author a lightweight schema bridge (`zodSchema.ts`) connecting Zod v4 with VeeValidate instead of relying on legacy third-party packages.
+- **Rationale:** Ensures early adoption of Zod v4 features while keeping validation logic lightweight and type-safe across the codebase.
 
-### [ADR-04] تطبيق التحقق الثنائي لكلمات المرور وتعيين الأخطاء المباشرة
-- **القرار**: مزامنة قواعد فحص كلمات المرور بين المتصفح (عبر Zod) والخادم (عبر Django Validators)، مع إعادة تعيين الأخطاء الواردة من الباك إند وربطها برمجياً بالحقول المعنية (`password`) بدلاً من مشاركتها كرسائل عامة.
-- **السبب**: لتحسين تجربة المستخدم وعرض رسائل الخطأ التفصيلية (مثل كلمة مرور شائعة أو ضعيفة) بجوار حقل الإدخال مباشرة، مما يسهل على المستخدم فهم المشكلة وحلها وتلافي غموض رسائل الأخطاء العامة.
+### [ADR-04] Dual Password Validation & Field Error Mapping
+- **Decision:** Mirror password strength validation between client Zod schemas and server Django validators, mapping any caught server `ValidationError` directly to the `password` field input key in Vue.
+- **Rationale:** Delivers instant field-level feedback under password inputs rather than displaying generic page alerts.
 
-### [ADR-05] عزل منطق الاستعلامات والعمليات (Selectors & Services)
-- **القرار**: تطبيق نمط الـ Selectors لجلب البيانات ونمط الـ Services لتعديلها وحفظها في قاعدة البيانات، وعزلها بالكامل عن الـ Views والـ Middleware.
-- **السبب**: لإبقاء الـ Views نحيفة جداً وخالية من منطق قاعدة البيانات (Thin Views)، ولمنع استعلامات $N+1$ المتكررة عن طريق الاستعلام المنظم والـ caching الموضعي والـ `select_related`/`prefetch_related` الموحدة.
+### [ADR-05] Decoupled Service & Selector Layer
+- **Decision:** Enforce class-based `Services` for write operations and `Selectors` for read queries, separating business logic from views and middleware.
+- **Rationale:** Keeps views thin and eliminates $N+1$ database queries through standardized `select_related` and `prefetch_related` calls.
 
-### [ADR-06] بيئة تشغيل آمنة للإنتاج باستخدام Docker
-- **القرار**: إعداد ملف Dockerfile متعدد المراحل (Multi-stage) مع تقييد صلاحيات التشغيل لمستخدم غير مميز (Non-root user) وتفعيل فحص الصحة (Healthcheck).
-- **السبب**: لمنع ثغرات الحاويات (Container Breakout) وحماية نظام التشغيل المضيف للإنتاج، مع الحفاظ على الحجم الأدنى للـ Image باستبعاد ملفات التطوير والمصادر المحلية غير المستعملة.
+### [ADR-06] Non-Root Multi-Stage Docker Containerization
+- **Decision:** Build production images using a multi-stage Dockerfile running under an unprivileged user (`appuser`, UID 10000) with container healthchecks.
+- **Rationale:** Prevents container breakout vulnerabilities, meets OWASP security standards, and minimizes production image size.
 
-### [ADR-07] التحقق وضمان الجودة المستمر (CI/CD Pipeline)
-- **القرار**: إعداد نظام للتحقق المستمر باستخدام GitHub Actions للتحقق من جودة الكود محلياً قبل الدمج للـ main branch.
-- **السبب**: لضمان أن التحديثات الجديدة لا تكسر أي من الـ 32 اختباراً التلقائي، ولمطابقة معايير جودة الكود وتنسيق بايثون (Ruff) وسلامة مهاجرات قواعد البيانات (Migrations).
-
+### [ADR-07] Automated CI/CD Quality Pipeline
+- **Decision:** Configure GitHub Actions workflows (`ci.yml`) to enforce code formatting (Ruff), migration consistency checks, and full Pytest execution on every push/PR.
+- **Rationale:** Guarantees zero regression bugs reach the production main branch.

@@ -10,11 +10,12 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.csrf import csrf_exempt
 from django_ratelimit.decorators import ratelimit
 from inertia import render, share
 
 from apps.users.forms import AuraLoginForm, AuraRegisterForm, ProfileUpdateForm
-from apps.users.services import AuthService
+from apps.users.services import AuthService, UserService
 from common.utils.request import get_request_data
 
 
@@ -35,7 +36,6 @@ class LoginView(View):
 
     @method_decorator(ratelimit(key="ip", rate="10/m", method="POST", block=True))
     def post(self, request):
-
         if request.user.is_authenticated:
             return redirect(reverse("profile"))
 
@@ -124,8 +124,6 @@ class ProfileUpdateView(LoginRequiredMixin, View):
         form = ProfileUpdateForm(data=data, instance=request.user)
 
         if form.is_valid():
-            from apps.users.services import UserService
-
             result = UserService.update_profile_preferences(
                 user=request.user,
                 language=form.cleaned_data["language"],
@@ -160,8 +158,6 @@ class AvatarPresignView(View):
 
         # في بيئة الإنتاج: يمكن توليد رابط S3 Presigned POST هنا
         # في بيئة التطوير المحلية: نرجع رابط رفع محلي لمحاكاة المعاملة السحابية
-        from django.urls import reverse
-
         upload_url = request.build_absolute_uri(reverse("auth:avatar_upload"))
         return JsonResponse(
             {
@@ -174,6 +170,7 @@ class AvatarPresignView(View):
         )
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class AvatarUploadView(View):
     """مستقبل الرفع المباشر للملفات الثنائية (محاكاة السحابة للتطوير المحلي)."""
 

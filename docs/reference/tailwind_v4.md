@@ -6,7 +6,7 @@ AuraFlow uses the CSS-first architecture of **Tailwind CSS v4** to manage themes
 
 ## ⚙️ CSS-First Configuration
 
-Tailwind v4 deprecates the javascript-based `tailwind.config.js` file. All theme configurations, design tokens, and utility extensions are defined inside [app.css](file:///a:/auraflow/frontend/src/app.css) using the `@theme` directive or native CSS variables.
+Tailwind v4 deprecates the javascript-based `tailwind.config.js` file. All theme configurations, design tokens, and utility extensions are defined inside [app.css](../../frontend/src/app.css) using the `@theme` directive or native CSS variables.
 
 ### Design Tokens
 Key styling tokens are defined at the `:root` level:
@@ -31,7 +31,7 @@ These are accessed inside components using standard Tailwind styling utility cla
 AuraFlow implements a reactive theme toggle that switches between `LIGHT`, `DARK`, and `SYSTEM` settings.
 
 ### Theme Swapper: `applyTheme()`
-The active theme is updated dynamically on the client side via the `applyTheme` function in [Profile.vue](file:///a:/auraflow/frontend/src/pages/Profile.vue):
+The active theme is updated dynamically on the client side via the `applyTheme` function in [Profile.vue](../../frontend/src/pages/Profile.vue):
 - **Dark Mode**: Appends the `.dark` class to the `<html>` element and overrides core theme CSS variables:
   ```typescript
   const applyTheme = (themeName: string) => {
@@ -53,4 +53,4 @@ The active theme is updated dynamically on the client side via the `applyTheme` 
 
 ## 🛠️ Tailwind Vite Integration
 
-The Tailwind compiler is linked to Vite via the `@tailwindcss/vite` plugin registered in [vite.config.ts](file:///a:/auraflow/frontend/vite.config.ts). This compiles styling and strips unused classes automatically during production builds.
+The Tailwind compiler is linked to Vite via the `@tailwindcss/vite` plugin registered in [vite.config.ts](../../frontend/vite.config.ts). This compiles styling and strips unused classes automatically during production builds.

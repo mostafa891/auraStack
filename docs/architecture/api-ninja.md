@@ -6,7 +6,7 @@ AuraStack uses **Django Ninja** for building fast, type-safe, and asynchronous-f
 
 ## 📂 Core Concept & Structure
 
-In AuraStack, APIs are split into two security categories defined in [api.py](file:///a:/auraflow/apps/payments/api.py):
+In AuraStack, APIs are split into two security categories defined in [api.py](../../apps/payments/api.py):
 
 ### 1. Private API (`private_api`)
 * **Endpoint path:** `/api/v1/private/`

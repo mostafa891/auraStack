@@ -420,7 +420,7 @@ class SetLanguageView(View):
             response.set_cookie(settings.LANGUAGE_COOKIE_NAME, lang)
             if hasattr(request, "session"):
                 request.session["_language"] = lang
-            if request.user.is_authenticated:
+            if hasattr(request, "user") and request.user.is_authenticated:
                 request.user.language = lang
                 request.user.save(update_fields=["language"])
             return response

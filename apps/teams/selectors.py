@@ -2,23 +2,25 @@ from apps.teams.models import Workspace, WorkspaceInvitation, WorkspaceMember
 
 
 def list_user_workspaces(user) -> list[WorkspaceMember]:
-    """جلب قائمة عضويات مساحات العمل للمستخدم بكفاءة مع الانضمام لبيانات مساحة العمل."""
+    """جلب قائمة عضويات مساحات العمل للمستخدم بكفاءة مع الانضمام لبيانات مساحة العمل والاشتراك."""
     if not user or not user.is_authenticated:
         return []
     return list(
-        WorkspaceMember.objects.filter(user=user).select_related("workspace").order_by("created_at")
+        WorkspaceMember.objects.filter(user=user)
+        .select_related("workspace", "workspace__subscription")
+        .order_by("created_at")
     )
 
 
 def get_active_workspace(user, active_workspace_id: str | None) -> WorkspaceMember | None:
-    """جلب عضوية مساحة العمل النشطة الحالية للمستخدم."""
+    """جلب عضوية مساحة العمل النشطة الحالية للمستخدم مع تفاصيل الاشتراك."""
     if not user or not user.is_authenticated or not active_workspace_id:
         return None
 
     # استخدام select_related للتخزين المؤقت وحقن الكائن
     return (
         WorkspaceMember.objects.filter(workspace_id=active_workspace_id, user=user)
-        .select_related("workspace")
+        .select_related("workspace", "workspace__subscription")
         .first()
     )
 

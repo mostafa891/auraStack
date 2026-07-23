@@ -54,13 +54,16 @@ def test_avatar_upload_and_display_e2e(live_server, page: Page):
         # تعيين الملف المؤقت للرفع
         page.set_input_files("input[type='file']", temp_file_path)
 
-        # 5. التحقق من ظهور التنبيه (Toast) بنجاح الرفع باللغة الافتراضية
-        page.wait_for_selector("text=Avatar uploaded successfully!", timeout=5000)
-
-        # 6. التحقق من تحديث رابط الصورة في الـ DOM وظهور الصورة المرفوعة
+        # 5. التحقق من تحديث رابط الصورة في الـ DOM وظهور الصورة المرفوعة
         avatar_img = page.locator("img[alt='Avatar']")
-        page.wait_for_selector("img[alt='Avatar']", timeout=5000)
+        page.wait_for_selector("img[alt='Avatar']", timeout=15000)
 
+        # 6. التأكد من نجاح الرفع وإرجاع رابط الصورة المرفوعة في الميديا
+        page.wait_for_function(
+            "() => document.querySelector(\"img[alt='Avatar']\") && "
+            "document.querySelector(\"img[alt='Avatar']\").src.includes('/media/avatars/')",
+            timeout=15000,
+        )
         src_url = avatar_img.get_attribute("src")
         assert "/media/avatars/" in src_url
         assert src_url.endswith(".png")

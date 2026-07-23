@@ -6,7 +6,7 @@ AuraFlow features a sleek, responsive administrative panel powered by **django-u
 
 ## ⚙️ Installed Apps Registration
 
-Because django-unfold overrides admin templates, it **must** be listed before `django.contrib.admin` inside `INSTALLED_APPS` in [base.py](file:///a:/auraflow/core/settings/base.py):
+Because django-unfold overrides admin templates, it **must** be listed before `django.contrib.admin` inside `INSTALLED_APPS` in [base.py](../../core/settings/base.py):
 
 ```python
 INSTALLED_APPS = [
@@ -21,7 +21,7 @@ INSTALLED_APPS = [
 
 ## 🛠️ User Admin Configuration (`admin.py`)
 
-AuraFlow customizes the administration model for the custom `CustomUser` user class. The registration is defined in [admin.py](file:///a:/auraflow/apps/users/admin.py):
+AuraFlow customizes the administration model for the custom `CustomUser` user class. The registration is defined in [admin.py](../../apps/users/admin.py):
 
 ```python
 from django.contrib import admin

@@ -1,61 +1,34 @@
-# 🌌 التقرير الفني الشامل وتصميم تطبيق AuraFlow (التقييم شبه النهائي)
+# 🌌 Comprehensive Technical Report & Interface Design — AuraFlow Engine
 
-مرفق أدناه التقرير الفني والهيكلي الكامل لتطبيق **AuraFlow SaaS Boilerplate** بعد تطبيق التعديلات الأخيرة، وتنسيق الواجهات، ونقل أزرار الدخول الاجتماعي للأسفل بناءً على تفضيلاتك، مع توضيح خريطة التطوير القادمة (Roadmap).
-
----
-
-## 📂 1. البنية الهيكلية وتوزيع الملفات
-
-تم إخضاع التطبيق لإعادة هيكلة شاملة لتنظيفه من قوالب HTML الزائدة وضمان توافقه مع معمارية SPA:
-
-* **Backend Views**: تم تحويل جميع الـ Views الأمنية في [views_security.py](file:///a:/auraflow/apps/users/views_security.py) لتكون فئات نظيفة ترث من `View` لـ Django وتتحكم بالتدفق البرمجي دون مقاطعة من Allauth.
-* **Frontend Pages**: تم إنشاء 6 واجهات Vue تفاعلية تحت مجلد `frontend/src/pages/Security/`.
-* **Templates**: تم التخلص تماماً من مجلدات `templates/account` و `templates/mfa`؛ المجلد يحتوي الآن فقط على [base.html](file:///a:/auraflow/templates/base.html) الذي يمثل حاوية Inertia الجذريّة.
+This report details the architectural enhancements, UI/UX polish, security mappings, and technical structure of **AuraFlow**.
 
 ---
 
-## 🎨 2. تحسينات تجربة المستخدم والواجهات (UX/UI)
+## 📂 1. Directory Structure & Architectural Refactoring
 
-### 2.1 نقل أزرار تسجيل الدخول الاجتماعي للأسفل
-بناءً على طلبك، قمنا بإعادة ترتيب العناصر في صفحات الدخول والإنشاء:
-* في [Login.vue](file:///a:/auraflow/frontend/src/pages/Auth/Login.vue) و [Register.vue](file:///a:/auraflow/frontend/src/pages/Auth/Register.vue): تم وضع نموذج البريد الإلكتروني وكلمة المرور في المقدمة كخيار رئيسي، يليه فاصل تفاعلي أنيق (Or continue with)، ثم أزرار جوجل وجيت هاب بستايلها الفاخر أسفل الفورم.
+The application underwent full architectural refactoring to eliminate redundant legacy HTML templates and ensure 100% SPA compliance:
 
-### 2.2 تجاوز واجهات التأكيد غير المنسقة
-*   تم تفعيل `SOCIALACCOUNT_LOGIN_ON_GET = True` و `SOCIALACCOUNT_AUTO_SIGNUP = True` لضمان تحويل المستخدم مباشرة لسيرفرات Google/GitHub عند النقر، وفي حالة التسجيل لأول مرة يُوجّه تلقائياً لواجهة [SocialSignup.vue](file:///a:/auraflow/frontend/src/pages/Auth/SocialSignup.vue) المخصصة بستايل الـ Glassmorphism.
-
-### 2.3 التحقق الثنائي لكلمات المرور وتتبع الأخطاء بدقة (Validation & Error Mapping)
-*   **تطابق المعايير**: تم تعضيد التحقق على مستوى المتصفح (Client-side) عبر Zod Schemas في واجهات Vue لتمنع إدخال كلمات مرور ضعيفة أو رقمية بالكامل أو مطابقة لاسم البريد الإلكتروني قبل إرسال النموذج.
-*   **تتبع الأخطاء الذكي**: أي خطأ تحقق من قوة كلمة المرور في الواجهة الخلفية (Backend Validators) يتم التقاطه برمجياً بواسطة الـ Adapter وتحويله وتوجيهه مباشرة ليرتبط بحقل `"password"` في الواجهة الأمامية، ليعرض الخطأ للمستخدم أسفل حقل كلمة المرور المعني مباشرة بدلاً من عرضه كرسالة عامة غير محددة.
+* **Backend Views**: All security and authentication views in [views_security.py](../apps/users/views_security.py) inherit clean Django `View` controllers rendering Inertia views.
+* **Frontend Pages**: Interactive Vue 3 components housed in `frontend/src/pages/Security/` (`PasswordChange.vue`, `MfaList.vue`, `TotpActivate.vue`, etc.).
+* **Root Container**: Clean template container in [base.html](../templates/base.html) mounting the root Inertia application.
 
 ---
 
-## 📋 3. دراسة الجدوى والجدول الزمني (الرؤية التجارية)
+## 🎨 2. UI/UX & Authentication Design
 
-### 3.1 تقدير وقت العمل لتطوير الميزات المتقدمة:
-1. **ربط بوابة الدفع (Stripe Billing & Webhooks)**:
-   * **الوقت المتوقع**: **12 - 18 ساعة عمل**.
-   * تشمل بناء نماذج الاشتراكات في Django، ومستقبل الـ Webhooks لتحديث حالة الدفع تلقائياً، والربط بـ Stripe Customer Portal، وواجهة أسعار بـ Vue.
-2. **نظام الفرق والمستأجرين (Teams & Workspaces)**:
-   * **الوقت المتوقع**: **15 - 20 ساعة عمل**.
-   * تشمل بناء علاقات الجداول (Workspace -> Member -> Role)، وتصميم وسيط دعوة الأعضاء عبر الإيميل، وقائمة تبديل مساحات العمل في الواجهة الأمامية.
-3. **الإجمالي**: حوالي **30 إلى 40 ساعة عمل** لإنتاج كود آمن وخاضع لاختبارات الـ Playwright بالكامل.
+### 2.1 Social Login Layout Positioning
+* In [Login.vue](../frontend/src/pages/Auth/Login.vue) and [Register.vue](../frontend/src/pages/Auth/Register.vue): Email and password inputs are placed prominently, followed by a subtle separator ("Or continue with"), and stylish glassmorphic OAuth buttons for Google and GitHub.
 
-### 3.2 جدوى القالب تجارياً: هل يشتري المطورون هذا القالب في عصر الـ AI؟
-*   **نعم، والطلب عليه مرتفع لسببين**:
-    1.  **الـ AI ممتاز في المقاطع البرمجية الصغيرة ولكنه سيئ جداً في الـ Scaffolding المتكامل**: المطور يضيع ساعات في جعل الـ AI يربط CSRF الخاص بـ Django مع Axios في Vue دون أخطاء، أو ضبط الـ manifest لـ Vite. القالب يمنحه "بنية متكاملة ومجربة وخالية من الثغرات" فوراً.
-    2.  **الثقة والأمان الجاهز**: المطورون يشترون القوالب لشراء راحة البال. وجود نظام مصادقة ثنائية (MFA)، واختبارات E2E Playwright جاهزة، وتوسيع حزمة الاختبارات الآلية (Pytest) لتغطي كافة تفاصيل الـ Views المخصصة للأمان والـ MFA وتغيير كلمة المرور يمنح المشتري ثقة مطلقة بجودة واستقرار الكود قبل إطلاقه للإنتاج.
-*   **الميزة التنافسية لـ AuraFlow**: القوالب القديمة في السوق (مثل SaaS Pegasus) ضخمة وتحتوي على أكواد قديمة ومكتوبة لعدة واجهات (HTMX, React, Vue, Bootstrap). قالب AuraFlow يتميز بكونه **حديثاً جداً (2026)**، خفيفاً، ويسد ثغرة مطلوبة بشدة وهي دمج **Django + Inertia + Vue 3 SPA + Tailwind v4** بشكل نظيف وبدون تضخم (Zero Bloat).
+### 2.2 Direct OAuth Flow
+* Activated `SOCIALACCOUNT_LOGIN_ON_GET = True` and `SOCIALACCOUNT_AUTO_SIGNUP = True` to redirect users directly to Google/GitHub authentication servers without unstyled intermediary confirmation screens, directing first-time signups to [SocialSignup.vue](../frontend/src/pages/Auth/SocialSignup.vue).
+
+### 2.3 Dual Validation & Field Error Mapping
+* **Client Validation**: Zod schemas enforce password length, non-numeric checks, and email similarity rules directly in the browser before submission.
+* **Server Error Mapping**: Backend password validation errors intercepted by `AllauthAdapter` are mapped directly to the `password` field prop, highlighting errors directly beneath the target input.
 
 ---
 
-## 🚀 4. خريطة التطوير المستقبلية (Roadmap)
+## 🔒 3. Multi-Tenancy & Workspace Architecture
 
-لجعل القالب منتجاً خارقاً بسعر 199$:
-
-1. **إضافة Docker (بيئة الحاويات)**:
-   * **الحالة**: مخطط لها كأولوية في الخطوة القادمة.
-   * **الأهمية**: المطورون يتوقعون وجود `Dockerfile` و `docker-compose.yml` لتشغيل قاعدة بيانات PostgreSQL والـ Redis للـ Caching/Background Tasks بأمر واحد دون إعدادات محلية معقدة.
-2. **دمج Django Ninja + JWT (APIs للأجهزة المحمولة)**:
-   * **الأهمية**: في حال أراد المطور مستقبلاً بناء تطبيق موبايل (iOS/Android) بجانب الويب، سيحتاج لـ REST API سريعة جداً تعتمد على الـ JWT بدلاً من الـ Sessions.
-3. **محرك تنظيف البيانات الحساسة للذكاء الاصطناعي (AI PII Filter/Scrubber)**:
-   * **الأهمية**: ميزة بيع قوية ومواكبة لعصر الـ AI. كلاس بايثون وسيط يقوم بتنظيف نصوص المستخدمين من البيانات الشخصية (مثل الإيميلات، الأسماء، بطاقات الائتمان) قبل إرسالها لـ LLMs لحماية خصوصية العملاء والتوافق مع معايير الـ GDPR.
+* **Row-Level Tenant Isolation**: Shared database model using unique workspace slugs, automatic invitation token expiration, and fine-grained Role-Based Access Control (`OWNER`, `ADMIN`, `MEMBER`).
+* **Automated Task Queues & Webhooks**: Webhook handlers backed by signature validation and background task execution via Django-Q2.

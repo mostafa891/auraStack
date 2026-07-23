@@ -37,3 +37,4 @@ q/
 *.njsproj
 *.sln
 *.sw?
+node_modules

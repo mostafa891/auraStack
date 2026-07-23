@@ -10,7 +10,7 @@ def test_welcome_email_template_rendering():
 
     assert "Welcome aboard!" in html_content
     assert "http://localhost:8000/auth/login/" in html_content
-    assert "AuraStack" in html_content
+    assert "AuraFlow" in html_content
 
 
 def test_password_reset_email_template_rendering():
@@ -42,7 +42,7 @@ def test_send_email_outbox_integration():
     mail.send_mail(
         subject="Test Email",
         message="Hello World",
-        from_email="no-reply@aurastack.com",
+        from_email="no-reply@auraflow.com",
         recipient_list=["user@example.com"],
         html_message="<h1>Hello World</h1>",
     )

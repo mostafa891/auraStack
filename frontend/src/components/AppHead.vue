@@ -10,9 +10,9 @@ defineProps<{
 
 <template>
   <Head>
-    <title>{{ title }} | AuraStack</title>
+    <title>{{ title }} | AuraFlow</title>
     <meta v-if="description" name="description" :content="description" />
-    <meta property="og:title" :content="title + ' | AuraStack'" />
+    <meta property="og:title" :content="title + ' | AuraFlow'" />
     <meta v-if="description" property="og:description" :content="description" />
     <meta property="og:image" :content="image || '/static/dist/images/default-share.png'" />
     <meta name="twitter:card" content="summary_large_image" />

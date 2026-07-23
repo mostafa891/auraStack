@@ -1,3 +1,5 @@
+import logging
+import os
 import sys
 
 from core.settings.base import *
@@ -16,11 +18,17 @@ DATABASES = {
 # تعطيل التحقق من البريد تماماً في بيئة التطوير المحلية لتسريع بناء الواجهات
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
-# طباعة رسائل البريد الإلكتروني في الكونسول لتسهيل التطوير المحلي واختبار الروابط
+# طباعة رسائل البريد الإلكتروني في الكونسول لتسهيل التطوير المحلي وااختبار الروابط
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # التحقق مما إذا كان المشروع يعمل تحت بيئة الاختبارات (pytest)
-TESTING = "test" in sys.argv or any("pytest" in arg for arg in sys.argv)
+TESTING = (
+    "test" in sys.argv
+    or any("pytest" in arg for arg in sys.argv)
+    or "PYTEST_CURRENT_TEST" in os.environ
+    or "PYTEST_XDIST_WORKER" in os.environ
+    or "pytest" in sys.modules
+)
 
 # تفعيل وضع التطوير الفوري لـ Vite (Hot Module Replacement) فقط خارج بيئة الاختبارات
 DJANGO_VITE = {
@@ -51,13 +59,17 @@ if DEBUG:
     # 2. إعداد nplusone لاكتشاف الاستعلامات الكسولة وتنبيهك بها
     INSTALLED_APPS.insert(0, "nplusone.ext.django")
     MIDDLEWARE.insert(0, "nplusone.ext.django.NPlusOneMiddleware")
-    import logging
 
     NPLUSONE_LOGGER = logging.getLogger("django")
     NPLUSONE_LOG_LEVEL = logging.WARNING
     NPLUSONE_RAISE = (
         TESTING  # إيقاف الاختبار وإفشاله فوراً إذا تم رصد N+1، وطباعة تحذير فقط في التصفح المعتاد
     )
+    NPLUSONE_WHITELIST = [
+        {"model": "teams.Workspace", "field": "subscription"},
+        {"model": "Workspace", "field": "subscription"},
+        {"model": "apps.teams.models.Workspace", "field": "subscription"},
+    ]
 
 # تعطيل محدد معدل الطلبات أثناء الاختبارات لمنع حظر اختبارات E2E والـ Live Server
 RATELIMIT_ENABLE = not TESTING

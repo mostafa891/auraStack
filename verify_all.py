@@ -13,7 +13,7 @@ def run_cmd(cmd):
 
 
 def main():
-    print("=== AuraStack Verification Script ===")
+    print("=== AuraFlow Verification Script ===")
 
     # 1. Install dependencies
     print("\n--- 1. Installing dependencies ---")

@@ -68,8 +68,8 @@ class AuthService:
             site_url = getattr(settings, "SITE_URL", "http://localhost:8000")
             html_message = render_to_string("emails/welcome.html", {"site_url": site_url})
             send_mail(
-                subject="Welcome to AuraStack!",
-                message="Welcome to AuraStack! Your account is now active.",
+                subject="Welcome to AuraFlow!",
+                message="Welcome to AuraFlow! Your account is now active.",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[cleaned_email],
                 html_message=html_message,

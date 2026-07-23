@@ -6,7 +6,7 @@ This document describes how **django-allauth** is configured, extended, and inte
 
 ## ⚙️ Core Configuration Settings
 
-AuraFlow leverages django-allauth for authentication, MFA, and social logins. Key overrides in [base.py](file:///a:/auraflow/core/settings/base.py) include:
+AuraFlow leverages django-allauth for authentication, MFA, and social logins. Key overrides in [base.py](../../core/settings/base.py) include:
 
 ```python
 # Authentication Method
@@ -24,7 +24,7 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory" # "none" in local development
 
 ## 🛠️ Adapter Layer: `AllauthAdapter`
 
-To decouple the Django views from allauth's internal APIs, AuraFlow implements a service adapter in [allauth.py](file:///a:/auraflow/apps/users/adapters/allauth.py).
+To decouple the Django views from allauth's internal APIs, AuraFlow implements a service adapter in [allauth.py](../../apps/users/adapters/allauth.py).
 
 ### Authentication
 `AllauthAdapter.authenticate_user(request, email, password) -> ServiceResult`
@@ -42,7 +42,7 @@ To decouple the Django views from allauth's internal APIs, AuraFlow implements a
 
 ## 🔄 SPA Integration (HTML to Vue/Inertia Views)
 
-Rather than rendering default django-allauth Django Templates (which cause full-page reloads and break SPA states), AuraFlow wraps allauth generic views in custom Inertia views located in [views_security.py](file:///a:/auraflow/apps/users/views_security.py).
+Rather than rendering default django-allauth Django Templates (which cause full-page reloads and break SPA states), AuraFlow wraps allauth generic views in custom Inertia views located in [views_security.py](../../apps/users/views_security.py).
 
 ### Custom Security Views
 1. **Password Change**: `PasswordChangeView` wrapping allauth's password change form logic.
@@ -55,7 +55,7 @@ Rather than rendering default django-allauth Django Templates (which cause full-
 ### 🛡️ Dual Password Validation & Field Error Mapping
 To provide a smooth user experience alongside solid backend protection, AuraFlow applies a dual password validation layer:
 * **Client-Side (Zod & VeeValidate)**: Enforces minimum 8 characters, non-numeric checks, and prevents using passwords similar to the email prefix directly in the browser before the form is sent.
-* **Server-Side (Django Password Validators)**: Performs full checks (similarity, length, common passwords, numeric). Any caught `ValidationError` is intercepted by [AllauthAdapter](file:///a:/auraflow/apps/users/adapters/allauth.py) and mapped directly to the `"password"` key in the error dictionary, ensuring the error is displayed directly under the password input in Vue instead of as a generic page alert.
+* **Server-Side (Django Password Validators)**: Performs full checks (similarity, length, common passwords, numeric). Any caught `ValidationError` is intercepted by [AllauthAdapter](../../apps/users/adapters/allauth.py) and mapped directly to the `"password"` key in the error dictionary, ensuring the error is displayed directly under the password input in Vue instead of as a generic page alert.
 
 ### Global URL Overrides
-In [core/urls.py](file:///a:/auraflow/core/urls.py), the custom Inertia security views are registered globally before allauth's URL patterns. This ensures that any internal redirect within allauth (e.g. redirecting to MFA verification after login) resolves to the Inertia page instead of the old HTML templates.
+In [core/urls.py](../../core/urls.py), the custom Inertia security views are registered globally before allauth's URL patterns. This ensures that any internal redirect within allauth (e.g. redirecting to MFA verification after login) resolves to the Inertia page instead of the old HTML templates.
