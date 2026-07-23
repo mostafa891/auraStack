@@ -115,6 +115,7 @@ class TotpActivateView(LoginRequiredMixin, View):
 
         # حفظ الـ secret في الـ session لمطابقته في الـ POST
         request.session["totp_secret"] = form.secret
+        request.session["mfa.totp.secret"] = form.secret
 
         return render(
             request,
@@ -126,19 +127,21 @@ class TotpActivateView(LoginRequiredMixin, View):
         )
 
     def post(self, request):
-        secret = request.session.get("totp_secret")
+        secret = request.session.get("totp_secret") or request.session.get("mfa.totp.secret")
         if not secret:
             return redirect(reverse("auth:totp_activate"))
 
         data = get_request_data(request)
         form = ActivateTOTPForm(user=request.user, data=data)
         form.secret = secret  # تمرير الـ secret المخزن لمطابقته
+        request.session["mfa.totp.secret"] = secret
 
         if form.is_valid():
             from allauth.mfa.totp.internal import flows
 
             flows.activate_totp(request, form)
             request.session.pop("totp_secret", None)
+            request.session.pop("mfa.totp.secret", None)
             return redirect(reverse("auth:mfa_list"))
         else:
             adapter = get_adapter()
