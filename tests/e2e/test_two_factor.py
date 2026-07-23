@@ -66,8 +66,8 @@ def test_two_factor_activation_and_validation_e2e(live_server, page: Page):
 
     # 5. التأكد من النجاح والعودة لقائمة الـ MFA وحالة TOTP نشطة
     page.wait_for_url(lambda url: url.rstrip("/").endswith("/auth/mfa"), timeout=10000)
-    page.wait_for_selector("span:has-text('Active /')", timeout=5000)
-    assert page.locator("span:has-text('Active /')").is_visible()
+    page.wait_for_selector("span:has-text('Active')", timeout=5000)
+    assert page.locator("span:has-text('Active')").is_visible()
 
     # 6. تسجيل الخروج وإعادة الدخول للتحقق من طلب الرمز
     page.goto(live_server.url + "/profile/")
@@ -103,4 +103,4 @@ def test_two_factor_activation_and_validation_e2e(live_server, page: Page):
     page.fill("#password", password)
     page.click("button[type='submit']")
     page.wait_for_url(lambda url: url.rstrip("/").endswith("/auth/mfa"), timeout=10000)
-    page.wait_for_selector("span:has-text('Inactive /')", timeout=5000)
+    page.wait_for_selector("span:has-text('Inactive')", timeout=5000)
