@@ -66,6 +66,7 @@ def test_two_factor_activation_and_validation_e2e(live_server, page: Page):
 
     # 5. التأكد من النجاح والعودة لقائمة الـ MFA وحالة TOTP نشطة
     page.wait_for_url("**/auth/mfa/", timeout=5000)
+    page.wait_for_selector("span:has-text('Active /')", timeout=5000)
     assert page.locator("span:has-text('Active /')").is_visible()
 
     # 6. تسجيل الخروج وإعادة الدخول للتحقق من طلب الرمز
