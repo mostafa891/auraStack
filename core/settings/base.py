@@ -114,50 +114,50 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.CustomUser"
 
-# معرّف الموقع الأساسي للمنصة (مطلوب لـ Sites Framework)
+# Primary Site ID for Sites Framework
 SITE_ID = 1
 
-# خطوط دفاع المصادقة المعتمدة في دجانغو
+# Authentication Backends
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 # ==============================================================================
-# إعدادات الحداثة لـ django-allauth (المطابقة لتوثيق 2026 المحدث)
+# django-allauth Settings
 # ==============================================================================
 
-# نسف وإسقاط حقل الـ username تماماً من خلايا الـ Backend
+# Exclude username field from backend user model
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 
-# المعيار الحديث لعام 2026: تحديد طرق الدخول كـ set صريحة
+# Login methods configuration
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_ADAPTER = "apps.users.adapters.allauth.CustomAccountAdapter"
 
-# سياسات الحصانة الفريدة للجلسات والمستخدمين
+# Session and user security policies
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_SESSION_REMEMBER = True
 
-# القيمة الافتراضية الصارمة للإنتاج (سيتم تعديلها محلياً في local للتطوير)
+# Production default email verification policy
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
-# توجيه المستخدمين بعد تسجيل الدخول والخروج
+# Post-login and logout redirects
 LOGIN_REDIRECT_URL = "profile"
 LOGOUT_REDIRECT_URL = "auth:login"
 
 # ==============================================================================
-# Inertia.js — ربط Django بـ Vue عبر بروتوكول Inertia
+# Inertia.js Settings
 # ==============================================================================
 
 INERTIA_LAYOUT = "base.html"
 
-# توافق CSRF مع Axios (المكتبة الداخلية لـ Inertia)
+# CSRF header compatibility for Axios (Inertia HTTP client)
 CSRF_HEADER_NAME = "HTTP_X_XSRF_TOKEN"
 CSRF_COOKIE_NAME = "XSRF-TOKEN"
 
 # ==============================================================================
-# django-vite — إدارة الأصول المبنية بـ Vite
+# django-vite Settings
 # ==============================================================================
 
 DJANGO_VITE = {
@@ -171,7 +171,7 @@ DJANGO_VITE = {
 }
 
 # ==============================================================================
-# Logging Configuration — إدارة السجلات والتتبع الأمني
+# Logging Configuration
 # ==============================================================================
 
 LOGGING = {
@@ -200,12 +200,12 @@ LOGGING = {
             "level": "INFO",
             "propagate": True,
         },
-        "auraflow.security": {
+        "aurastack.security": {
             "handlers": ["console"],
             "level": "WARNING",
             "propagate": False,
         },
-        "auraflow.audit": {
+        "aurastack.audit": {
             "handlers": ["console"],
             "level": "INFO",
             "propagate": False,
@@ -214,7 +214,7 @@ LOGGING = {
 }
 
 # ==============================================================================
-# Social Account Providers — إعدادات تسجيل الدخول الاجتماعي
+# Social Account Providers Configuration
 # ==============================================================================
 
 SOCIALACCOUNT_LOGIN_ON_GET = False
@@ -253,7 +253,7 @@ REDIS_URL = env.str("REDIS_URL", default="")
 
 if REDIS_URL:
     Q_CLUSTER = {
-        "name": "auraflow_q",
+        "name": "aurastack_q",
         "workers": 4,
         "recycle": 500,
         "timeout": 60,
@@ -261,12 +261,12 @@ if REDIS_URL:
     }
 else:
     Q_CLUSTER = {
-        "name": "auraflow_q",
+        "name": "aurastack_q",
         "workers": 2,
         "recycle": 100,
         "timeout": 60,
-        "sleep": 1,  # فحص هادئ لتجنب إجهاد الـ CPU لقاعدة البيانات محلياً
-        "save_limit": 0,  # مسح المهام الناجحة فوراً لمنع التضخم
+        "sleep": 1,  # Gentle polling interval to prevent local CPU database strain
+        "save_limit": 0,  # Prune successful tasks immediately to prevent database bloat
         "orm": "default",
     }
 

@@ -1,79 +1,62 @@
-name: AuraFlow CI/CD Pipeline
+name: auraStack CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, dev ]
   pull_request:
     branches: [ main, master ]
 
 jobs:
-  lint-and-test:
+  test-and-lint:
+    name: Build, Lint & Test
     runs-on: ubuntu-latest
-    
+
     services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: auraflow_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+      redis:
+        image: redis:alpine
         ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          - 6379:6379
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
 
-    # 1. Frontend Build Verification
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: 'npm'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
 
-    - name: Install Frontend Dependencies
-      run: npm ci
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-    - name: Build Frontend Assets
-      run: npm run build
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          npm ci
 
-    # 2. Python Setup
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-        cache: 'pip'
+      - name: Run Ruff Linter
+        run: ruff check .
 
-    - name: Install Python Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        playwright install --with-deps chromium
+      - name: Build Frontend Assets
+        run: npm run build
 
-    # 3. Linting and Formatting Check (Ruff)
-    - name: Run Linter (Ruff)
-      run: ruff check .
+      - name: Check Django Migrations
+        env:
+          SECRET_KEY: "ci-secret-key-for-testing"
+          DEBUG: "True"
+        run: python manage.py makemigrations --check --dry-run
 
-    - name: Run Formatter Check (Ruff)
-      run: ruff format --check .
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
 
-    # 4. Django Migrations Consistency Check
-    - name: Check Database Migrations Consistency
-      env:
-        DATABASE_URL: postgres://postgres:postgres@localhost:5432/auraflow_test
-        SECRET_KEY: "ci-secret-key-for-testing"
-      run: |
-        python manage.py makemigrations --check --dry-run
-
-    # 5. Execute Tests (Pytest)
-    - name: Run Pytest Suite
-      env:
-        DATABASE_URL: postgres://postgres:postgres@localhost:5432/auraflow_test
-        SECRET_KEY: "ci-secret-key-for-testing"
-      run: |
-        pytest
+      - name: Run Pytest Test Suite
+        env:
+          SECRET_KEY: "ci-secret-key-for-testing"
+          DEBUG: "True"
+          DJANGO_SETTINGS_MODULE: "core.settings"
+        run: pytest -v

@@ -9,7 +9,7 @@ from apps.users.models import CustomUser
 
 @admin.register(CustomUser)
 class CustomUserAdmin(BaseUserAdmin, ModelAdmin):
-    """تخصيص لوحة إدارة المستخدم المخصص وتزيينها بسمة Unfold الراقية."""
+    """Custom user admin configuration styled with Django Unfold."""
 
     add_form = CustomUserCreationForm
     form = CustomUserChangeForm
@@ -27,7 +27,7 @@ class CustomUserAdmin(BaseUserAdmin, ModelAdmin):
     search_fields = ("email", "first_name", "last_name")
     ordering = ("email",)
 
-    # إعادة كتابة مجموعات الحقول لإقصاء اسم المستخدم (username) تماماً
+    # Custom fieldsets excluding username
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         (_("Personal info"), {"fields": ("first_name", "last_name", "avatar_url")}),
@@ -50,7 +50,7 @@ class CustomUserAdmin(BaseUserAdmin, ModelAdmin):
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
 
-    # فورم إضافة مستخدم جديد في لوحة الإدارة
+    # Add user form fieldsets for admin panel
     add_fieldsets = (
         (
             None,

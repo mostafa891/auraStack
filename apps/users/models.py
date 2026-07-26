@@ -8,13 +8,13 @@ from common.models import TimeStampedModel
 
 
 class CustomUserManager(BaseUserManager):
-    """مدير مستخدمين مخصص يعتمد على البريد الإلكتروني كالمعرف الفريد للمصادقة."""
+    """Custom user manager where email is the unique identifier for authentication."""
 
     def create_user(self, email: str, password: str | None = None, **extra_fields):
         if not email:
             raise ValueError(_("The Email field must be set"))
 
-        # تطبيع النطاق الصارم وقطع الفراغات
+        # Normalize domain casing and trim whitespace
         email = self.normalize_email(email.strip())
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -35,7 +35,7 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractUser, TimeStampedModel):
-    """موديل المستخدم الرئيسي لمنصة AuraFlow بمواصفات الإنتاج العالمي."""
+    """Primary CustomUser model for the application."""
 
     class LanguageChoices(models.TextChoices):
         ENGLISH = "en", _("English")
@@ -46,18 +46,18 @@ class CustomUser(AbstractUser, TimeStampedModel):
         DARK = "DARK", _("Dark")
         SYSTEM = "SYSTEM", _("System")
 
-    # إزاحة حقل اسم المستخدم التقليدي تماماً لمنع حدوث التضارب في نظام دجانغو
+    # Remove username field completely in favor of email authentication
     username = None
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # unique=True تكفي لبناء الـ Index تلقائياً في PostgreSQL دون تكرار
+    # Unique email address field with automatic database index
     email = models.EmailField(_("email address"), unique=True)
 
-    # رفع العبء عن السيرفر المحلي وتحويل الـ Avatar لروابط Appwrite السحابية
+    # Avatar URL field supporting cloud/CDN hosted avatar images
     avatar_url = models.URLField(_("avatar URL"), max_length=500, null=True, blank=True)
 
-    # التفضيلات الشخصية الملتزمة بالـ TextChoices والـ zoneinfo
+    # User preferences fields
     language = models.CharField(
         max_length=2,
         choices=LanguageChoices.choices,
@@ -76,7 +76,7 @@ class CustomUser(AbstractUser, TimeStampedModel):
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []  # الـ email مطلوب إجبارياً بحكم الـ USERNAME_FIELD
+    REQUIRED_FIELDS = []  # Email is required by virtue of USERNAME_FIELD
 
     class Meta:
         verbose_name = _("user")

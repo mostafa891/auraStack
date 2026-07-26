@@ -3,27 +3,26 @@ import { usePage } from "@inertiajs/vue3";
 import type { SharedErrors } from "@/types/inertia";
 
 /**
- * Composable لاستخراج أخطاء Inertia المُشاركة وتحويلها لصيغة سهلة الاستخدام.
+ * Composable to extract and format shared Inertia form errors.
  *
- * الفكرة:
- * - Django بيبعت الأخطاء عبر `share(request, errors={...})`
- * - الـ Composable ده بيحولها من `{ field: [{message, code}] }`
- *   لـ `{ field: "first error message" }` عشان تربطها بالـ Form بسهولة.
+ * Details:
+ * - Django shares form validation errors via `share(request, errors={...})`
+ * - Formats raw `{ field: [{message, code}] }` into simplified `{ field: "first message string" }`
  */
 export function useFormErrors() {
   const page = usePage();
 
-  /** الأخطاء الخام من Django */
+  /** Raw errors payload returned from Django */
   const rawErrors = computed<SharedErrors>(
     () => (page.props.errors as unknown as SharedErrors) ?? null
   );
 
-  /** كود الخطأ (مثل INVALID_CREDENTIALS, EMAIL_ALREADY_EXISTS) */
+  /** Specific error code string (e.g. INVALID_CREDENTIALS, EMAIL_ALREADY_EXISTS) */
   const errorCode = computed<string | null>(
     () => (page.props.error_code as string | null) ?? null
   );
 
-  /** أخطاء مبسّطة: كل حقل يرجع أول رسالة خطأ فقط */
+  /** Formatted errors: maps each field key to its primary message string */
   const fieldErrors = computed<Record<string, string>>(() => {
     const errors = rawErrors.value;
     if (!errors) return {};
@@ -42,17 +41,17 @@ export function useFormErrors() {
     return result;
   });
 
-  /** استخراج خطأ حقل معين */
+  /** Get error message for a specific form field */
   function getFieldError(field: string): string | undefined {
     return fieldErrors.value[field];
   }
 
-  /** هل فيه أخطاء عامة (مش مرتبطة بحقل معين)? */
+  /** Check if general non-field errors exist */
   const hasGeneralError = computed(() => {
     return !!fieldErrors.value["__all__"] || !!errorCode.value;
   });
 
-  /** رسالة الخطأ العام */
+  /** Primary general error message */
   const generalError = computed(() => {
     if (fieldErrors.value["__all__"]) return fieldErrors.value["__all__"];
     if (errorCode.value === "INVALID_CREDENTIALS") return "Invalid email or password.";

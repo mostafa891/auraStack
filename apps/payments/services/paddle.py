@@ -12,13 +12,12 @@ logger = logging.getLogger(__name__)
 
 
 class PaddleService(BasePaymentGateway):
-    """
-    تطبيق كامل لبوابة الدفع Paddle Billing (v2).
+    """Paddle Billing (v2) payment gateway integration.
 
-    المتغيرات المطلوبة في .env:
-        PADDLE_API_KEY        — مفتاح API من لوحة تحكم Paddle
-        PADDLE_WEBHOOK_SECRET — مفتاح التحقق من webhooks
-        PADDLE_ENVIRONMENT    — 'sandbox' أو 'production'
+    Required environment variables:
+        PADDLE_API_KEY        - API secret key
+        PADDLE_WEBHOOK_SECRET - Webhook verification secret
+        PADDLE_ENVIRONMENT    - 'sandbox' or 'production'
     """
 
     def __init__(self):
@@ -30,7 +29,7 @@ class PaddleService(BasePaymentGateway):
         )
 
     def _paddle_request(self, method: str, endpoint: str, payload: dict = None) -> dict:
-        """دالة مساعدة لإرسال طلبات لـ Paddle API."""
+        """Helper utility for sending requests to Paddle API."""
         url = f"{self.base_url}{endpoint}"
         data = json.dumps(payload).encode("utf-8") if payload else None
         req = urllib.request.Request(
@@ -46,7 +45,7 @@ class PaddleService(BasePaymentGateway):
             return json.loads(resp.read().decode("utf-8"))
 
     def create_customer(self, workspace_id: str, email: str) -> str:
-        """إنشاء عميل في Paddle."""
+        """Creates customer in Paddle."""
         if not self.api_key:
             raise ValueError("PADDLE_API_KEY is not configured")
         try:
@@ -68,7 +67,7 @@ class PaddleService(BasePaymentGateway):
         cancel_url: str,
         metadata: dict = None,
     ) -> str:
-        """إنشاء رابط Paddle Checkout."""
+        """Creates Paddle Checkout transaction URL."""
         if not self.api_key:
             raise ValueError("PADDLE_API_KEY is not configured")
         try:
@@ -89,7 +88,7 @@ class PaddleService(BasePaymentGateway):
             raise
 
     def cancel_subscription(self, subscription_id: str) -> bool:
-        """إلغاء اشتراك Paddle."""
+        """Cancels Paddle subscription."""
         if not self.api_key:
             return False
         try:
@@ -104,12 +103,12 @@ class PaddleService(BasePaymentGateway):
             return False
 
     def verify_webhook_signature(self, payload: bytes, signature: str) -> bool:
-        """التحقق من HMAC-SHA256 لـ Paddle webhooks."""
+        """Verifies HMAC-SHA256 signature for Paddle webhooks."""
         if not self.webhook_secret:
             logger.error("PADDLE_WEBHOOK_SECRET is not set")
             return False
         try:
-            # Paddle يُرسل: ts=TIMESTAMP;h1=SIGNATURE
+            # Paddle header format: ts=TIMESTAMP;h1=SIGNATURE
             parts = dict(item.split("=", 1) for item in signature.split(";"))
             ts = parts.get("ts", "")
             h1 = parts.get("h1", "")

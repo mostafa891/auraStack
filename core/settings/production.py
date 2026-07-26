@@ -43,7 +43,7 @@ if USE_S3_STORAGE:
     AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME")
     AWS_S3_ENDPOINT_URL = env.str("AWS_S3_ENDPOINT_URL", default=None)
     AWS_S3_CUSTOM_DOMAIN = env.str("AWS_S3_CUSTOM_DOMAIN", default=None)
-    AWS_S3_SIGNATURE_VERSION = "s3v4"  # إلزامي لخدمة Cloudflare R2
+    AWS_S3_SIGNATURE_VERSION = "s3v4"  # Required for Cloudflare R2 / S3
     AWS_S3_FILE_OVERWRITE = False
     AWS_S3_OBJECT_PARAMETERS = {
         "CacheControl": "max-age=86400",
@@ -58,7 +58,7 @@ else:
         },
     }
 
-# تهيئة الـ Redis Cache في الإنتاج ليدعم عمل الـ Rate limiting عبر الحاويات الموزعة
+# Setup Redis cache in production to support rate limiting across distributed containers
 REDIS_URL = env.str("REDIS_URL", default="")
 if REDIS_URL:
     CACHES = {
@@ -69,7 +69,7 @@ if REDIS_URL:
     }
 else:
     warnings.warn(
-        "[AuraFlow] REDIS_URL is not set in production! "
+        "[auraStack] REDIS_URL is not set in production! "
         "Rate limiting will NOT work correctly across multiple containers. "
         "Set REDIS_URL in your .env to fix this.",
         stacklevel=1,

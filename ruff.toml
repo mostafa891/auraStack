@@ -3,11 +3,10 @@ target-version = "py313"
 
 [lint]
 select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
 fixable = ["ALL"]
 
 [lint.per-file-ignores]
-# الاستثناء الخاص بملفات الإعدادات المقسمة
+# Ignore wildcard import warnings for split settings modules
 "core/settings/*.py" = ["F403", "F405"]
-
-# التعديل الجديد: سحق خطأ طول السطر (E501) داخل جميع ملفات الميجريشنز تلقائياً
-"**/migrations/*.py" = ["E501"]
+"scripts/*.py" = ["E402"]

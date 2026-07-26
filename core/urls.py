@@ -23,20 +23,20 @@ from common.views.health import health_check
 urlpatterns = [
     path("", LandingView.as_view(), name="landing"),
     path("admin/", admin.site.urls),
-    # نقاط الـ API الخاصة بالاشتراكات والمدفوعات
+    # API endpoints for payments and billing
     path("api/v1/private/", private_api.urls),
     path("api/v1/public/", public_api.urls),
-    # مسارات واجهات الاشتراكات والمدفوعات
+    # Billing and subscriptions UI routes
     path("billing/", include("apps.payments.urls", namespace="billing")),
-    # توجيه مسارات المصادقة والـ Accounts إلى تطبيقنا الداخلي الموزع
+    # Authentication and accounts routing
     path("auth/", include("apps.users.urls", namespace="auth")),
-    # مسارات إدارة الفرق ومساحات العمل (Multi-tenancy)
+    # Workspace and team management routes (Multi-tenancy)
     path("workspaces/", include("apps.teams.urls", namespace="teams")),
-    # مسارات تطبيق المدونة والتحديثات
+    # Blog and updates application routes
     path("blog/", include("apps.blog.urls", namespace="blog")),
-    # صفحة تفضيلات الملف الشخصي الرئيسي
+    # User profile preferences page
     path("profile/", ProfileView.as_view(), name="profile"),
-    # تجاوز مسارات allauth الافتراضية بمسارات Inertia المخصصة على المستوى العام
+    # Override default allauth views with custom Inertia SPA views
     path("accounts/password/change/", PasswordChangeView.as_view(), name="account_change_password"),
     path("accounts/password/reset/", PasswordResetView.as_view(), name="account_reset_password"),
     path(
@@ -64,13 +64,13 @@ urlpatterns = [
         name="socialaccount_connections",
     ),
     path("accounts/social/signup/", SocialSignupView.as_view(), name="socialaccount_signup"),
-    # تضمين مسارات django-allauth بالكامل للوصول لروابط المزايا الأمنية المتقدمة
+    # Include default allauth URL routes
     path("accounts/", include("allauth.urls")),
-    # مسار فحص صحة النظام
+    # Health check endpoint
     path("health/", health_check, name="health_check"),
 ]
 
-# تمكين خدمة ملفات الميديا محلياً في بيئة التطوير
+# Serve media files locally during development
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

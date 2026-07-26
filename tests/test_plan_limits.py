@@ -1,6 +1,6 @@
 """
-اختبارات التحقق من تطبيق حدود الخطط (Plan Limits Enforcement).
-تتحقق من أن نظام الدعوات يرفض إضافة أعضاء عند بلوغ الحد الأقصى للخطة.
+Tests for plan limits enforcement.
+Verifies that the invitation system rejects adding members once plan limit is reached.
 """
 
 import pytest
@@ -30,20 +30,20 @@ def workspace_with_owner(db, owner):
 
 
 # ============================================================
-# اختبارات selectors
+# Selectors Tests
 # ============================================================
 
 
 @pytest.mark.django_db
 def test_get_workspace_plan_returns_free_by_default(workspace_with_owner):
-    """مساحة عمل بدون اشتراك → خطة free."""
+    """Workspace without subscription defaults to free plan."""
     plan = get_workspace_plan(workspace_with_owner)
     assert plan == "free"
 
 
 @pytest.mark.django_db
 def test_get_workspace_plan_returns_active_plan(workspace_with_owner):
-    """مساحة عمل مع اشتراك نشط → الخطة الصحيحة."""
+    """Workspace with active subscription returns correct plan."""
     Subscription.objects.create(
         workspace=workspace_with_owner,
         provider=ProviderChoices.STRIPE,
@@ -58,7 +58,7 @@ def test_get_workspace_plan_returns_active_plan(workspace_with_owner):
 
 @pytest.mark.django_db
 def test_get_workspace_plan_ignores_inactive_subscription(workspace_with_owner):
-    """اشتراك منتهي → fallback لـ free."""
+    """Expired subscription falls back to free plan."""
     Subscription.objects.create(
         workspace=workspace_with_owner,
         provider=ProviderChoices.STRIPE,
@@ -73,14 +73,14 @@ def test_get_workspace_plan_ignores_inactive_subscription(workspace_with_owner):
 
 @pytest.mark.django_db
 def test_get_plan_limit_free(workspace_with_owner):
-    """الخطة المجانية: max_members = 3."""
+    """Free plan: max_members = 3."""
     limit = get_plan_limit(workspace_with_owner, "max_members")
     assert limit == 3
 
 
 @pytest.mark.django_db
 def test_get_plan_limit_pro(workspace_with_owner):
-    """الخطة Pro: max_members = 20."""
+    """Pro plan: max_members = 20."""
     Subscription.objects.create(
         workspace=workspace_with_owner,
         provider=ProviderChoices.STRIPE,
@@ -94,15 +94,15 @@ def test_get_plan_limit_pro(workspace_with_owner):
 
 
 # ============================================================
-# اختبارات invite_member مع تطبيق الحدود
+# invite_member limits enforcement tests
 # ============================================================
 
 
 @pytest.mark.django_db
 def test_invite_blocked_when_free_plan_full(db, workspace_with_owner, owner):
     """
-    الخطة المجانية: حد 3 أعضاء — الدعوة تُرفض عند بلوغ الحد.
-    المالك يُحسب كعضو (1)، نضيف 2 أعضاء آخرين = 3 إجمالاً.
+    Free plan: 3 members limit — invitation rejected when limit reached.
+    Owner counts as 1 member, adding 2 more members = 3 total.
     """
     for i in range(2):
         user = User.objects.create_user(email=f"member{i}@test.com", password="Password123!")
@@ -110,7 +110,7 @@ def test_invite_blocked_when_free_plan_full(db, workspace_with_owner, owner):
             workspace=workspace_with_owner, user=user, role=WorkspaceMember.RoleChoices.MEMBER
         )
 
-    # العضوية = 3 (الحد الأقصى للخطة المجانية)
+    # Membership = 3 (Free plan maximum)
     assert workspace_with_owner.members.count() == 3
 
     result = WorkspaceService.invite_member(
@@ -125,8 +125,8 @@ def test_invite_blocked_when_free_plan_full(db, workspace_with_owner, owner):
 
 @pytest.mark.django_db
 def test_invite_allowed_when_below_limit(db, workspace_with_owner, owner):
-    """الخطة المجانية: أقل من 3 أعضاء — الدعوة تُقبل."""
-    # المالك فقط = 1 عضو (أقل من الحد)
+    """Free plan: below 3 members — invitation accepted."""
+    # Owner only = 1 member (below limit)
     result = WorkspaceService.invite_member(
         workspace=workspace_with_owner,
         invited_by=owner,
@@ -138,7 +138,7 @@ def test_invite_allowed_when_below_limit(db, workspace_with_owner, owner):
 
 @pytest.mark.django_db
 def test_invite_allowed_when_pro_plan_not_full(db, workspace_with_owner, owner):
-    """الخطة Pro: حد 20 — الدعوة تُقبل مع 3 أعضاء."""
+    """Pro plan: limit 20 — invitation accepted with 3 members."""
     Subscription.objects.create(
         workspace=workspace_with_owner,
         provider=ProviderChoices.STRIPE,

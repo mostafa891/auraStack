@@ -4,17 +4,17 @@ from django.template.loader import render_to_string
 
 
 def test_welcome_email_template_rendering():
-    """التحقق من صحة تصيير قالب البريد الإلكتروني الترحيبي والتأكد من تضمين المعاملات."""
+    """Verifies welcome email template rendering and variable injection."""
     context = {"site_url": "http://localhost:8000"}
     html_content = render_to_string("emails/welcome.html", context)
 
     assert "Welcome aboard!" in html_content
     assert "http://localhost:8000/auth/login/" in html_content
-    assert "AuraFlow" in html_content
+    assert "auraStack" in html_content
 
 
 def test_password_reset_email_template_rendering():
-    """التحقق من صحة تصيير قالب بريد استعادة كلمة المرور والتأكد من إدراج رابط إعادة التعيين."""
+    """Verifies password reset email template rendering."""
     context = {"password_reset_url": "http://localhost:8000/reset-confirm/123/"}
     html_content = render_to_string("emails/password_reset.html", context)
 
@@ -23,7 +23,7 @@ def test_password_reset_email_template_rendering():
 
 
 def test_workspace_invite_email_template_rendering():
-    """التحقق من صحة تصيير قالب دعوات الأعضاء وإدراج اسم الداعي ومساحة العمل."""
+    """Verifies workspace invite email template rendering."""
     context = {
         "inviter": "Mohamed",
         "workspace_name": "DeepMind Corp",
@@ -38,11 +38,11 @@ def test_workspace_invite_email_template_rendering():
 
 @pytest.mark.django_db
 def test_send_email_outbox_integration():
-    """التحقق من أن استدعاء إرسال إيميل عبر دجانغو يضعه في الـ outbox بنجاح في التطوير."""
+    """Verifies sending mail places email in outbox during testing."""
     mail.send_mail(
         subject="Test Email",
         message="Hello World",
-        from_email="no-reply@auraflow.com",
+        from_email="no-reply@aurastack.com",
         recipient_list=["user@example.com"],
         html_message="<h1>Hello World</h1>",
     )

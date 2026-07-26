@@ -8,9 +8,9 @@ from django_q.models import Task
 
 def health_check(request):
     """
-    نقطة فحص صحة النظام للتحقق من الاتصال بالخدمات الحيوية:
-    1. قاعدة البيانات (Database Connectivity)
-    2. حالة خادم المهام Q2 (Recent Task Executions)
+    Health check endpoint verifying system connectivity to vital services:
+    1. Database connectivity
+    2. Task Queue worker status (Django Q2)
     """
     health_status = {
         "status": "healthy",
@@ -18,7 +18,7 @@ def health_check(request):
         "services": {"database": "unknown", "q2_worker": "unknown"},
     }
 
-    # 1. فحص قاعدة البيانات
+    # 1. Database connectivity check
     try:
         connection.ensure_connection()
         health_status["services"]["database"] = "up"
@@ -26,7 +26,7 @@ def health_check(request):
         health_status["status"] = "unhealthy"
         health_status["services"]["database"] = f"down: {str(e)}"
 
-    # 2. فحص حالة خادم Q2 (البحث عن مهام تمت معالجتها مؤخراً)
+    # 2. Django Q2 task worker check (recent task execution status)
     try:
         recent_tasks_exist = Task.objects.filter(
             started__gte=now() - datetime.timedelta(hours=24)

@@ -2,8 +2,8 @@ import json
 
 
 def get_request_data(request) -> dict:
-    """استخراج بيانات الطلب سواء كانت JSON أو Form-Encoded بأمان
-    لتوافق Inertia والترميزات المختلفة."""
+    """Safely extracts request data from either JSON payload or Form-Encoded data
+    for compatibility with Inertia and different content types."""
     if request.content_type and "application/json" in request.content_type:
         try:
             return json.loads(request.body)

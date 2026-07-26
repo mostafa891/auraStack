@@ -1,17 +1,17 @@
 /**
  * TypeScript definitions for Inertia shared props.
  *
- * الأنواع دي بتحدد شكل البيانات اللي Django بيبعتها لـ Vue
- * عبر Inertia `share()` — أي حاجة تتغير في الباك إند لازم تتحدث هنا.
+ * Defines the structure of data passed from Django to Vue
+ * via Inertia `share()` — any backend payload changes must be updated here.
  */
 
-/** شكل الخطأ الواحد كما يرجع من Django Form errors */
+/** Single field error structure returned from Django Form errors */
 export interface FieldError {
   message: string;
   code: string;
 }
 
-/** الأخطاء المُشاركة عبر Inertia share() */
+/** Errors shared via Inertia share() */
 export type SharedErrors = Record<string, FieldError[]> | null;
 
 export interface AuthUser {
@@ -44,7 +44,7 @@ export interface WorkspaceInfo {
   subscription?: WorkspaceSubscription | null;
 }
 
-/** كل الـ Shared Props اللي Inertia بيبعتها مع كل Response */
+/** Complete Shared Props payload sent by Inertia on every response */
 export interface SharedProps {
   errors?: SharedErrors;
   error_code?: string | null;
@@ -56,6 +56,6 @@ export interface SharedProps {
   [key: string]: any;
 }
 
-/** لتعريف props أي صفحة Inertia */
+/** Helper type to define props for any Inertia page */
 export type PageProps<T extends Record<string, unknown> = Record<string, unknown>> =
   T & SharedProps;

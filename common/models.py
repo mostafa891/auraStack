@@ -3,7 +3,7 @@ from django.utils import timezone
 
 
 class TimeStampedModel(models.Model):
-    """كلاس مجرد لتتبع التوقيت الصارم لجميع موديلات المنصة لمنع تكرار الحقول."""
+    """Abstract model class providing created_at and updated_at timestamps."""
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -26,12 +26,12 @@ class SoftDeleteManager(models.Manager):
 
 
 class SoftDeleteModel(models.Model):
-    """موديل مجرد لدعم الحذف الناعم (Soft Delete) للملفات الحساسة."""
+    """Abstract base model implementing soft delete behavior."""
 
     deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
     objects = SoftDeleteManager()
-    all_objects = models.Manager()  # جلب كافة السجلات بما فيها المحذوفة ناعماً
+    all_objects = models.Manager()  # Returns all records including soft-deleted entries
 
     class Meta:
         abstract = True

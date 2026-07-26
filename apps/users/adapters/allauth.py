@@ -17,7 +17,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
 
 
 class AllauthAdapter:
-    """المحول المباشر لإدارة وتطويع الـ APIs المستقرة لـ django-allauth."""
+    """Adapter bridging django-allauth internal services and APIs."""
 
     @staticmethod
     def authenticate_user(
@@ -41,39 +41,39 @@ class AllauthAdapter:
 
     @staticmethod
     def register_user(request: HttpRequest, email: str, password: str) -> ServiceResult:
-        """إنشاء مستخدم جديد بالكامل عبر الـ Adapter API الرسمية والمستقرة لـ allauth."""
+        """Registers a new user using the official allauth adapter API."""
         adapter = get_adapter(request)
         user = adapter.new_user(request)
         user.email = email
 
         try:
-            # تشغيل سياسات فحص قوة كلمة المرور الرسمية لـ دجانغو وallauth
+            # Enforce Django and allauth password validation policies
             adapter.clean_password(password, user)
             user.set_password(password)
 
-            # الحفظ الصارم في قاعدة البيانات - سيطلق الـ IntegrityError فوراً لو كان البريد مكرراً
+            # Save user instance - raises IntegrityError if email is duplicated
             user.save()
 
-            # تهيئة البريد الإلكتروني في جداول Allauth لضمان إنشاء سجل EmailAddress
+            # Initialize user email in Allauth tables to create EmailAddress record
             from allauth.account.utils import setup_user_email
 
             setup_user_email(request, user, [])
 
-            # إكمال المعاملة الخلفية لـ allauth (إطلاق الـ Signals، وتجهيز بريد التفعيل)
+            # Complete allauth signup lifecycle (dispatch signals, trigger emails)
             complete_signup(
                 request=request,
                 user=user,
-                email_verification="none",  # محكوم بالـ Settings الافتراضية للـ local
+                email_verification="none",  # Governed by default settings
                 success_url="/",
             )
             return ServiceResult(success=True, data=user)
 
         except ValidationError as e:
-            # بما أن الخطأ يتم إطلاقه من clean_password، فهو دائماً يتعلق بحقل كلمة المرور
+            # Validation error raised from clean_password pertains to password policy
             errors = e.message_dict if hasattr(e, "error_dict") else {"password": e.messages}
             return ServiceResult(
                 success=False, errors=errors, code=AuthErrorCode.INVALID_CREDENTIALS
             )
         except IntegrityError:
-            # صيد ثغرة الـ Race Condition من المنبع (قاعدة البيانات)
+            # Catch database level unique constraint race condition
             return ServiceResult(success=False, code=AuthErrorCode.EMAIL_ALREADY_EXISTS)

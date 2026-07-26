@@ -1,6 +1,7 @@
 from django.urls import path
 
 from apps.users.views import (
+    AvatarDeleteView,
     AvatarPresignView,
     AvatarUploadView,
     LoginView,
@@ -27,6 +28,7 @@ urlpatterns = [
     path("profile/update/", ProfileUpdateView.as_view(), name="profile_update"),
     path("profile/avatar/presign/", AvatarPresignView.as_view(), name="avatar_presign"),
     path("profile/avatar/upload/", AvatarUploadView.as_view(), name="avatar_upload"),
+    path("profile/avatar/delete/", AvatarDeleteView.as_view(), name="avatar_delete"),
     path("set-language/", SetLanguageView.as_view(), name="set_language"),
     # Security, MFA, and Social connections (SPA Vue/Inertia pages)
     path("password/change/", PasswordChangeView.as_view(), name="password_change"),

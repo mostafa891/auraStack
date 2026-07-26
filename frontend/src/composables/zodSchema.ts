@@ -2,14 +2,12 @@ import type { TypedSchema, TypedSchemaError } from "vee-validate";
 import type { z } from "zod";
 
 /**
- * محول مخصص لربط Zod v4 بـ VeeValidate.
+ * Custom schema bridge connecting Zod v4 with VeeValidate.
  *
- * المكتبة الرسمية @vee-validate/zod لسه ما تدعمش Zod v4
- * فاحنا بنكتب الربط يدوياً — ده أبسط مما تتخيل:
- *
- * 1. VeeValidate بيبعت القيم (values) للـ validate()
- * 2. Zod بيعمل safeParse ويرجع نجاح أو أخطاء
- * 3. احنا بنحوّل أخطاء Zod لصيغة VeeValidate
+ * Provides a lightweight bridge between Zod v4 and VeeValidate:
+ * 1. VeeValidate passes form values to parse()
+ * 2. Zod executes safeParse() and returns success or error issues
+ * 3. Zod error issues are formatted into VeeValidate error objects
  */
 export function toTypedSchema<TOutput extends Record<string, unknown>>(
   zodSchema: z.ZodType<TOutput>
@@ -27,7 +25,7 @@ export function toTypedSchema<TOutput extends Record<string, unknown>>(
         };
       }
 
-      // تحويل أخطاء Zod لصيغة VeeValidate
+      // Convert Zod issues to VeeValidate schema errors
       const errors: TypedSchemaError[] = result.error.issues.map((issue) => ({
         path: issue.path.map(String).join(".") || issue.path[0]?.toString(),
         errors: [issue.message],

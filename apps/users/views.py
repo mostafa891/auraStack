@@ -20,14 +20,14 @@ from common.utils.request import get_request_data
 
 
 class LandingView(View):
-    """عرض صفحة الهبوط العامة للقالب."""
+    """Renders the public landing page for the application."""
 
     def get(self, request):
         return render(request, "Landing")
 
 
 class LoginView(View):
-    """تحكم تسجيل الدخول وإدارة حركة المرور مع التوجيه الذاتي."""
+    """Handles user authentication and traffic routing with self-redirects."""
 
     def get(self, request):
         if request.user.is_authenticated:
@@ -57,7 +57,7 @@ class LoginView(View):
             share(request, errors=result.errors, error_code=result.code)
             return render(request, "Auth/Login")
 
-        # إذا قام allauth بإرجاع استجابة توجيه مخصصة (مثل التوجيه للمصادقة الثنائية)، نقوم بإرجاعها
+        # Handle custom redirect responses returned by django-allauth (e.g. 2FA MFA redirect)
         if result.data:
             return result.data
 
@@ -69,7 +69,7 @@ class LoginView(View):
 
 
 class RegisterView(View):
-    """تحكم إنشاء حساب جديد مع التوجيه الذاتي للمستخدمين المصادقين."""
+    """Handles user registration with self-redirects for authenticated users."""
 
     def get(self, request):
         if request.user.is_authenticated:
@@ -106,7 +106,7 @@ class RegisterView(View):
 
 
 class ProfileView(LoginRequiredMixin, View):
-    """صفحة التفضيلات الشخصية وإعدادات الحساب للمستخدم."""
+    """User profile and account settings page."""
 
     login_url = "auth:login"
 
@@ -115,7 +115,7 @@ class ProfileView(LoginRequiredMixin, View):
 
 
 class ProfileUpdateView(LoginRequiredMixin, View):
-    """مستقبل تحديث تفضيلات المستخدم (اللغة، المظهر، المنطقة الزمنية)."""
+    """Updates user profile preferences (language, theme, timezone, avatar)."""
 
     login_url = "auth:login"
 
@@ -140,7 +140,7 @@ class ProfileUpdateView(LoginRequiredMixin, View):
 
 
 class LogoutView(View):
-    """واجهة إنهاء الجلسة وتسجيل الخروج الآمن."""
+    """Ends user session and logs out safely."""
 
     def post(self, request):
         auth_logout(request)
@@ -148,7 +148,7 @@ class LogoutView(View):
 
 
 class AvatarPresignView(View):
-    """توليد روابط الرفع المباشر الموقعة للتخزين السحابي (أو محاكاتها محلياً في التطوير)."""
+    """Generates direct signed upload URLs for cloud storage (or local dev simulation)."""
 
     def get(self, request):
         if not request.user.is_authenticated:
@@ -156,8 +156,8 @@ class AvatarPresignView(View):
                 {"error": "Authentication credentials were not provided."}, status=401
             )
 
-        # في بيئة الإنتاج: يمكن توليد رابط S3 Presigned POST هنا
-        # في بيئة التطوير المحلية: نرجع رابط رفع محلي لمحاكاة المعاملة السحابية
+        # In production: generate S3 Presigned POST URL here
+        # In local development: return local upload URL to simulate cloud behavior
         upload_url = request.build_absolute_uri(reverse("auth:avatar_upload"))
         return JsonResponse(
             {
@@ -172,12 +172,12 @@ class AvatarPresignView(View):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class AvatarUploadView(View):
-    """مستقبل الرفع المباشر للملفات الثنائية (محاكاة السحابة للتطوير المحلي)."""
+    """Endpoint for direct binary file uploads (simulating cloud storage in local dev)."""
 
     def _is_valid_image_header(self, uploaded_file) -> bool:
-        """التحقق من صحة توقيع الصورة الفعلي (Magic Bytes) لتفادي التزوير."""
+        """Validates actual file header magic bytes to prevent spoofing."""
         header = uploaded_file.read(12)
-        uploaded_file.seek(0)  # إعادة مؤشر الملف للبداية بعد القراءة
+        uploaded_file.seek(0)  # Reset stream position after reading
 
         # PNG
         if header.startswith(b"\x89PNG"):
@@ -200,7 +200,7 @@ class AvatarUploadView(View):
                 {"error": "Authentication credentials were not provided."}, status=401
             )
 
-        # التحقق من مطابقة الـ user_id المرسل للمستخدم المصادق الحالي لمنع ثغرات التلاعب بالمعرفات
+        # Verify uploaded user_id matches authenticated user to prevent IDOR vulnerabilities
         user_id = request.POST.get("user_id")
         if not user_id or user_id != str(request.user.id):
             return JsonResponse({"error": "Access denied. User ID mismatch."}, status=403)
@@ -210,7 +210,7 @@ class AvatarUploadView(View):
 
         uploaded_file = request.FILES["file"]
 
-        # 1. التحقق من امتداد الملف (Extension Whitelist)
+        # 1. File extension whitelist check
         ext = os.path.splitext(uploaded_file.name)[1].lower()
         if ext not in [".png", ".jpg", ".jpeg", ".webp", ".gif"]:
             return JsonResponse(
@@ -222,24 +222,41 @@ class AvatarUploadView(View):
                 status=400,
             )
 
-        # 2. التحقق من حجم الملف (الحد الأقصى 5 ميجابايت)
+        # 2. File size limit check (Max 5MB)
         if uploaded_file.size > 5 * 1024 * 1024:
             return JsonResponse({"error": "File size exceeds the limit of 5MB."}, status=400)
 
-        # 3. التحقق من الـ Content-Type المرسل
+        # 3. Content-Type check
         if not uploaded_file.content_type.startswith("image/"):
             return JsonResponse({"error": "File content type must be an image"}, status=400)
 
-        # 4. التحقق الفعلي من توقيع الصورة (Magic Bytes)
+        # 4. Magic bytes signature verification
         if not self._is_valid_image_header(uploaded_file):
             return JsonResponse({"error": "Corrupted or invalid image file structure"}, status=400)
 
-        # توليد اسم فريد وحفظ الملف عبر نظام التخزين الافتراضي لدجانغو
+        # Generate unique filename and save via Django default storage
         filename = f"avatars/{uuid.uuid4()}{ext}"
         saved_path = default_storage.save(filename, ContentFile(uploaded_file.read()))
         file_url = default_storage.url(saved_path)
 
-        # إرجاع الرابط المطلق للملف
+        # Return absolute URL for the saved avatar image
         absolute_url = request.build_absolute_uri(file_url)
 
         return JsonResponse({"avatar_url": absolute_url})
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class AvatarDeleteView(LoginRequiredMixin, View):
+    """Deletes avatar image file and resets avatar URL for authenticated user."""
+
+    def post(self, request):
+        user = request.user
+        if user.avatar_url:
+            if "/media/" in user.avatar_url:
+                relative_path = user.avatar_url.split("/media/")[-1]
+                if default_storage.exists(relative_path):
+                    default_storage.delete(relative_path)
+            user.avatar_url = ""
+            user.save(update_fields=["avatar_url"])
+
+        return JsonResponse({"success": True, "avatar_url": ""})

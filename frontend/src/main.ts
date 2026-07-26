@@ -4,15 +4,15 @@ import { createPinia } from "pinia";
 import ToastContainer from "@/layouts/ToastContainer.vue";
 import "@/app.css";
 
-// حل توافقية Inertia v2/v3 مع django-inertia:
-// حزم الباك إند القديمة تنشئ حاوية <div> بينما الإصدارات الحديثة للفرونت إند تتوقع عنصر <script>
+// Handle Inertia v2/v3 compatibility bridge with django-inertia backend container:
+// Parses the dataset page attributes attached to the root mount element
 const el = document.getElementById("app");
 const page = el && el.dataset.page ? JSON.parse(el.dataset.page) : undefined;
 
 createInertiaApp({
   page,
   resolve: (name: string) => {
-    // تحميل الصفحات ديناميكياً ومجزءاً (Lazy Loading) من مجلد pages/
+    // Dynamically resolve page components lazily from pages/ directory
     const pages = import.meta.glob<DefineComponent>("./pages/**/*.vue");
 
     const pageModule = pages[`./pages/${name}.vue`];
@@ -23,12 +23,12 @@ createInertiaApp({
       );
     }
 
-    // دعم استيراد الوعد (Promise) في Inertia v3
+    // Support async promise module imports in Inertia v3
     return typeof pageModule === "function" ? pageModule() : pageModule;
   },
 
   setup({ el, App, props, plugin }) {
-    // بناء غلاف جذري يضم تطبيق Inertia بالإضافة لحاوية التنبيهات (Toasts)
+    // Mount root wrapper containing the Inertia App and Toast notifications container
     const RootApp = {
       render() {
         return h("div", [

@@ -8,7 +8,7 @@ from django.utils.timezone import now
 
 
 class Tag(models.Model):
-    """وسوم تصنيف مقالات البلوغ."""
+    """Tags for classifying blog posts."""
 
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(max_length=60, unique=True, blank=True)
@@ -49,7 +49,7 @@ class Post(models.Model):
     summary = models.TextField(max_length=500, blank=True)
     content = models.TextField(help_text="Markdown content supported")
     cover_image = models.ImageField(
-        upload_to="blog/covers/", blank=True, null=True, help_text="صورة الغلاف للمقال"
+        upload_to="blog/covers/", blank=True, null=True, help_text="Cover image for the article"
     )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -95,7 +95,7 @@ class Post(models.Model):
 
     @property
     def reading_time(self) -> int:
-        """تقدير وقت القراءة بالدقائق (بمعدل 200 كلمة/دقيقة)."""
+        """Estimated reading time in minutes (assuming 200 words/min)."""
         words = len(self.content.split())
         minutes = math.ceil(words / 200)
         return max(1, minutes)

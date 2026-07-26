@@ -32,46 +32,46 @@ def workspace_setup(db):
 
 @pytest.mark.django_db
 def test_workspace_settings_isolation(client, workspace_setup):
-    """التحقق من أن المستخدم لا يمكنه الدخول لصفحة إعدادات مساحة عمل لا ينتمي إليها."""
+    """Verifies that a user cannot access workspace settings for a workspace they do not belong to."""
     client.force_login(workspace_setup["user_a"])
 
-    # محاولة دخول إعدادات مساحة العمل B
+    # Attempt to access Workspace B settings
     response = client.get(
         reverse("teams:workspace_settings", kwargs={"slug": workspace_setup["workspace_b"].slug})
     )
 
-    # يجب أن يتم توجيهه أو إرجاع رسالة خطأ، بناءً على منطق العرض
+    # Should redirect with unauthorized status
     assert response.status_code == 302
 
 
 @pytest.mark.django_db
 def test_workspace_update_settings_isolation(client, workspace_setup):
-    """التحقق من أن المستخدم لا يمكنه تحديث إعدادات مساحة عمل لا ينتمي إليها."""
+    """Verifies that a user cannot update settings for a workspace they do not belong to."""
     client.force_login(workspace_setup["user_a"])
 
-    # إرسال طلب بوست لتحديث اسم مساحة العمل B
+    # Attempt POST to update Workspace B name
     response = client.post(
         reverse("teams:workspace_settings", kwargs={"slug": workspace_setup["workspace_b"].slug}),
         data={"name": "Hacked Name"},
     )
     assert response.status_code == 302
 
-    # يجب أن يفشل الطلب ويتم حظر التعديل
+    # Verify update was blocked and name remains unchanged
     workspace_setup["workspace_b"].refresh_from_db()
     assert workspace_setup["workspace_b"].name == "Workspace B"
 
 
 @pytest.mark.django_db
 def test_workspace_invitation_isolation(client, workspace_setup):
-    """التحقق من منع إرسال دعوات لمساحة عمل لا ينتمي إليها المستخدم."""
+    """Verifies that a user cannot send member invitations for a workspace they do not belong to."""
     client.force_login(workspace_setup["user_a"])
 
-    # محاولة دعوة شخص لمساحة العمل B
+    # Attempt POST to invite member to Workspace B
     response = client.post(
         reverse("teams:workspace_invite", kwargs={"slug": workspace_setup["workspace_b"].slug}),
         data={"email": "new_member@example.com", "role": "MEMBER"},
     )
     assert response.status_code == 302
 
-    # يجب أن يتم رفض الطلب
+    # Verify invitation was blocked
     assert WorkspaceInvitation.objects.filter(workspace=workspace_setup["workspace_b"]).count() == 0

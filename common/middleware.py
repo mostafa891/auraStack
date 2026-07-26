@@ -3,14 +3,14 @@ from inertia import share
 
 
 class ShareUserDataMiddleware:
-    """كود وسيط لمشاركة تفاصيل المستخدم الحالي مع واجهات Inertia بشكل آمن."""
+    """Middleware to share authenticated user, workspace, and flash data with Inertia."""
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest):
         request.active_workspace = None
-        # في بيئة Inertia، نقوم بنشر الحساب والمعلومات المشتركة في كل استجابة
+        # Share user context and workspace data on every Inertia response
         if request.user and request.user.is_authenticated:
             user_lang = request.user.language
             if (
@@ -26,8 +26,7 @@ class ShareUserDataMiddleware:
 
             from apps.teams.selectors import get_active_workspace, list_user_workspaces
 
-            # جلب مساحات العمل التي ينتمي إليها المستخدم
-            # مع أدواره فيها بشكل فعال باستخدام الـ Selector
+            # Fetch workspace memberships with assigned roles efficiently via selector
             memberships = list_user_workspaces(request.user)
             workspaces_data = [
                 {
@@ -40,7 +39,7 @@ class ShareUserDataMiddleware:
                 for m in memberships
             ]
 
-            # جلب مساحة العمل النشطة من الجلسة باستخدام الـ Selector
+            # Retrieve active workspace instance from session using selector
             active_workspace_id = request.session.get("active_workspace_id")
             active_workspace = None
 
@@ -51,7 +50,7 @@ class ShareUserDataMiddleware:
                 active_mem = get_active_workspace(request.user, active_workspace_id)
                 if active_mem:
                     request.active_workspace = active_mem.workspace
-                    # جلب تفاصيل الاشتراك الحالية من الكائن المحمل مسبقاً (select_related)
+                    # Get current subscription details from select_related object
                     sub = getattr(active_mem.workspace, "subscription", None)
                     if sub:
                         plan_id = sub.plan_id
@@ -95,12 +94,12 @@ class ShareUserDataMiddleware:
                 else:
                     request.session.pop("active_workspace_id", None)
 
-            # إذا لم تكن هناك مساحة نشطة، نختار مساحة العمل الأولى تلقائياً
+            # Default to first workspace if no active workspace ID in session
             if not active_workspace and memberships:
                 first_mem = memberships[0]
                 request.active_workspace = first_mem.workspace
                 request.session["active_workspace_id"] = str(first_mem.workspace.id)
-                # جلب تفاصيل الاشتراك الحالية من الكائن المحمل مسبقاً (select_related)
+                # Get current subscription details from select_related object
                 sub = getattr(first_mem.workspace, "subscription", None)
                 if sub:
                     plan_id = sub.plan_id
@@ -170,7 +169,7 @@ class ShareUserDataMiddleware:
                 },
             )
 
-        # مشاركة الرسائل الفورية (Flash Messages) الخاصة بـ Django مع Inertia
+        # Share Django flash messages with Inertia
         from django.contrib.messages import get_messages
 
         django_messages = []

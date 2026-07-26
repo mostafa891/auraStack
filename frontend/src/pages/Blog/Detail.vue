@@ -122,7 +122,7 @@ function inlineParser(text: string): string {
     <header class="border-b border-slate-800/60 bg-slate-950/90 backdrop-blur-xl sticky top-0 z-50">
       <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-          AuraFlow
+          auraStack
         </Link>
         <div class="flex items-center gap-4">
           <!-- Language Switcher -->
@@ -205,7 +205,7 @@ function inlineParser(text: string): string {
     </main>
 
     <footer class="border-t border-slate-800/60 mt-8 py-6 text-center text-sm text-slate-600">
-      <p>{{ t('blog.built_with') }} AuraFlow · <Link href="/" class="hover:text-slate-400 transition-colors">{{ t('blog.back_to_app') }}</Link></p>
+      <p>{{ t('blog.built_with') }} auraStack · <Link href="/" class="hover:text-slate-400 transition-colors">{{ t('blog.back_to_app') }}</Link></p>
     </footer>
   </div>
 </template>

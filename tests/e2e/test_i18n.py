@@ -5,45 +5,40 @@ from playwright.sync_api import Page
 
 @pytest.mark.django_db(transaction=True)
 def test_i18n_and_direction_flipping_e2e(live_server, page: Page):
-    """التحقق من عمل المترجم التفاعلي وتعديل اتجاهات الصفحة (RTL/LTR) تلقائياً."""
+    """End-to-end testing of dynamic internationalization (i18n) and RTL/LTR direction flipping."""
     User = get_user_model()
 
     page.on("console", lambda msg: print(f"[Browser Console i18n] {msg.text}"))
     page.on("pageerror", lambda err: print(f"[Browser PageError i18n] {err}"))
 
-    # 1. زيارة صفحة الدخول (تظهر بالإنجليزية افتراضياً)
+    # 1. Visit login page (default LTR / English)
     page.goto(live_server.url + "/auth/login/")
-    try:
-        page.wait_for_selector("#email", timeout=5000)
-    except Exception as e:
-        print(f"Current page URL: {page.url}")
-        print(f"Current page content: {page.content()}")
-        raise e
+    page.wait_for_selector("#email", timeout=5000)
 
-    # التحقق من أن اتجاه الصفحة الافتراضي هو LTR واللغة en
+    # Verify default page direction is LTR and lang is en
     assert page.locator("html").get_attribute("dir") == "ltr"
     assert page.locator("html").get_attribute("lang") == "en"
     assert page.locator("h1:has-text('Welcome back')").is_visible()
 
-    # 2. الضغط على زر تبديل اللغة للعربية
+    # 2. Click language switcher to Arabic
     page.click("button:has-text('العربية')")
     page.wait_for_function("document.documentElement.lang === 'ar'", timeout=5000)
 
-    # التحقق من انقلاب الاتجاه إلى RTL وتغير اللغة إلى ar والنصوص للعربية
+    # Verify direction flipped to RTL and lang is ar
     assert page.locator("html").get_attribute("dir") == "rtl"
     assert page.locator("html").get_attribute("lang") == "ar"
     assert page.locator("h1:has-text('مرحباً بك مجدداً')").is_visible()
 
-    # 3. الضغط للتبديل مرة أخرى للإنجليزية
+    # 3. Switch back to English
     page.click("button:has-text('English')")
     page.wait_for_function("document.documentElement.lang === 'en'", timeout=5000)
 
-    # التحقق من العودة لـ LTR واللغة en
+    # Verify return to LTR and lang en
     assert page.locator("html").get_attribute("dir") == "ltr"
     assert page.locator("html").get_attribute("lang") == "en"
 
-    # 4. إنشاء مستخدم وتجربة تسجيل الدخول وتغيير التفضيلات
-    email = "i18n_user@auraflow.com"
+    # 4. Create user account, login, and update user language preference in profile
+    email = "i18n_user@aurastack.com"
     User.objects.create_user(email=email, password="Password123!")
 
     page.fill("#email", email)
@@ -52,16 +47,16 @@ def test_i18n_and_direction_flipping_e2e(live_server, page: Page):
 
     page.wait_for_url("**/profile/", timeout=5000)
 
-    # التحقق من أن التفضيلات تظهر وتغيير اللغة للعربية وحفظها
+    # Select Arabic preference and save settings
     page.select_option("#language", "ar")
     page.click("button:has-text('Save Settings')")
     page.wait_for_function("document.documentElement.lang === 'ar'", timeout=5000)
 
-    # التحقق من حفظ التفضيلات وتحديث اتجاه الصفحة إلى RTL
+    # Verify direction flipped to RTL
     assert page.locator("html").get_attribute("dir") == "rtl"
     assert page.locator("html").get_attribute("lang") == "ar"
 
-    # إعادة تحميل الصفحة للتحقق من قراءة التفضيلات المخزنة في قاعدة البيانات تلقائياً
+    # Reload page to verify saved user preference persists from DB
     page.reload()
     page.wait_for_selector("#language", timeout=5000)
     assert page.locator("html").get_attribute("dir") == "rtl"

@@ -1,28 +1,43 @@
-# 🌌 AuraFlow SaaS Boilerplate & Internal Tools Engine
+# 🌌 auraStack SaaS Boilerplate & Internal Tools Engine
 
 Production-grade, modular Full-Stack SaaS Boilerplate & Internal Platform Engine engineered with modern 2026 web architecture.
 
-![Python](https://img.shields.io/badge/Python-3.13-blue?style=for-the-badge&logo=python)
+[![CI/CD Pipeline](https://github.com/mostafa891/auraStack/actions/workflows/ci.yml/badge.svg)](#)
+![Python](https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python)
 ![Django](https://img.shields.io/badge/Django-5.1-092E20?style=for-the-badge&logo=django)
 ![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=for-the-badge&logo=vuedotjs)
-![Inertia.js](https://img.shields.io/badge/Inertia.js-0.6-9553E9?style=for-the-badge&logo=inertia)
+![Inertia.js](https://img.shields.io/badge/Inertia.js-v2-9553E9?style=for-the-badge&logo=inertia)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?style=for-the-badge&logo=tailwindcss)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript)
-![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions)
 
 ---
 
 ## 🛠️ Core Technology Stack
 
-AuraFlow leverages a modern hybrid architecture combining robust backend security with rich, dynamic Single Page Application (SPA) reactive user experiences:
+auraStack leverages a modern hybrid architecture combining robust backend security with rich, dynamic Single Page Application (SPA) reactive user experiences:
 
 * **Backend Engine:** [Django 5](https://www.djangoproject.com/) (LTS release).
 * **Frontend SPA:** [Vue 3](https://vuejs.org/) (Composition API with `<script setup lang="ts">`) powered by [Vite](https://vitejs.dev/).
-* **Protocol Bridge:** [Inertia.js](https://inertiajs.com/) (Direct server-driven SPA routing without full-page reloads or unnecessary REST API boilerplate).
+* **Protocol Bridge:** [Inertia.js v2](https://inertiajs.com/) (Direct server-driven SPA routing without full-page reloads or unnecessary REST API boilerplate).
 * **Design & Styling:** [Tailwind CSS v4](https://tailwindcss.com/) (CSS-first configuration with dynamic dark mode design tokens).
 * **Identity & Security:** [django-allauth](https://django-allauth.readthedocs.io/) (Custom adapters, username-less email authentication, TOTP/MFA, and OAuth2 connections).
+* **Payment Gateways:** 5 pre-wired providers (Stripe, LemonSqueezy, PayPal, Paddle, and Paymob MENA).
 * **Admin Dashboard:** [django-unfold](https://github.com/unfoldadmin/django-unfold) (Sleek dark-mode-first administration panel).
 * **Task Queues & Webhooks:** Django-Q2 background worker clusters and signature-verified webhook handlers.
+
+---
+
+## ⚡ Developer Automation & DX (`Makefile`)
+
+The repository includes a `Makefile` for instant one-word developer commands:
+
+```bash
+make dev      # Starts Django backend & Vite dev servers concurrently
+make test     # Runs Pytest unit and browser E2E test suite
+make verify   # Runs full system verification (tests + dry-run migrations)
+make lint     # Runs Ruff linter checks across Python codebase
+make migrate  # Applies pending Django database migrations
+```
 
 ---
 
@@ -31,12 +46,13 @@ AuraFlow leverages a modern hybrid architecture combining robust backend securit
 Organized following domain-driven, modular application standards:
 
 ```text
-auraflow/
+aurastack/
 │
+├── .github/workflows/       # Automated CI/CD GitHub Actions pipeline
 ├── apps/                    # Domain-driven modular local applications
-│   ├── users/               # Custom User model, security views, MFA, adapters
+│   ├── users/               # Custom User model, security views, MFA, avatar management
 │   ├── teams/               # Multi-tenancy workspaces, RBAC, member invitations
-│   ├── payments/            # Gateway webhooks, plan limits, subscription tracking
+│   ├── payments/            # 5 payment gateways, webhooks, subscription tracking
 │   └── blog/                # Content and internal publishing management
 │
 ├── common/                  # Shared cross-cutting concerns & utilities
@@ -52,20 +68,36 @@ auraflow/
 │
 ├── frontend/                # Complete SPA frontend (Vue 3 + TypeScript + Vite)
 │   ├── src/
-│   │   ├── pages/           # Inertia page views (Auth, Security, Workspaces)
+│   │   ├── pages/           # Inertia page views (Auth, Profile, Workspaces, Landing)
 │   │   ├── layouts/         # Shared wrappers & Toast notification containers
-│   │   ├── composables/     # Vue hooks (Form error parser, Zod schema adapter)
-│   │   ├── types/           # TypeScript interface definitions
+│   │   ├── composables/     # Vue hooks (i18n, Zod schema adapter)
 │   │   └── main.ts          # Application entry point & Inertia initialization
 │   └── vite.config.ts       # Vite build setup synced with django-vite
 │
-├── scripts/                 # Automation & seed data generation scripts
-│   └── seed_data.py         # Instant demo account population script
-│
+├── render.yaml              # 1-Click Render.com deployment configuration
+├── fly.toml                 # 1-Click Fly.io deployment configuration
+├── Makefile                 # Developer automation shortcuts
 ├── pytest.ini               # Pytest suite configuration
 ├── requirements.txt         # Python dependencies specification
-├── ruff.toml                # Code quality & linter configuration
-└── .pre-commit-config.yaml  # Pre-commit quality gates
+└── ruff.toml                # Code quality & linter configuration
+```
+
+---
+
+## 🩺 System Health Monitoring Endpoint
+
+auraStack exposes a lightweight system health probe at `/api/v1/public/health` for container orchestration and status monitoring:
+
+```json
+GET /api/v1/public/health
+
+Response 200 OK:
+{
+  "status": "healthy",
+  "database": "ok",
+  "service": "auraStack",
+  "version": "1.0.0"
+}
 ```
 
 ---
@@ -74,10 +106,11 @@ auraflow/
 
 Full integration with `django-allauth` wrapped entirely within Inertia Vue 3 views:
 
-1. **Multi-Factor Authentication (MFA/2FA):** TOTP authentication via Google Authenticator with active QR code generation and recovery codes (`/accounts/mfa/list/`).
-2. **Username-less Auth:** Clean `email` primary key login with server-side Django password complexity validators mapped directly to Vue field inputs.
-3. **Password Recovery & Password Change:** Automated password reset links and authenticated password change flows.
-4. **OAuth Social Connections:** One-click Google and GitHub social logins with glassmorphic signup onboarding.
+1. **Multi-Factor Authentication (MFA/2FA):** TOTP authentication via Google Authenticator with active QR code generation and recovery codes (`/auth/mfa/`).
+2. **Username-less Auth:** Clean `email` primary key login with server-side Django password complexity validators.
+3. **Avatar Security:** Direct magic-bytes header verification (PNG/JPEG/WEBP) before saving to disk, plus a **Remove Avatar** action.
+4. **Password Recovery & Password Change:** Automated password reset links and authenticated password change flows.
+5. **OAuth Social Connections:** One-click Google and GitHub social logins.
 
 ---
 
@@ -90,6 +123,7 @@ python -m venv .venv
 
 # Activate environment (Windows)
 .venv\Scripts\activate
+
 # Activate environment (Linux / macOS)
 source .venv/bin/activate
 
@@ -108,34 +142,28 @@ python manage.py migrate
 # Seed instant test accounts
 python manage.py runscript seed_data
 ```
-> **Pre-populated Demo Accounts:**
-> *   **Superadmin User:** `admin@auraflow.com` | Password: `AdminPass123!`
-> *   **Standard User:** `user@auraflow.com` | Password: `UserPass123!`
 
 ### 3. Running Development Servers
-To run locally, execute the backend and frontend development servers concurrently:
-
 ```bash
-# Terminal 1: Run Django Backend Server
+make dev
+# Or manually:
 python manage.py runserver
-
-# Terminal 2: Run Vite Frontend Dev Server
 npm run dev
 ```
 
 ---
 
-## 🐳 Docker Production Setup
+## 🚀 1-Click Cloud Deployment
 
-Run the entire stack (Gunicorn + Vite production bundle + PostgreSQL + Django-Q Worker) in isolated non-root containers:
+### Render.com
+auraStack includes a pre-configured `render.yaml` specification for Render.com deployment.
 
+### Fly.io
+Deploy to Fly.io using the included `fly.toml`:
 ```bash
-# Build and run containers
-docker-compose up --build
+fly launch
+fly deploy
 ```
-* Multi-stage build (`Node 20 Alpine` builds frontend assets, `Python 3.13 Slim` executes Gunicorn).
-* Non-privileged security user (`appuser`, UID 10000) for OWASP compliance.
-* Built-in container healthchecks.
 
 ---
 
@@ -143,18 +171,15 @@ docker-compose up --build
 
 ### 1. Automated Quality Gates (Ruff)
 ```bash
-# Run Linter & Formatter checks
-ruff check --fix
-ruff format
+make lint
 ```
 
 ### 2. Pytest & Playwright E2E Suite
 ```bash
-# Run complete test suite
-pytest
+make test
 ```
 * **Backend Tests:** Verifies custom user model, tenant isolation, workspace lockout, N+1 query limits, and webhook security.
-* **E2E Playwright Tests:** Launches real Chromium instances to execute end-to-end user journeys (Registration, Login, MFA verification, workspace role management, and dynamic Dark/Light theme switching).
+* **E2E Playwright Tests:** Launches real Chromium instances to execute end-to-end user journeys.
 
 ---
 
@@ -162,13 +187,8 @@ pytest
 
 Detailed architectural and technical guides are available in the `docs/` directory:
 
-1. **[Django Core Guide](docs/reference/django_core.md):** Base configurations, custom user model, lifecycle middleware.
-2. **[Django Allauth Integration](docs/reference/django_allauth.md):** Authentication adapters, MFA, dual password validation.
-3. **[Inertia-Django Architecture](docs/reference/inertia_django.md):** Page rendering, shared state props, views setup.
-4. **[Django Vite Integration](docs/reference/django_vite.md):** HMR setup, production asset manifest parsing.
-5. **[Django Unfold Admin](docs/reference/django_unfold.md):** Modern administrative panel customization.
-6. **[Vue 3 Composition API Guide](docs/reference/vue3.md):** SFC structures, Zod v4 validation adapter, toast store.
-7. **[Tailwind CSS v4 Guide](docs/reference/tailwind_v4.md):** CSS-first design tokens, dynamic dark mode switching.
-8. **[Pytest & Playwright Guide](docs/reference/pytest_playwright.md):** Backend unit tests, async fixtures, E2E browser testing.
-9. **[Django Helper Packages](docs/reference/django_packages.md):** Environ, lifecycle, storages, cleanup.
-10. **[Multi-Tenancy & Teams Guide](docs/reference/django_multi_tenancy.md):** Workspaces, RBAC permissions, invitation flows.
+1. **[Django Core Guide](docs/reference/django_core.md)**
+2. **[Django Allauth Integration](docs/reference/django_allauth.md)**
+3. **[Inertia-Django Architecture](docs/reference/inertia_django.md)**
+4. **[Multi-Tenancy & Teams Guide](docs/reference/django_multi_tenancy.md)**
+5. **[Pytest & Playwright Guide](docs/reference/pytest_playwright.md)**

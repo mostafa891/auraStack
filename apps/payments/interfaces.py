@@ -5,7 +5,7 @@ from typing import Any
 class BasePaymentGateway(ABC):
     @abstractmethod
     def create_customer(self, workspace_id: str, email: str) -> str:
-        """إنشاء أو جلب العميل من بوابة الدفع."""
+        """Creates or retrieves customer reference from payment provider."""
         pass
 
     @abstractmethod
@@ -17,15 +17,15 @@ class BasePaymentGateway(ABC):
         cancel_url: str,
         metadata: dict[str, Any] = None,
     ) -> str:
-        """توليد رابط الدفع لجلسة جديدة (Checkout Session)."""
+        """Generates checkout URL for a new payment session."""
         pass
 
     @abstractmethod
     def cancel_subscription(self, subscription_id: str) -> bool:
-        """إلغاء الاشتراك النشط لدى البوابة."""
+        """Cancels active subscription with payment provider."""
         pass
 
     @abstractmethod
     def verify_webhook_signature(self, payload: bytes, signature: str) -> bool:
-        """التحقق التواقيع والـ HMAC الخاص بالإشارات الواردة."""
+        """Verifies incoming webhook payload digital signature / HMAC digest."""
         pass

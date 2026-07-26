@@ -16,18 +16,18 @@ def published_post(db):
 
 @pytest.mark.django_db
 def test_post_slug_auto_generation():
-    """التحقق من توليد الـ Slug تلقائياً لعنوان المقالة عند الحفظ."""
+    """Verifies automatic slug generation from post title on save."""
     post = Post.objects.create(title="My Brand New SaaS Feature", content="Content")
     assert post.slug == "my-brand-new-saas-feature"
 
 
 @pytest.mark.django_db
 def test_blog_post_list_view(client, published_post):
-    """التحقق من إرجاع قائمة المقالات المنشورة بنجاح عبر Inertia."""
+    """Verifies rendering published posts list view via Inertia."""
     response = client.get(reverse("blog:post_list"))
     assert response.status_code == 200
 
-    # التحقق من إدراج المقالة في الـ context الخاص بـ Inertia
+    # Verify post inclusion in Inertia page props
     posts_in_context = (
         response.context["page"]["props"]["posts"]
         if isinstance(response.context["page"], dict)
@@ -47,7 +47,7 @@ def test_blog_post_list_view(client, published_post):
 
 @pytest.mark.django_db
 def test_blog_post_detail_view(client, published_post):
-    """التحقق من إرجاع تفاصيل المقالة وعرضها بنجاح."""
+    """Verifies rendering individual blog post detail view."""
     response = client.get(reverse("blog:post_detail", kwargs={"slug": published_post.slug}))
     assert response.status_code == 200
 

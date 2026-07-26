@@ -9,7 +9,7 @@ from common.models import SoftDeleteModel, TimeStampedModel
 
 
 class Workspace(SoftDeleteModel, TimeStampedModel):
-    """يمثل مساحة العمل أو المستأجر (Tenant) الرئيسي في المنصة."""
+    """Represents a Tenant workspace in the application."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(_("workspace name"), max_length=100)
@@ -29,10 +29,10 @@ class Workspace(SoftDeleteModel, TimeStampedModel):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            # توليد slug مبدئي يدعم اللغة العربية
+            # Generate initial slug supporting unicode characters
             base_slug = slugify(self.name, allow_unicode=True)
             if not base_slug:
-                # إذا كان الاسم يحتوي على رموز خاصة فقط أو فارغ، نستخدم معرّف عشوائي قصير
+                # Fallback to random unique prefix if name consists purely of special characters
                 base_slug = f"workspace-{uuid.uuid4().hex[:6]}"
 
             slug = base_slug
@@ -55,7 +55,7 @@ class Workspace(SoftDeleteModel, TimeStampedModel):
 
 
 class WorkspaceMember(SoftDeleteModel, TimeStampedModel):
-    """يربط المستخدمين بمساحات العمل مع تحديد رتبهم وصلاحياتهم."""
+    """Links user accounts to workspace instances with assigned roles."""
 
     class RoleChoices(models.TextChoices):
         OWNER = "OWNER", _("Owner")
@@ -93,7 +93,7 @@ class WorkspaceMember(SoftDeleteModel, TimeStampedModel):
 
 
 class WorkspaceInvitation(TimeStampedModel):
-    """إدارة دعوات البريد الإلكتروني للانضمام لمساحات العمل."""
+    """Manages email invitations for joining a workspace."""
 
     class StatusChoices(models.TextChoices):
         PENDING = "PENDING", _("Pending")

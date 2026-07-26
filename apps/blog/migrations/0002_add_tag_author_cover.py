@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # إنشاء نموذج Tag الجديد
+        # Create Tag model
         migrations.CreateModel(
             name="Tag",
             fields=[
@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
                 "ordering": ["name"],
             },
         ),
-        # إضافة حقل cover_image
+        # Add cover_image field
         migrations.AddField(
             model_name="post",
             name="cover_image",
@@ -38,10 +38,10 @@ class Migration(migrations.Migration):
                 blank=True,
                 null=True,
                 upload_to="blog/covers/",
-                help_text="صورة الغلاف للمقال",
+                help_text="Cover image for the article",
             ),
         ),
-        # إضافة حقل author
+        # Add author field
         migrations.AddField(
             model_name="post",
             name="author",
@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
                 verbose_name="author",
             ),
         ),
-        # إضافة علاقة tags (ManyToMany)
+        # Add tags ManyToMany relationship
         migrations.AddField(
             model_name="post",
             name="tags",

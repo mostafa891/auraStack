@@ -14,7 +14,7 @@ from common.utils.email import normalize_email
 
 
 class AuraLoginForm(forms.Form):
-    """نموذج فحص وتطهير مدخلات تسجيل الدخول لمنصة AuraFlow."""
+    """Form sanitization and validation for user login."""
 
     email = forms.EmailField(
         required=True,
@@ -32,7 +32,7 @@ class AuraLoginForm(forms.Form):
 
 
 class AuraRegisterForm(forms.Form):
-    """نموذج فحص وتطهير مدخلات حساب جديد دون التدخل في شروط العمل."""
+    """Form validation and sanitization for user registration."""
 
     email = forms.EmailField(
         required=True,
@@ -63,7 +63,7 @@ class AuraRegisterForm(forms.Form):
 
 
 class ProfileUpdateForm(forms.ModelForm):
-    """نموذج تحديث التفضيلات الشخصية للمستخدم (اللغة، المظهر، المنطقة الزمنية، الصورة الرمزية)."""
+    """Form for updating user preferences (language, theme, timezone, avatar URL)."""
 
     timezone = forms.ChoiceField(choices=[])
 

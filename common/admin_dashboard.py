@@ -6,11 +6,11 @@ from apps.teams.models import Workspace
 
 def admin_dashboard_callback(request, context):
     """
-    يقوم بحساب وعرض مؤشرات الأداء الحيوية في لوحة تحكم الأدمن:
-    1. عدد المستخدمين الكلي
-    2. عدد مساحات العمل الكلية
-    3. عدد الاشتراكات المدفوعة النشطة
-    4. تقدير الإيرادات المتكررة شهرياً (MRR)
+    Computes key performance metrics for the admin dashboard:
+    1. Total registered users
+    2. Total workspaces count
+    3. Active paid subscriptions count
+    4. Estimated Monthly Recurring Revenue (MRR)
     """
     User = get_user_model()
 

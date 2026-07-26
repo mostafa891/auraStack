@@ -3,23 +3,23 @@ from django.test import override_settings
 
 
 def test_queue_broker_orm_fallback():
-    """التحقق من أن طابور المهام Q2 يستخدم الـ ORM محلياً لتبسيط التشغيل والتثبيت."""
-    # عند غياب المتغير البيئي للـ Redis، يجب أن يقع النظام على الـ ORM
+    """Verifies that task queue Q2 falls back to DB ORM locally for zero-config setup."""
+    # When Redis environment variable is absent, system falls back to ORM
     q_cluster = settings.Q_CLUSTER
 
-    # التحقق من أن الوسيط هو default (ORM)
+    # Verify broker is ORM default
     assert q_cluster.get("orm") == "default"
     assert "redis" not in q_cluster
     assert q_cluster.get("save_limit") == 0
 
 
 def test_queue_broker_redis_override():
-    """التحقق من إمكانية التبديل الفوري لوسيط Redis للإنتاج بمجرد تعريف المتغير البيئي."""
+    """Verifies seamless switching to Redis broker when REDIS_URL environment variable is set."""
     dummy_redis_url = "redis://:password@127.0.0.1:6379/0"
 
-    # محاكاة سلوك الـ settings.py عند وجود REDIS_URL
+    # Simulate settings.py behavior when REDIS_URL is present
     q_cluster_prod = {
-        "name": "auraflow_q",
+        "name": "aurastack_q",
         "workers": 4,
         "recycle": 500,
         "timeout": 60,

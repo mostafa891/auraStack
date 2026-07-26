@@ -136,10 +136,60 @@ import { useToast } from "@/composables/useToast";
 const { toast } = useToast();
 
 const isUploadingAvatar = vueRef(false);
+const isDeletingAvatar = vueRef(false);
 const avatarInput = vueRef<HTMLInputElement | null>(null);
 
 const triggerAvatarUpload = () => {
   avatarInput.value?.click();
+};
+
+const handleAvatarDelete = async () => {
+  if (!form.avatar_url) return;
+  isDeletingAvatar.value = true;
+  try {
+    const getCookie = (name: string) => {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    };
+    const csrfToken = getCookie("XSRF-TOKEN") || getCookie("csrftoken") || "";
+
+    const response = await fetch("/auth/profile/avatar/delete/", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken,
+        "X-XSRF-TOKEN": csrfToken,
+      },
+      credentials: "same-origin",
+    });
+
+    const data = await response.json();
+    if (response.ok && data.success) {
+      form.avatar_url = "";
+      form.post("/auth/profile/update/", {
+        preserveScroll: true,
+        onSuccess: () => {
+          toast.success(locale.value === "ar" ? "تم حذف الصورة الشخصية بنجاح!" : "Avatar removed successfully!");
+        },
+      });
+    } else {
+      throw new Error(data.error || "Failed to remove avatar.");
+    }
+  } catch (error: any) {
+    console.error("Avatar deletion failed:", error);
+    toast.error(error.message || (locale.value === "ar" ? "فشل حذف الصورة الشخصية." : "Failed to remove avatar."));
+  } finally {
+    isDeletingAvatar.value = false;
+  }
 };
 
 const handleAvatarUpload = async (event: Event) => {
@@ -309,7 +359,7 @@ watch(
                 <span>{{ isUploadingAvatar ? t('profile.uploading_avatar') : t('profile.change_avatar') }}</span>
               </button>
 
-              <!-- حقل الرفع المخفي -->
+              <!-- Hidden File Upload Input -->
               <input
                 type="file"
                 ref="avatarInput"
@@ -317,6 +367,21 @@ watch(
                 accept="image/*"
                 @change="handleAvatarUpload"
               />
+            </div>
+
+            <!-- Remove Avatar Button -->
+            <div v-if="form.avatar_url" class="mb-3">
+              <button
+                @click="handleAvatarDelete"
+                type="button"
+                :disabled="isDeletingAvatar"
+                class="px-3 py-1 text-xs font-medium text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>{{ t('profile.remove_avatar') }}</span>
+              </button>
             </div>
             
             <h2 class="text-lg font-bold text-[var(--color-text)] truncate">{{ user?.email }}</h2>

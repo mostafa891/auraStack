@@ -27,10 +27,10 @@ def process_stripe_webhook(payload: bytes, sig_header: str):
             return
 
         subscription_id = session.get("subscription")
-        # استخراج plan_id من الـ metadata أو الـ line_items — مع fallback آمن
+        # Extract plan_id from metadata or line_items with fallback
         plan_id = (
             session.get("metadata", {}).get("plan_id")
-            or "pro"  # fallback للإصدارات القديمة التي لا تُرسل plan_id في metadata
+            or "pro"  # fallback for legacy payload formats without explicit plan_id
         )
 
         with transaction.atomic():
@@ -52,7 +52,7 @@ def process_stripe_webhook(payload: bytes, sig_header: str):
                 sub.current_period_end = now() + datetime.timedelta(days=30)
                 sub.save()
 
-            # تسجيل الحركة المالية
+            # Record financial transaction
             PaymentTransaction.objects.update_or_create(
                 transaction_id=session.get("id"),
                 defaults={
@@ -96,9 +96,8 @@ def process_stripe_webhook(payload: bytes, sig_header: str):
 
 
 def process_paymob_webhook(payload: dict, params: dict):
-    """
-    معالجة webhooks الواردة من Paymob.
-    Paymob يُرسل بيانات الدفع عبر GET params + POST body.
+    """Processes incoming webhooks from Paymob.
+    Paymob sends payment data via GET params + POST body.
     """
     import logging
 
@@ -109,7 +108,7 @@ def process_paymob_webhook(payload: dict, params: dict):
     pending = obj.get("pending", True)
 
     if success and not pending:
-        # استخراج workspace_id من merchant_order_id
+        # Extract workspace_id from merchant_order_id
         order = obj.get("order", {})
         workspace_id = order.get("merchant_order_id")
         if not workspace_id:
@@ -150,7 +149,7 @@ def process_paymob_webhook(payload: dict, params: dict):
 
 
 def process_lemonsqueezy_webhook(payload: bytes, signature: str):
-    """معالجة webhooks الواردة من LemonSqueezy."""
+    """Processes incoming webhooks from LemonSqueezy."""
     import json
     import logging
 
@@ -206,7 +205,7 @@ def process_lemonsqueezy_webhook(payload: bytes, signature: str):
 
 
 def process_paddle_webhook(payload: bytes, signature: str):
-    """معالجة webhooks الواردة من Paddle Billing."""
+    """Processes incoming webhooks from Paddle Billing."""
     import json
     import logging
 
@@ -261,7 +260,7 @@ def process_paddle_webhook(payload: bytes, signature: str):
 
 
 def process_paypal_webhook(payload: bytes, signature: str):
-    """معالجة webhooks الواردة من PayPal."""
+    """Processes incoming webhooks from PayPal."""
     import json
     import logging
 

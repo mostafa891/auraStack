@@ -18,7 +18,7 @@ from common.utils.request import get_request_data
 
 
 class WorkspaceListView(LoginRequiredMixin, View):
-    """صفحة استعراض مساحات العمل للمستخدم وإنشاء مساحة جديدة."""
+    """User workspaces overview and creation view."""
 
     login_url = "auth:login"
 
@@ -68,20 +68,20 @@ class WorkspaceListView(LoginRequiredMixin, View):
 
 
 class WorkspaceSettingsView(LoginRequiredMixin, View):
-    """لوحة التحكم بإعدادات مساحة العمل وإدارة الفريق."""
+    """Workspace settings and team management dashboard."""
 
     login_url = "auth:login"
 
     def get(self, request, slug):
         workspace = get_object_or_404(Workspace, slug=slug)
 
-        # التحقق من أن المستخدم عضو في مساحة العمل باستخدام الـ Selector
+        # Verify user is a member of the workspace using selector
         membership = get_workspace_membership(workspace, request.user)
         if not membership:
             messages.error(request, "You do not have access to this workspace.")
             return redirect(reverse("teams:workspace_list"))
 
-        # جلب الأعضاء والدعوات المعلقة باستخدام الـ Selectors المخصصة والمنسقة
+        # Fetch members and pending invitations using selectors
         members = [
             {
                 "id": str(m.id),
@@ -128,7 +128,7 @@ class WorkspaceSettingsView(LoginRequiredMixin, View):
     def post(self, request, slug):
         workspace = get_object_or_404(Workspace, slug=slug)
 
-        # التحقق من الصلاحيات (Owner/Admin فقط) باستخدام الـ Selector
+        # Verify permissions (Owner/Admin only) using selector
         membership = get_workspace_membership(workspace, request.user)
         if not membership or membership.role not in [
             WorkspaceMember.RoleChoices.OWNER,
@@ -185,10 +185,10 @@ class WorkspaceSettingsView(LoginRequiredMixin, View):
 
         try:
             workspace.name = name
-            # إذا رغبنا في تغيير الـ slug يدوياً (اختياري)
+            # Optional manual slug update
             new_slug = data.get("slug", "").strip()
             if new_slug and new_slug != workspace.slug:
-                # توليد الـ slug الفريد والتحقق منه
+                # Generate unique slug
                 from django.utils.text import slugify
 
                 base_slug = slugify(new_slug, allow_unicode=True)
@@ -210,7 +210,7 @@ class WorkspaceSettingsView(LoginRequiredMixin, View):
 
 
 class WorkspaceActiveSwitchView(LoginRequiredMixin, View):
-    """تبديل مساحة العمل النشطة للمستخدم في الـ Session."""
+    """Switches current active workspace in session."""
 
     login_url = "auth:login"
 
@@ -221,7 +221,7 @@ class WorkspaceActiveSwitchView(LoginRequiredMixin, View):
         if not workspace_id:
             return JsonResponse({"error": "workspace_id is required"}, status=400)
 
-        # التحقق من العضوية
+        # Check membership
         membership = WorkspaceMember.objects.filter(
             workspace_id=workspace_id, user=request.user
         ).first()
@@ -231,12 +231,11 @@ class WorkspaceActiveSwitchView(LoginRequiredMixin, View):
         request.session["active_workspace_id"] = str(workspace_id)
         messages.success(request, f"Switched to workspace '{membership.workspace.name}'")
 
-        # إرجاع رد لتوجيه الصفحة
         return redirect(reverse("profile"))
 
 
 class WorkspaceInviteView(LoginRequiredMixin, View):
-    """إرسال دعوة لعضو جديد للانضمام للفريق."""
+    """Sends invitation email for a new member to join the workspace."""
 
     login_url = "auth:login"
 
@@ -259,14 +258,14 @@ class WorkspaceInviteView(LoginRequiredMixin, View):
 
 
 class WorkspaceMemberDeleteView(LoginRequiredMixin, View):
-    """حذف عضو من الفريق أو مغادرة مساحة العمل."""
+    """Removes member from team or handles member leaving workspace."""
 
     login_url = "auth:login"
 
     def post(self, request, slug, member_id):
         workspace = get_object_or_404(Workspace, slug=slug)
 
-        # جلب معرف المستخدم قبل حذفه من قاعدة البيانات لمعرفة ما إذا كان يغادر بنفسه
+        # Get member user_id prior to deletion to verify if user is leaving themselves
         member_user_id = (
             WorkspaceMember.objects.filter(id=member_id, workspace=workspace)
             .values_list("user_id", flat=True)
@@ -288,7 +287,7 @@ class WorkspaceMemberDeleteView(LoginRequiredMixin, View):
 
 
 class WorkspaceMemberUpdateView(LoginRequiredMixin, View):
-    """تعديل رتبة عضو في الفريق."""
+    """Updates team member role."""
 
     login_url = "auth:login"
 
@@ -310,15 +309,15 @@ class WorkspaceMemberUpdateView(LoginRequiredMixin, View):
 
 
 class WorkspaceInvitationAcceptView(View):
-    """قبول دعوة الانضمام عبر الرابط الموقع بالتوكن."""
+    """Accepts invitation token via signed URL."""
 
     def get(self, request, token):
-        # 1. التحقق من وجود الدعوة
+        # 1. Verify invitation existence
         invitation = get_object_or_404(WorkspaceInvitation, token=token)
 
-        # 2. التحقق من مصادقة المستخدم الحالي
+        # 2. Verify user authentication
         if not request.user.is_authenticated:
-            # الاحتفاظ بالتوكن في الجلسة ليتم القبول التلقائي بعد التسجيل/الدخول
+            # Save token in session to auto-accept post-login/register
             request.session["pending_invite_token"] = str(token)
             messages.info(
                 request,
@@ -329,11 +328,11 @@ class WorkspaceInvitationAcceptView(View):
             )
             return redirect(reverse("auth:login") + f"?next={request.path}")
 
-        # 3. معالجة قبول الدعوة
+        # 3. Process invitation acceptance
         result = WorkspaceService.accept_invitation(token_uuid=invitation.token, user=request.user)
 
         if result.success:
-            # تعيين مساحة العمل المقبولة كنشطة في الجلسة
+            # Set accepted workspace as active in session
             request.session["active_workspace_id"] = str(invitation.workspace.id)
             messages.success(request, result.message)
             return redirect(
@@ -345,14 +344,14 @@ class WorkspaceInvitationAcceptView(View):
 
 
 class WorkspaceInvitationDeleteView(LoginRequiredMixin, View):
-    """إلغاء دعوة معلقة للإنضمام للفريق."""
+    """Revokes pending workspace invitation."""
 
     login_url = "auth:login"
 
     def post(self, request, slug, invitation_id):
         workspace = get_object_or_404(Workspace, slug=slug)
 
-        # التحقق من الصلاحيات (Owner/Admin فقط) باستخدام الـ Selector
+        # Verify permissions (Owner/Admin only) using selector
         membership = get_workspace_membership(workspace, request.user)
         if not membership or membership.role not in [
             WorkspaceMember.RoleChoices.OWNER,
@@ -368,7 +367,7 @@ class WorkspaceInvitationDeleteView(LoginRequiredMixin, View):
 
 
 class WorkspaceDeleteView(LoginRequiredMixin, View):
-    """حذف مساحة العمل حذفاً ناعماً."""
+    """Soft-deletes workspace instance."""
 
     login_url = "auth:login"
 
@@ -378,7 +377,7 @@ class WorkspaceDeleteView(LoginRequiredMixin, View):
 
         if result.success:
             messages.success(request, result.message)
-            # إذا تم حذف مساحة العمل النشطة، نقوم بإزالتها من الجلسة
+            # Remove active workspace from session if deleted
             if str(workspace.id) == request.session.get("active_workspace_id"):
                 request.session.pop("active_workspace_id", None)
             return redirect(reverse("teams:workspace_list"))
@@ -388,7 +387,7 @@ class WorkspaceDeleteView(LoginRequiredMixin, View):
 
 
 class WorkspaceRestoreView(LoginRequiredMixin, View):
-    """استرجاع مساحة العمل المحذوفة ناعماً."""
+    """Restores soft-deleted workspace instance."""
 
     login_url = "auth:login"
 

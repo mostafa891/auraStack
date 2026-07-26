@@ -4,7 +4,7 @@ from typing import Any
 
 
 class AuthErrorCode(StrEnum):
-    """رموز الأخطاء الصارمة الموحدة لمنظومة الهوية."""
+    """Standardized authentication error code definitions."""
 
     INVALID_CREDENTIALS = "INVALID_CREDENTIALS"
     ACCOUNT_LOCKED = "ACCOUNT_LOCKED"
@@ -14,7 +14,7 @@ class AuthErrorCode(StrEnum):
 
 @dataclass(slots=True)
 class ServiceResult:
-    """الكائن القياسي الموحد لنقل البيانات والمؤشرات عبر طبقات المنصة."""
+    """Standard container for service layer responses and operation state."""
 
     success: bool
     data: Any = None

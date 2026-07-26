@@ -9,11 +9,11 @@ from common.results import ServiceResult
 
 
 class WorkspaceService:
-    """طبقة الخدمات لإدارة الأعمال والتحقق الأمني لمساحات العمل والفرق."""
+    """Workspace service layer managing business logic, tenant isolation, and security constraints."""
 
     @staticmethod
     def create_workspace(name: str, user) -> ServiceResult:
-        """إنشاء مساحة عمل جديدة وإضافة المستخدم كمالك (OWNER) لها."""
+        """Creates a new workspace instance and assigns the creating user as OWNER."""
         if not name or not name.strip():
             return ServiceResult(success=False, message="Workspace name cannot be empty")
 
@@ -31,7 +31,7 @@ class WorkspaceService:
 
     @staticmethod
     def invite_member(workspace: Workspace, invited_by, email: str, role: str) -> ServiceResult:
-        """دعوة عضو جديد لمساحة العمل عبر البريد الإلكتروني مع التحقق من عدم تكراره."""
+        """Invites a new member to a workspace via email with duplicate checks."""
         email_clean = email.strip().lower()
         if not email_clean:
             return ServiceResult(success=False, message="Email address is required")
@@ -39,7 +39,7 @@ class WorkspaceService:
         if role not in WorkspaceMember.RoleChoices.values:
             return ServiceResult(success=False, message="Invalid role specified")
 
-        # 1. التحقق من صلاحية الداعي (يجب أن يكون OWNER أو ADMIN)
+        # 1. Verify inviter permission (Must be OWNER or ADMIN)
         operator = WorkspaceMember.objects.filter(workspace=workspace, user=invited_by).first()
         if not operator or operator.role not in [
             WorkspaceMember.RoleChoices.OWNER,
@@ -50,13 +50,13 @@ class WorkspaceService:
                 message="Access denied. You do not have permission to invite members.",
             )
 
-        # 2. التحقق من أن المستخدم ليس عضواً بالفعل
+        # 2. Check if target user is already a member
         if workspace.members.filter(user__email__iexact=email_clean).exists():
             return ServiceResult(
                 success=False, message="User is already a member of this workspace"
             )
 
-        # 3. التحقق من وجود دعوة معلقة صالحة لنفس البريد
+        # 3. Check for active pending invitation for target email
         active_invite = workspace.invitations.filter(
             email__iexact=email_clean,
             status=WorkspaceInvitation.StatusChoices.PENDING,
@@ -67,7 +67,7 @@ class WorkspaceService:
                 success=False, message="An active invitation has already been sent to this email"
             )
 
-        # 4. التحقق من حد الأعضاء وفقاً للخطة المدفوعة
+        # 4. Check plan member limit constraints
         from apps.payments.selectors import get_plan_limit
 
         max_members = get_plan_limit(workspace, "max_members")
@@ -82,7 +82,7 @@ class WorkspaceService:
                     ),
                 )
 
-        # 5. إنشاء الدعوة
+        # 5. Create invitation instance
         from django.conf import settings
         from django.core.mail import send_mail
         from django.template.loader import render_to_string
@@ -98,7 +98,7 @@ class WorkspaceService:
                     expires_at=expires_at,
                 )
 
-                # تجميع ورسالة البريد الإلكتروني
+                # Compose invite email message
                 site_url = getattr(settings, "SITE_URL", "http://localhost:8000")
                 invite_url = f"{site_url}/workspaces/invitations/{invitation.token}/accept/"
 
@@ -110,7 +110,7 @@ class WorkspaceService:
                 html_message = render_to_string("emails/workspace_invite.html", context)
 
                 send_mail(
-                    subject=f"Invitation to join team {workspace.name} on AuraFlow",
+                    subject=f"Invitation to join team {workspace.name} on auraStack",
                     message=(
                         f"You have been invited by {invited_by.email} to join the "
                         f"{workspace.name} workspace. Accept here: {invite_url}"
@@ -130,12 +130,12 @@ class WorkspaceService:
 
     @staticmethod
     def accept_invitation(token_uuid: uuid.UUID, user) -> ServiceResult:
-        """قبول الدعوة وإضافة المستخدم كعضو بالصلاحية المحددة بالدعوة."""
+        """Accepts invitation token and adds user to workspace with specified role."""
         invitation = WorkspaceInvitation.objects.filter(token=token_uuid).first()
         if not invitation:
             return ServiceResult(success=False, message="Invalid invitation link")
 
-        # التحقق من الصلاحية والوقت
+        # Verify status and expiration
         if (
             invitation.status != WorkspaceInvitation.StatusChoices.PENDING
             or invitation.expires_at <= timezone.now()
@@ -147,7 +147,7 @@ class WorkspaceService:
                 success=False, message="This invitation has expired or is no longer valid"
             )
 
-        # التحقق من تطابق البريد الإلكتروني
+        # Verify email match
         if invitation.email.lower() != user.email.lower():
             return ServiceResult(
                 success=False,
@@ -157,7 +157,7 @@ class WorkspaceService:
                 ),
             )
 
-        # التحقق من أن المستخدم ليس عضواً بالفعل
+        # Verify user is not already a member
         existing_member = WorkspaceMember.objects.filter(
             workspace=invitation.workspace, user=user
         ).first()
@@ -187,12 +187,12 @@ class WorkspaceService:
 
     @staticmethod
     def remove_member(workspace: Workspace, member_id: str, operator) -> ServiceResult:
-        """إزالة عضو من مساحة العمل مع التحقق من الصلاحيات والقيود الأمنية."""
+        """Removes a workspace member enforcing role hierarchy and sole owner safeguards."""
         member = WorkspaceMember.objects.filter(id=member_id, workspace=workspace).first()
         if not member:
             return ServiceResult(success=False, message="Member not found in this workspace")
 
-        # الحصول على دور المنفذ (Operator)
+        # Get operator membership role
         operator_member = WorkspaceMember.objects.filter(workspace=workspace, user=operator).first()
         if not operator_member:
             return ServiceResult(
@@ -201,10 +201,10 @@ class WorkspaceService:
 
         is_self = member.user == operator
 
-        # 1. إذا كان يغادر بنفسه (Self-removal/Leave)
+        # 1. Handle self-removal / leaving workspace
         if is_self:
             if member.role == WorkspaceMember.RoleChoices.OWNER:
-                # التحقق من عدم كونه المالك الوحيد
+                # Prevent sole owner from leaving without assigning another owner
                 owners_count = workspace.members.filter(
                     role=WorkspaceMember.RoleChoices.OWNER
                 ).count()
@@ -219,8 +219,7 @@ class WorkspaceService:
             member.delete()
             return ServiceResult(success=True, message="You have left the workspace successfully")
 
-        # 2. إذا كان المنفذ يزيل شخصاً آخر
-        # التحقق من رتبة المنفذ
+        # 2. Handle removing another member
         if operator_member.role not in [
             WorkspaceMember.RoleChoices.OWNER,
             WorkspaceMember.RoleChoices.ADMIN,
@@ -229,7 +228,7 @@ class WorkspaceService:
                 success=False, message="Access denied. Only Owners and Admins can remove members."
             )
 
-        # المشرف (ADMIN) لا يمكنه إزالة مالك (OWNER) أو مشرف آخر (ADMIN)
+        # ADMIN cannot remove OWNER or another ADMIN
         if operator_member.role == WorkspaceMember.RoleChoices.ADMIN:
             if member.role in [
                 WorkspaceMember.RoleChoices.OWNER,
@@ -240,7 +239,6 @@ class WorkspaceService:
                     message="Access denied. Admins cannot remove Owners or other Admins.",
                 )
 
-        # المالك (OWNER) يمكنه إزالة أي شخص عدا نفسه (تم معالجتها في Leave)
         member.delete()
         return ServiceResult(
             success=True, message=f"Member {member.user.email} removed successfully"
@@ -250,7 +248,7 @@ class WorkspaceService:
     def update_member_role(
         workspace: Workspace, member_id: str, new_role: str, operator
     ) -> ServiceResult:
-        """تعديل رتبة وصلاحيات العضو مع حماية رتبة المالك الوحيد."""
+        """Updates workspace member role protecting sole owner role."""
         if new_role not in WorkspaceMember.RoleChoices.values:
             return ServiceResult(success=False, message="Invalid role specified")
 
@@ -258,14 +256,13 @@ class WorkspaceService:
         if not member:
             return ServiceResult(success=False, message="Member not found in this workspace")
 
-        # الحصول على دور المنفذ (Operator)
         operator_member = WorkspaceMember.objects.filter(workspace=workspace, user=operator).first()
         if not operator_member:
             return ServiceResult(
                 success=False, message="Access denied. You are not a member of this workspace."
             )
 
-        # 1. لا يجوز تعديل رتبة المالك الوحيد إلى رتبة أقل
+        # 1. Prevent demoting sole owner
         if (
             member.role == WorkspaceMember.RoleChoices.OWNER
             and new_role != WorkspaceMember.RoleChoices.OWNER
@@ -280,7 +277,7 @@ class WorkspaceService:
                     ),
                 )
 
-        # 2. التحقق من الصلاحيات الأمنية للمنفذ
+        # 2. Check operator permissions
         if operator_member.role not in [
             WorkspaceMember.RoleChoices.OWNER,
             WorkspaceMember.RoleChoices.ADMIN,
@@ -289,7 +286,7 @@ class WorkspaceService:
                 success=False, message="Access denied. Only Owners and Admins can change roles."
             )
 
-        # المشرف (ADMIN) لا يمكنه ترقية أو تخفيض رتبة الملاك أو المشرفين
+        # ADMIN cannot promote or demote OWNER/ADMIN roles
         if operator_member.role == WorkspaceMember.RoleChoices.ADMIN:
             if member.role in [
                 WorkspaceMember.RoleChoices.OWNER,
@@ -299,7 +296,6 @@ class WorkspaceService:
                     success=False, message="Access denied. Admins cannot modify Owner/Admin roles."
                 )
 
-        # المالك (OWNER) يمكنه تغيير أي رتبة
         member.role = new_role
         member.save()
         return ServiceResult(
@@ -310,7 +306,7 @@ class WorkspaceService:
 
     @staticmethod
     def delete_workspace(workspace: Workspace, operator) -> ServiceResult:
-        """حذف مساحة العمل حذفاً ناعماً والتحقق من صلاحية المالك (OWNER)."""
+        """Soft-deletes workspace verifying OWNER permission."""
         operator_member = WorkspaceMember.objects.filter(workspace=workspace, user=operator).first()
         if not operator_member or operator_member.role != WorkspaceMember.RoleChoices.OWNER:
             return ServiceResult(
@@ -318,9 +314,7 @@ class WorkspaceService:
             )
         try:
             with transaction.atomic():
-                # الحذف الناعم لمساحة العمل
                 workspace.delete()
-                # الحذف الناعم لجميع الأعضاء المنتسبين إليها لكي يختفوا من لوحات التحكم
                 WorkspaceMember.objects.filter(workspace=workspace).delete()
             return ServiceResult(success=True, message="Workspace archived successfully.")
         except Exception as e:
@@ -328,16 +322,14 @@ class WorkspaceService:
 
     @staticmethod
     def restore_workspace(workspace_id: str, operator) -> ServiceResult:
-        """استرجاع مساحة العمل المحذوفة ناعماً والتحقق من الصلاحيات."""
+        """Restores soft-deleted workspace verifying OWNER permission."""
         try:
-            # جلب مساحة العمل المحذوفة ناعماً عبر Manager المخصص
             workspace = Workspace.all_objects.filter(
                 id=workspace_id, deleted_at__isnull=False
             ).first()
             if not workspace:
                 return ServiceResult(success=False, message="Workspace not found or not archived.")
 
-            # التحقق من أن المنفذ هو من أنشأ مساحة العمل أو كان المالك
             operator_member = WorkspaceMember.all_objects.filter(
                 workspace=workspace, user=operator, role=WorkspaceMember.RoleChoices.OWNER
             ).first()
@@ -348,10 +340,8 @@ class WorkspaceService:
                 )
 
             with transaction.atomic():
-                # إلغاء الحذف الناعم لمساحة العمل
                 workspace.deleted_at = None
                 workspace.save(update_fields=["deleted_at"])
-                # استعادة عضويات جميع الأعضاء
                 WorkspaceMember.all_objects.filter(workspace=workspace).update(deleted_at=None)
 
             return ServiceResult(

@@ -8,7 +8,7 @@ from common.results import AuthErrorCode
 
 @pytest.mark.django_db
 def test_login_user_incorrect_credentials(client, test_user):
-    """التحقق من فشل المصادقة عند استخدام كلمة مرور خاطئة."""
+    """Verifies authentication failure when providing incorrect password."""
     request = client.request().wsgi_request
     with context.request_context(request):
         result = AuthService.login_user(
@@ -22,7 +22,7 @@ def test_login_user_incorrect_credentials(client, test_user):
 
 @pytest.mark.django_db
 def test_register_user_duplicate_email(client, test_user):
-    """التحقق من منع تسجيل حساب ببريد إلكتروني مسجل مسبقاً."""
+    """Verifies registration prevention when email already exists."""
     request = client.request().wsgi_request
     with context.request_context(request):
         result = AuthService.register_user(
@@ -36,9 +36,9 @@ def test_register_user_duplicate_email(client, test_user):
 
 @pytest.mark.django_db
 def test_register_user_successful(client):
-    """التحقق من نجاح التسجيل واستدعاء دورة إنشاء حساب allauth."""
+    """Verifies successful user registration and database creation."""
     request = client.request().wsgi_request
-    email = "new_signup@auraflow.com"
+    email = "new_signup@aurastack.com"
     with context.request_context(request):
         result = AuthService.register_user(
             request=request,

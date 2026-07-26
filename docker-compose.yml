@@ -3,7 +3,7 @@ version: '3.8'
 services:
   web:
     build: .
-    container_name: auraflow_web
+    container_name: aurastack_web
     ports:
       - "8000:8000"
     env_file:
@@ -27,7 +27,7 @@ services:
           memory: 512M
     # Restart policy
     restart: unless-stopped
-    # Health check with better timeout
+    # Health check with proper timeout
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health/"] 
       interval: 30s
@@ -35,7 +35,7 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - auraflow-network
+      - aurastack-network
     logging:
       driver: "json-file"
       options:
@@ -44,7 +44,7 @@ services:
 
   worker:
     build: .
-    container_name: auraflow_worker
+    container_name: aurastack_worker
     command: python manage.py qcluster
     env_file:
       - .env
@@ -65,7 +65,7 @@ services:
           memory: 256M
     restart: unless-stopped
     networks:
-      - auraflow-network
+      - aurastack-network
     logging:
       driver: "json-file"
       options:
@@ -74,20 +74,20 @@ services:
 
   db:
     image: postgres:16-alpine
-    container_name: auraflow_db
+    container_name: aurastack_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backups:/backups
     environment:
       # Use strong password from .env
-      POSTGRES_DB: ${POSTGRES_DB:-auraflow}
+      POSTGRES_DB: ${POSTGRES_DB:-aurastack}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-in-production}
       POSTGRES_INITDB_ARGS: "-c shared_buffers=256MB -c max_connections=200"
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-auraflow}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-aurastack}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -102,7 +102,7 @@ services:
           memory: 512M
     restart: unless-stopped
     networks:
-      - auraflow-network
+      - aurastack-network
     logging:
       driver: "json-file"
       options:
@@ -114,5 +114,5 @@ volumes:
     driver: local
 
 networks:
-  auraflow-network:
+  aurastack-network:
     driver: bridge

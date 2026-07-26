@@ -14,7 +14,7 @@ LEMONSQUEEZY_BASE_URL = "https://api.lemonsqueezy.com/v1"
 
 
 def _ls_request(method: str, endpoint: str, payload: dict = None, api_key: str = "") -> dict:
-    """دالة مساعدة لإرسال طلبات لـ LemonSqueezy API."""
+    """Helper utility for sending requests to LemonSqueezy REST API."""
     url = f"{LEMONSQUEEZY_BASE_URL}{endpoint}"
     data = json.dumps(payload).encode("utf-8") if payload else None
     req = urllib.request.Request(
@@ -32,13 +32,12 @@ def _ls_request(method: str, endpoint: str, payload: dict = None, api_key: str =
 
 
 class LemonSqueezyService(BasePaymentGateway):
-    """
-    تطبيق كامل لبوابة الدفع LemonSqueezy.
+    """LemonSqueezy payment gateway integration.
 
-    المتغيرات المطلوبة في .env:
-        LEMONSQUEEZY_API_KEY       — مفتاح API من لوحة تحكم LemonSqueezy
-        LEMONSQUEEZY_STORE_ID      — معرّف المتجر
-        LEMONSQUEEZY_WEBHOOK_SECRET — مفتاح التحقق من webhooks
+    Required environment variables:
+        LEMONSQUEEZY_API_KEY        - API Secret Key
+        LEMONSQUEEZY_STORE_ID       - Store ID
+        LEMONSQUEEZY_WEBHOOK_SECRET  - Webhook verification secret
     """
 
     def __init__(self):
@@ -47,7 +46,7 @@ class LemonSqueezyService(BasePaymentGateway):
         self.webhook_secret = getattr(settings, "LEMONSQUEEZY_WEBHOOK_SECRET", "")
 
     def create_customer(self, workspace_id: str, email: str) -> str:
-        """إنشاء أو جلب عميل في LemonSqueezy."""
+        """Creates or fetches customer record in LemonSqueezy."""
         if not self.api_key:
             raise ValueError("LEMONSQUEEZY_API_KEY is not configured")
         try:
@@ -64,7 +63,7 @@ class LemonSqueezyService(BasePaymentGateway):
             return str(response["data"]["id"])
         except Exception as e:
             logger.error(f"LemonSqueezy create_customer error: {e}")
-            return workspace_id  # fallback
+            return workspace_id
 
     def create_checkout_session(
         self,
@@ -74,7 +73,7 @@ class LemonSqueezyService(BasePaymentGateway):
         cancel_url: str,
         metadata: dict = None,
     ) -> str:
-        """إنشاء جلسة Checkout عبر LemonSqueezy."""
+        """Creates checkout session URL via LemonSqueezy."""
         if not self.api_key or not self.store_id:
             raise ValueError(
                 "LemonSqueezy is not configured. Set LEMONSQUEEZY_API_KEY and LEMONSQUEEZY_STORE_ID"
@@ -103,7 +102,7 @@ class LemonSqueezyService(BasePaymentGateway):
         return response["data"]["attributes"]["url"]
 
     def cancel_subscription(self, subscription_id: str) -> bool:
-        """إلغاء اشتراك LemonSqueezy."""
+        """Cancels LemonSqueezy subscription."""
         if not self.api_key:
             return False
         try:
@@ -114,7 +113,7 @@ class LemonSqueezyService(BasePaymentGateway):
             return False
 
     def verify_webhook_signature(self, payload: bytes, signature: str) -> bool:
-        """التحقق من HMAC-SHA256 لـ LemonSqueezy webhooks."""
+        """Verifies HMAC-SHA256 digest for LemonSqueezy webhooks."""
         if not self.webhook_secret:
             logger.error("LEMONSQUEEZY_WEBHOOK_SECRET is not set")
             return False

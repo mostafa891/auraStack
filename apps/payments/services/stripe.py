@@ -10,15 +10,15 @@ class StripeService(BasePaymentGateway):
         stripe.api_key = getattr(settings, "STRIPE_SECRET_KEY", "")
 
     def create_customer(self, workspace_id: str, email: str) -> str:
-        # التحقق من وجود العميل محلياً
+        # Check if local customer mapping exists
         pc = PaymentCustomer.objects.filter(workspace_id=workspace_id, provider="STRIPE").first()
         if pc and pc.customer_id:
             return pc.customer_id
 
-        # إنشاء العميل في Stripe
+        # Register customer in Stripe API
         customer = stripe.Customer.create(email=email, metadata={"workspace_id": workspace_id})
 
-        # حفظ المعرف محلياً
+        # Save customer mapping locally
         PaymentCustomer.objects.update_or_create(
             workspace_id=workspace_id, provider="STRIPE", defaults={"customer_id": customer.id}
         )

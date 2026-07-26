@@ -6,7 +6,7 @@ from apps.users.models import CustomUser
 
 
 def get_user_by_email(email: str) -> CustomUser | None:
-    """جلب مستخدم عن طريق بريده الإلكتروني."""
+    """Retrieves a user model instance by email address."""
     try:
         return CustomUser.objects.get(email=email)
     except CustomUser.DoesNotExist:
@@ -14,28 +14,28 @@ def get_user_by_email(email: str) -> CustomUser | None:
 
 
 def is_totp_active(user) -> bool:
-    """التحقق مما إذا كانت المصادقة الثنائية (2FA/TOTP) مفعلة للمستخدم."""
+    """Checks whether 2FA/TOTP authentication is enabled for a user."""
     if not user or not user.is_authenticated:
         return False
     return Authenticator.objects.filter(user=user, type=Authenticator.Type.TOTP).exists()
 
 
 def get_totp_authenticator(user) -> Authenticator | None:
-    """جلب جهاز المصادقة الثنائية النشط للمستخدم."""
+    """Retrieves the active TOTP authenticator device instance for a user."""
     if not user or not user.is_authenticated:
         return None
     return Authenticator.objects.filter(user=user, type=Authenticator.Type.TOTP).first()
 
 
 def list_user_social_accounts(user) -> list[SocialAccount]:
-    """جلب قائمة الحسابات الاجتماعية المرتبطة بحساب المستخدم."""
+    """Lists all social accounts connected to a user profile."""
     if not user or not user.is_authenticated:
         return []
     return list(SocialAccount.objects.filter(user=user))
 
 
 def list_social_providers() -> list[dict]:
-    """جلب قائمة بكل مزودي تسجيل الدخول الاجتماعي المسجلين في المنصة."""
+    """Lists registered OAuth social login providers."""
     providers = []
     for provider_class in registry.get_class_list():
         providers.append(

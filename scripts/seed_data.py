@@ -4,8 +4,8 @@ from apps.users.models import CustomUser
 def run():
     print("Starting database seeding...")
 
-    # إنشاء أو تحديث مستخدم خارق تجريبي (Superuser)
-    admin_email = "admin@auraflow.com"
+    # Create or update demo superuser
+    admin_email = "admin@aurastack.com"
     admin_user, created = CustomUser.objects.get_or_create(
         email=admin_email,
         defaults={
@@ -26,8 +26,8 @@ def run():
     else:
         print(f"[-] Superuser already exists: {admin_email}")
 
-    # إنشاء أو تحديث مستخدم اعتيادي تجريبي (Standard User)
-    user_email = "user@auraflow.com"
+    # Create or update demo standard user
+    user_email = "user@aurastack.com"
     normal_user, created = CustomUser.objects.get_or_create(
         email=user_email,
         defaults={

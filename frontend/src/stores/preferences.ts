@@ -8,7 +8,7 @@ export type Language = "en" | "ar";
 export const usePreferencesStore = defineStore("preferences", () => {
   const page = usePage() as any;
 
-  // 1. تحديد القيم الافتراضية بناء على بيانات السيرفر أو التخزين المحلي
+  // 1. Initial values from server props or localStorage
   const getInitialTheme = (): Theme => {
     const serverUser = page.props?.auth?.user as any;
     if (serverUser?.theme) return serverUser.theme as Theme;
@@ -29,12 +29,12 @@ export const usePreferencesStore = defineStore("preferences", () => {
     return localStorage.getItem("timezone") || "UTC";
   };
 
-  // 2. التعريفات التفاعلية (Reactive State)
+  // 2. Reactive State
   const theme = ref<Theme>(getInitialTheme());
   const language = ref<Language>(getInitialLanguage());
   const timezone = ref<string>(getInitialTimezone());
 
-  // 3. تحديث السمة بصرياً في المتصفح
+  // 3. Apply theme visually to DOM
   const applyTheme = (t: Theme) => {
     const root = document.documentElement;
     if (t === "DARK" || (t === "SYSTEM" && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
@@ -44,7 +44,7 @@ export const usePreferencesStore = defineStore("preferences", () => {
     }
   };
 
-  // 4. مراقبة التغييرات وحفظها محلياً للزوار
+  // 4. Watch state changes and save to localStorage
   watch(theme, (newTheme) => {
     localStorage.setItem("theme", newTheme);
     applyTheme(newTheme);
@@ -58,7 +58,7 @@ export const usePreferencesStore = defineStore("preferences", () => {
     localStorage.setItem("timezone", newTz);
   }, { immediate: true });
 
-  // 5. استقبال التحديثات من الخادم عند تغير البروبس الممررة من Inertia
+  // 5. Sync updates when server Inertia props change
   watch(() => page.props?.auth?.user, (newUser: any) => {
     if (newUser) {
       if (newUser.theme && newUser.theme !== theme.value) {

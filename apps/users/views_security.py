@@ -28,12 +28,12 @@ from inertia import render, share
 from common.utils.request import get_request_data
 
 # ==============================================================================
-# Password Change — تغيير كلمة المرور (Pure SPA)
+# Password Change — Pure SPA
 # ==============================================================================
 
 
 class PasswordChangeView(LoginRequiredMixin, View):
-    """تغيير كلمة المرور عبر Inertia."""
+    """Change password view rendered via Inertia."""
 
     def get(self, request):
         return render(request, "Security/PasswordChange")
@@ -41,7 +41,7 @@ class PasswordChangeView(LoginRequiredMixin, View):
     def post(self, request):
         data = get_request_data(request)
 
-        # خريطة تحويل الحقول لتطابق مسميات النموذج الداخلي لـ allauth
+        # Map frontend form keys to allauth internal form field names
         mapped_data = {
             "oldpassword": data.get("old_password"),
             "password1": data.get("password"),
@@ -52,13 +52,13 @@ class PasswordChangeView(LoginRequiredMixin, View):
 
         if form.is_valid():
             form.save()
-            # إنهاء التغيير وتحديث الجلسة وإرسال التنبيهات الرسمية لـ allauth
+            # Finalize password change, refresh session, and dispatch signals
             from allauth.account.internal.flows.password_change import finalize_password_change
 
             finalize_password_change(request, form.user)
             return redirect(reverse("profile"))
         else:
-            # إعادة خريطة مسميات الأخطاء لتظهر في الواجهة الأمامية بشكل صحيح
+            # Map allauth form error keys back to frontend field names
             errors = form.errors.get_json_data()
             mapped_errors = {}
             if "oldpassword" in errors:
@@ -73,12 +73,12 @@ class PasswordChangeView(LoginRequiredMixin, View):
 
 
 # ==============================================================================
-# MFA Index — قائمة أجهزة المصادقة الثنائية (2FA)
+# MFA Index — 2FA Devices List
 # ==============================================================================
 
 
 class MfaListView(LoginRequiredMixin, View):
-    """عرض وإدارة المصادقة الثنائية (2FA) عبر Inertia."""
+    """Lists multi-factor authentication devices via Inertia."""
 
     def get(self, request):
         from apps.users.selectors import is_totp_active
@@ -93,27 +93,27 @@ class MfaListView(LoginRequiredMixin, View):
 
 
 # ==============================================================================
-# TOTP Activate — تفعيل المصادقة الثنائية
+# TOTP Activate — Enable 2FA
 # ==============================================================================
 
 
 class TotpActivateView(LoginRequiredMixin, View):
-    """تفعيل TOTP/2FA عبر Inertia."""
+    """Activates TOTP/2FA via Inertia."""
 
     def get(self, request):
         from apps.users.selectors import is_totp_active
 
-        # التحقق مما إذا كان مفعلاً بالفعل لتفادي التكرار
+        # Prevent duplicate activation if TOTP is already active
         if is_totp_active(request.user):
             return redirect(reverse("auth:mfa_list"))
 
-        # إنشاء فورم Allauth الافتراضي لتوليد الـ secret تلقائياً
+        # Initialize Allauth form to generate secret automatically
         form = ActivateTOTPForm(user=request.user)
         adapter = get_adapter()
         totp_url = adapter.build_totp_url(request.user, form.secret)
         totp_svg = adapter.build_totp_svg(totp_url)
 
-        # حفظ الـ secret في الـ session لمطابقته في الـ POST
+        # Store secret in session for verification on POST
         request.session["totp_secret"] = form.secret
         request.session["mfa.totp.secret"] = form.secret
 
@@ -133,7 +133,7 @@ class TotpActivateView(LoginRequiredMixin, View):
 
         data = get_request_data(request)
         form = ActivateTOTPForm(user=request.user, data=data)
-        form.secret = secret  # تمرير الـ secret المخزن لمطابقته
+        form.secret = secret  # Pass saved secret for matching
         request.session["mfa.totp.secret"] = secret
 
         if form.is_valid():
@@ -159,12 +159,12 @@ class TotpActivateView(LoginRequiredMixin, View):
 
 
 # ==============================================================================
-# TOTP Deactivate — تعطيل المصادقة الثنائية
+# TOTP Deactivate — Disable 2FA
 # ==============================================================================
 
 
 class TotpDeactivateView(LoginRequiredMixin, View):
-    """تعطيل TOTP/2FA عبر Inertia."""
+    """Deactivates TOTP/2FA via Inertia."""
 
     def get_authenticator(self, request):
         from django.http import Http404
@@ -177,14 +177,14 @@ class TotpDeactivateView(LoginRequiredMixin, View):
         return authenticator
 
     def get(self, request):
-        self.get_authenticator(request)  # التحقق من الوجود
+        self.get_authenticator(request)  # Verify existence
         return render(request, "Security/TotpDeactivate")
 
     def post(self, request):
         authenticator = self.get_authenticator(request)
         data = get_request_data(request)
 
-        # فورم التعطيل يتطلب تمرير الـ authenticator
+        # Deactivation form requires authenticator instance
         form = DeactivateTOTPForm(authenticator=authenticator, data=data)
 
         if form.is_valid():
@@ -198,7 +198,7 @@ class TotpDeactivateView(LoginRequiredMixin, View):
 
 
 # ==============================================================================
-# MFA Authenticate — التحقق من رمز MFA أثناء تسجيل الدخول
+# MFA Authenticate — 2FA Code Verification
 # ==============================================================================
 
 
@@ -207,7 +207,7 @@ class TotpDeactivateView(LoginRequiredMixin, View):
     name="dispatch",
 )
 class MfaAuthenticateView(View):
-    """التحقق من رمز MFA أثناء تسجيل الدخول عبر Inertia."""
+    """Verifies MFA TOTP code during login via Inertia."""
 
     def get(self, request):
         return render(request, "Security/MfaAuthenticate")
@@ -221,19 +221,19 @@ class MfaAuthenticateView(View):
 
         if form.is_valid():
             form.save()
-            return stage.exit()  # إنهاء عملية تسجيل الدخول وتوجيه المستخدم للداخل
+            return stage.exit()  # Complete login flow and exit stage
         else:
             share(request, errors=form.errors.get_json_data())
             return render(request, "Security/MfaAuthenticate")
 
 
 # ==============================================================================
-# Social Connections — إدارة الحسابات الاجتماعية المرتبطة
+# Social Connections — Manage Connected Accounts
 # ==============================================================================
 
 
 class SocialConnectionsView(LoginRequiredMixin, View):
-    """إدارة الحسابات الاجتماعية المرتبطة عبر Inertia."""
+    """Manages connected social accounts via Inertia."""
 
     def get(self, request):
         from apps.users.selectors import list_social_providers, list_user_social_accounts
@@ -286,12 +286,12 @@ class SocialConnectionsView(LoginRequiredMixin, View):
 
 
 # ==============================================================================
-# Social Signup — استكمال التسجيل للحسابات الاجتماعية
+# Social Signup — Complete Registration for Social Accounts
 # ==============================================================================
 
 
 class SocialSignupView(AllauthSocialSignupView):
-    """استكمال الاشتراك للحسابات الاجتماعية عبر Inertia."""
+    """Completes registration for social account signups via Inertia."""
 
     def render_to_response(self, context, **response_kwargs):
         provider = context.get("account").provider if context.get("account") else ""
@@ -305,12 +305,12 @@ class SocialSignupView(AllauthSocialSignupView):
 
 
 # ==============================================================================
-# Password Reset — استعادة كلمة المرور عبر البريد (Pure SPA)
+# Password Reset — Pure SPA Email Recovery
 # ==============================================================================
 
 
 class PasswordResetView(AllauthPasswordResetView):
-    """صفحة طلب إعادة تعيين كلمة المرور."""
+    """Password reset request page."""
 
     def render_to_response(self, context, **response_kwargs):
         return render(self.request, "Security/PasswordReset")
@@ -329,14 +329,14 @@ class PasswordResetView(AllauthPasswordResetView):
 
 
 class PasswordResetDoneView(AllauthPasswordResetDoneView):
-    """صفحة إشعار إرسال بريد استعادة كلمة المرور."""
+    """Password reset email sent confirmation page."""
 
     def get(self, request, *args, **kwargs):
         return render(request, "Security/PasswordResetDone")
 
 
 class PasswordResetFromKeyView(AllauthPasswordResetFromKeyView):
-    """صفحة كتابة كلمة المرور الجديدة بعد الضغط على الرابط في الإيميل."""
+    """Password reset key verification and new password entry page."""
 
     def dispatch(self, request, uidb36, key, **kwargs):
         is_inertia = (
@@ -404,14 +404,14 @@ class PasswordResetFromKeyView(AllauthPasswordResetFromKeyView):
 
 
 class PasswordResetFromKeyDoneView(AllauthPasswordResetFromKeyDoneView):
-    """صفحة تأكيد نجاح إعادة تعيين كلمة المرور."""
+    """Password reset success confirmation view."""
 
     def get(self, request, *args, **kwargs):
         return render(request, "Security/PasswordResetFromKeyDone")
 
 
 class SetLanguageView(View):
-    """تغيير لغة التطبيق وتخزينها في الكوكيز والجلسة."""
+    """Changes application language preference and stores in cookies/session."""
 
     def post(self, request):
         data = get_request_data(request)

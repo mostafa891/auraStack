@@ -1,12 +1,12 @@
-# 🌌 Comprehensive Technical Architecture Document — AuraFlow Engine
+# 🌌 Comprehensive Technical Architecture Document — auraStack Engine
 
-This document details the software architecture, technical integrations, data flows, and design decisions of the **AuraFlow** SaaS Boilerplate & Internal Tools Engine.
+This document details the software architecture, technical integrations, data flows, and design decisions of the **auraStack** SaaS Boilerplate & Internal Tools Engine.
 
 ---
 
-## 🏛️ System Architecture Overview
+## 1. High-Level System Architecture
 
-AuraFlow follows a **Modern Hybrid Architecture** that pairs Django's enterprise-grade backend security and ORM capabilities with Vue 3's reactive Single Page Application (SPA) frontend user experience using **Inertia.js** as a direct protocol bridge—eliminating the need for separate REST API boilerplate or JWT token management overhead.
+auraStack follows a **Modern Hybrid Architecture** that pairs Django's enterprise-grade backend security and ORM capabilities with Vue 3's reactive Single Page Application (SPA) frontend user experience using **Inertia.js** as a direct protocol bridge—eliminating the need for separate REST API boilerplate or JWT token management overhead.
 
 ```mermaid
 graph TD

@@ -5,7 +5,7 @@ from inertia import render
 
 
 class PricingView(LoginRequiredMixin, View):
-    """عرض خطط الأسعار والاشتراكات المتاحة."""
+    """Renders pricing plans and billing subscription view."""
 
     def get(self, request):
         stripe_key = getattr(settings, "STRIPE_PUBLISHABLE_KEY", "")
@@ -24,7 +24,7 @@ class PricingView(LoginRequiredMixin, View):
 
 
 class SubscriptionSettingsView(LoginRequiredMixin, View):
-    """عرض صفحة تفاصيل اشتراك مساحة العمل النشطة الحالية."""
+    """Renders active workspace subscription details and management view."""
 
     def get(self, request):
         return render(request, "Billing/SubscriptionSettings")

@@ -12,14 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 class PayPalService(BasePaymentGateway):
-    """
-    تطبيق كامل لبوابة الدفع PayPal (Subscriptions API).
+    """PayPal Subscriptions API integration.
 
-    المتغيرات المطلوبة في .env:
-        PAYPAL_CLIENT_ID     — معرّف التطبيق من PayPal Developer
-        PAYPAL_CLIENT_SECRET — مفتاح التطبيق السري
-        PAYPAL_WEBHOOK_ID    — معرّف Webhook للتحقق
-        PAYPAL_ENVIRONMENT   — 'sandbox' أو 'production'
+    Required environment variables:
+        PAYPAL_CLIENT_ID     - PayPal Developer App Client ID
+        PAYPAL_CLIENT_SECRET - PayPal Developer App Client Secret
+        PAYPAL_WEBHOOK_ID    - Webhook verification ID
+        PAYPAL_ENVIRONMENT   - 'sandbox' or 'production'
     """
 
     def __init__(self):
@@ -34,7 +33,7 @@ class PayPalService(BasePaymentGateway):
         )
 
     def _get_access_token(self) -> str:
-        """الحصول على OAuth2 access token من PayPal."""
+        """Obtains OAuth2 access token from PayPal."""
         if not self.client_id or not self.client_secret:
             raise ValueError("PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET are not configured")
         credentials = base64.b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode()
@@ -52,7 +51,7 @@ class PayPalService(BasePaymentGateway):
             return json.loads(resp.read().decode())["access_token"]
 
     def _paypal_request(self, method: str, endpoint: str, payload: dict = None) -> dict:
-        """دالة مساعدة لإرسال طلبات لـ PayPal API."""
+        """Helper utility for sending requests to PayPal REST API."""
         token = self._get_access_token()
         url = f"{self.base_url}{endpoint}"
         data = json.dumps(payload).encode("utf-8") if payload else None
@@ -71,7 +70,7 @@ class PayPalService(BasePaymentGateway):
             return json.loads(body) if body else {}
 
     def create_customer(self, workspace_id: str, email: str) -> str:
-        """PayPal لا يتطلب إنشاء عميل مسبق — يُرجع workspace_id."""
+        """PayPal does not require pre-created customers; returns workspace_id as reference."""
         return workspace_id
 
     def create_checkout_session(
@@ -82,7 +81,7 @@ class PayPalService(BasePaymentGateway):
         cancel_url: str,
         metadata: dict = None,
     ) -> str:
-        """إنشاء اشتراك PayPal وإرجاع رابط الموافقة."""
+        """Creates PayPal subscription and returns approval URL."""
         try:
             response = self._paypal_request(
                 "POST",
@@ -92,13 +91,13 @@ class PayPalService(BasePaymentGateway):
                     "application_context": {
                         "return_url": success_url,
                         "cancel_url": cancel_url,
-                        "brand_name": "AuraFlow",
+                        "brand_name": "auraStack",
                         "user_action": "SUBSCRIBE_NOW",
                     },
                     "custom_id": customer_id,
                 },
             )
-            # استخراج رابط approve من الـ links
+            # Extract approval URL from links array
             for link in response.get("links", []):
                 if link.get("rel") == "approve":
                     return link["href"]
@@ -108,7 +107,7 @@ class PayPalService(BasePaymentGateway):
             raise
 
     def cancel_subscription(self, subscription_id: str) -> bool:
-        """إلغاء اشتراك PayPal."""
+        """Cancels PayPal subscription."""
         try:
             self._paypal_request(
                 "POST",
@@ -121,19 +120,19 @@ class PayPalService(BasePaymentGateway):
             return False
 
     def verify_webhook_signature(self, payload: bytes, signature: str) -> bool:
-        """
-        التحقق من صحة PayPal Webhooks عبر PayPal Webhook verification API.
-        يتطلب PAYPAL_WEBHOOK_ID من لوحة تحكم PayPal.
+        """Verifies PayPal Webhook payload using PayPal verification API.
+
+        Requires PAYPAL_WEBHOOK_ID configured from PayPal Developer Dashboard.
         """
         if not self.webhook_id:
             logger.error("PAYPAL_WEBHOOK_ID is not set — skipping webhook verification")
             return False
         try:
             token = self._get_access_token()
-            # PayPal يتطلب إرسال البيانات لـ API التحقق الخاص به
+            # PayPal verification payload schema
             verify_payload = {
                 "auth_algo": "SHA256withRSA",
-                "cert_url": signature,  # في الواقع يُمرر cert_url من headers
+                "cert_url": signature,  # cert_url passed from header
                 "transmission_id": "",
                 "transmission_sig": signature,
                 "transmission_time": "",

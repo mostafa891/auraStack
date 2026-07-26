@@ -112,7 +112,7 @@ const getCookie = (name: string) => {
           {{ locale === 'ar' ? 'خطط أسعار بسيطة، بدون تعقيد' : 'Simple, transparent pricing' }}
         </h2>
         <p class="text-sm text-[var(--color-text-muted)] max-w-md mx-auto leading-relaxed">
-          {{ locale === 'ar' ? 'اختر الخطة المناسبة لفريقك وابدأ رحلتك التوسعية اليوم مع AuraFlow.' : 'Choose the best plan for your team and unlock advanced capabilities today.' }}
+          {{ locale === 'ar' ? 'اختر الخطة المناسبة لفريقك وابدأ رحلتك التوسعية اليوم مع auraStack.' : 'Choose the best plan for your team and unlock advanced capabilities today.' }}
         </p>
       </div>
 

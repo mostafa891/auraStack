@@ -7,11 +7,11 @@ from common.results import ServiceResult
 
 
 class AuthService:
-    """طبقة خدمات الهوية لإدارة المعاملات الأمنية وتتبع المؤشرات الحركية."""
+    """Authentication service layer managing security events and user identity flows."""
 
     @staticmethod
     def _get_metadata(request: HttpRequest) -> dict:
-        """استخراج بيانات العميل للـ Audit Trail بأمان."""
+        """Safely extracts client metadata for security audit trail logging."""
         return {
             "ip": request.META.get("REMOTE_ADDR"),
             "ua": request.META.get("HTTP_USER_AGENT", "Unknown"),
@@ -59,7 +59,7 @@ class AuthService:
             )
             return result
 
-        # إرسال البريد الترحيبي
+        # Dispatch welcome email notification
         from django.conf import settings
         from django.core.mail import send_mail
         from django.template.loader import render_to_string
@@ -68,8 +68,8 @@ class AuthService:
             site_url = getattr(settings, "SITE_URL", "http://localhost:8000")
             html_message = render_to_string("emails/welcome.html", {"site_url": site_url})
             send_mail(
-                subject="Welcome to AuraFlow!",
-                message="Welcome to AuraFlow! Your account is now active.",
+                subject="Welcome to auraStack!",
+                message="Welcome to auraStack! Your account is now active.",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[cleaned_email],
                 html_message=html_message,
@@ -88,7 +88,7 @@ class AuthService:
 
 
 class UserService:
-    """طبقة خدمات المستخدم لإدارة وتحديث البيانات الشخصية والتفضيلات."""
+    """User service layer for profile data and preference updates."""
 
     @staticmethod
     def update_profile_preferences(

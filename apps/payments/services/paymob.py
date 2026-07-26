@@ -15,7 +15,7 @@ PAYMOB_BASE_URL = "https://accept.paymob.com/api"
 
 
 def _paymob_post(endpoint: str, payload: dict) -> dict:
-    """دالة مساعدة لإرسال طلبات POST لـ Paymob API."""
+    """Helper utility for sending POST requests to Paymob API."""
     url = f"{PAYMOB_BASE_URL}{endpoint}"
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
@@ -29,14 +29,13 @@ def _paymob_post(endpoint: str, payload: dict) -> dict:
 
 
 class PaymobService(BasePaymentGateway):
-    """
-    تطبيق كامل لبوابة الدفع Paymob (السوق المصري والعربي).
+    """Paymob payment gateway integration (MENA region).
 
-    المتغيرات المطلوبة في .env:
-        PAYMOB_API_KEY       — مفتاح API من لوحة تحكم Paymob
-        PAYMOB_INTEGRATION_ID — معرّف الـ integration (بطاقة ائتمان أو محافظ)
-        PAYMOB_IFRAME_ID     — معرّف الـ iframe لصفحة الدفع
-        PAYMOB_HMAC_SECRET   — مفتاح HMAC للتحقق من صحة الـ webhooks
+    Required environment variables:
+        PAYMOB_API_KEY        - API secret key
+        PAYMOB_INTEGRATION_ID - Integration ID (card or wallet)
+        PAYMOB_IFRAME_ID      - Payment iframe template ID
+        PAYMOB_HMAC_SECRET    - Webhook HMAC secret
     """
 
     def __init__(self):
@@ -46,14 +45,14 @@ class PaymobService(BasePaymentGateway):
         self.hmac_secret = getattr(settings, "PAYMOB_HMAC_SECRET", "")
 
     def _authenticate(self) -> str:
-        """الخطوة 1: المصادقة والحصول على auth_token."""
+        """Step 1: Authenticate and obtain auth_token."""
         if not self.api_key:
             raise ValueError("PAYMOB_API_KEY is not configured")
         response = _paymob_post("/auth/tokens", {"api_key": self.api_key})
         return response["token"]
 
     def _register_order(self, auth_token: str, amount_cents: int, workspace_id: str) -> str:
-        """الخطوة 2: تسجيل الطلب والحصول على order_id."""
+        """Step 2: Register merchant order and obtain order_id."""
         payload = {
             "auth_token": auth_token,
             "delivery_needed": False,
@@ -68,7 +67,7 @@ class PaymobService(BasePaymentGateway):
     def _get_payment_key(
         self, auth_token: str, order_id: str, amount_cents: int, billing_data: dict
     ) -> str:
-        """الخطوة 3: الحصول على payment_key لفتح iframe الدفع."""
+        """Step 3: Generate payment_key to render payment iframe."""
         payload = {
             "auth_token": auth_token,
             "amount_cents": amount_cents,
@@ -83,7 +82,7 @@ class PaymobService(BasePaymentGateway):
         return response["token"]
 
     def create_customer(self, workspace_id: str, email: str) -> str:
-        """Paymob لا يحتاج عملاء مسبقاً — نُرجع workspace_id كمعرّف."""
+        """Paymob does not require pre-created customers; returns workspace_id as reference."""
         return workspace_id
 
     def create_checkout_session(
@@ -94,18 +93,15 @@ class PaymobService(BasePaymentGateway):
         cancel_url: str,
         metadata: dict = None,
     ) -> str:
-        """
-        إنشاء رابط الدفع عبر Paymob iframe.
-        يُرجع رابط iframe الكامل.
-        """
+        """Generates Paymob payment iframe checkout URL."""
         if not self.api_key or not self.integration_id or not self.iframe_id:
             raise ValueError(
                 "Paymob is not fully configured. "
                 "Set PAYMOB_API_KEY, PAYMOB_INTEGRATION_ID, PAYMOB_IFRAME_ID in .env"
             )
 
-        # سعر ثابت للتجربة — في الإنتاج يُحسب من الخطة
-        amount_cents = 19900  # 199 جنيه مصري = 19900 قرش
+        # Base amount in cents (199 EGP = 19900 cents)
+        amount_cents = 19900
 
         billing_data = {
             "apartment": "NA",
@@ -113,7 +109,7 @@ class PaymobService(BasePaymentGateway):
             if metadata
             else "customer@example.com",
             "floor": "NA",
-            "first_name": "AuraFlow",
+            "first_name": "auraStack",
             "street": "NA",
             "building": "NA",
             "phone_number": "+20100000000",
@@ -133,7 +129,7 @@ class PaymobService(BasePaymentGateway):
         return f"https://accept.paymob.com/api/acceptance/iframes/{self.iframe_id}?payment_token={payment_key}"
 
     def cancel_subscription(self, subscription_id: str) -> bool:
-        """Paymob لا يدعم إلغاء الاشتراكات عبر API مباشرة — يتم يدوياً من لوحة التحكم."""
+        """Paymob subscriptions are managed manually from Paymob Dashboard."""
         logger.warning(
             "Paymob subscription cancellation must be done manually from Paymob dashboard. "
             f"Subscription ID: {subscription_id}"
@@ -141,14 +137,14 @@ class PaymobService(BasePaymentGateway):
         return True
 
     def verify_webhook_signature(self, payload: bytes, signature: str) -> bool:
-        """التحقق من HMAC-SHA512 لـ Paymob webhooks."""
+        """Verifies HMAC-SHA512 signature for Paymob webhooks."""
         if not self.hmac_secret:
             logger.error("PAYMOB_HMAC_SECRET is not set — webhook signature verification skipped")
             return False
         try:
             body = json.loads(payload.decode("utf-8"))
             obj = body.get("obj", {})
-            # بناء سلسلة HMAC بترتيب Paymob المحدد
+            # Construct HMAC concatenated string in Paymob sequence
             concatenated = "".join(
                 str(obj.get(k, ""))
                 for k in [

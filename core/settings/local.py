@@ -4,10 +4,10 @@ import sys
 
 from core.settings.base import *
 
-# تفعيل الـ Debug والمؤشرات المحلية
+# Enable local DEBUG mode
 DEBUG = env.bool("DEBUG", default=True)
 
-# الالتزام بـ SQLite للمرحلة الحالية لتسريع التأسيس
+# Default SQLite database for local development
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -15,13 +15,13 @@ DATABASES = {
     }
 }
 
-# تعطيل التحقق من البريد تماماً في بيئة التطوير المحلية لتسريع بناء الواجهات
+# Disable email verification requirements in local dev
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
-# طباعة رسائل البريد الإلكتروني في الكونسول لتسهيل التطوير المحلي وااختبار الروابط
+# Console email backend for easy local testing
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-# التحقق مما إذا كان المشروع يعمل تحت بيئة الاختبارات (pytest)
+# Check if application is running under Pytest test runner
 TESTING = (
     "test" in sys.argv
     or any("pytest" in arg for arg in sys.argv)
@@ -30,7 +30,7 @@ TESTING = (
     or "pytest" in sys.modules
 )
 
-# تفعيل وضع التطوير الفوري لـ Vite (Hot Module Replacement) فقط خارج بيئة الاختبارات
+# Enable Vite Hot Module Replacement (HMR) in dev mode outside pytest
 DJANGO_VITE = {
     "default": {
         **DJANGO_VITE["default"],
@@ -39,10 +39,10 @@ DJANGO_VITE = {
 }
 
 # ==============================================================================
-# أدوات مراقبة الاستعلامات وتتبع مشاكل N+1 في بيئة التطوير والاختبار
+# Query performance monitoring and N+1 query detection
 # ==============================================================================
 if DEBUG:
-    # 1. إعداد django-querycount لمراقبة عدد الاستعلامات وتكرارها في الطرفية
+    # 1. Setup django-querycount middleware
     MIDDLEWARE.insert(0, "querycount.middleware.QueryCountMiddleware")
     QUERYCOUNT = {
         "THRESHOLDS": {
@@ -56,20 +56,18 @@ if DEBUG:
         "DISPLAY_DUPLICATES": True,
     }
 
-    # 2. إعداد nplusone لاكتشاف الاستعلامات الكسولة وتنبيهك بها
+    # 2. Setup nplusone lazy-query detection
     INSTALLED_APPS.insert(0, "nplusone.ext.django")
     MIDDLEWARE.insert(0, "nplusone.ext.django.NPlusOneMiddleware")
 
     NPLUSONE_LOGGER = logging.getLogger("django")
     NPLUSONE_LOG_LEVEL = logging.WARNING
-    NPLUSONE_RAISE = (
-        TESTING  # إيقاف الاختبار وإفشاله فوراً إذا تم رصد N+1، وطباعة تحذير فقط في التصفح المعتاد
-    )
+    NPLUSONE_RAISE = TESTING  # Raise error immediately during test execution on N+1 queries
     NPLUSONE_WHITELIST = [
         {"model": "teams.Workspace", "field": "subscription"},
         {"model": "Workspace", "field": "subscription"},
         {"model": "apps.teams.models.Workspace", "field": "subscription"},
     ]
 
-# تعطيل محدد معدل الطلبات أثناء الاختبارات لمنع حظر اختبارات E2E والـ Live Server
+# Disable rate limiting during automated test execution
 RATELIMIT_ENABLE = not TESTING

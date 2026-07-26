@@ -16,7 +16,7 @@ def lockout_setup(db):
         workspace=workspace, user=owner, role=WorkspaceMember.RoleChoices.OWNER
     )
 
-    # إضافة أعضاء إضافيين لمحاكاة تجاوز الحد
+    # Add extra members to simulate exceeding plan limit
     user_a = User.objects.create_user(email="member_a@example.com", password="Password123!")
     user_b = User.objects.create_user(email="member_b@example.com", password="Password123!")
     user_c = User.objects.create_user(email="member_c@example.com", password="Password123!")
@@ -39,23 +39,18 @@ def lockout_setup(db):
 
 @pytest.mark.django_db
 def test_workspace_lockout_when_exceeding_free_limit(client, lockout_setup):
-    """التحقق من أن مساحة العمل يتم قفلها (is_locked=True)
-
-    عند تجاوز حد الأعضاء للباقة المجانية (Free: max 3 members).
-    """
-    # حالياً في قاعدة البيانات لدينا 4 أعضاء (المالك + 3 أعضاء)
-    # والاشتراك الافتراضي هو Free
-
+    """Verifies that workspace gets locked (is_locked=True) when member count exceeds Free plan limit (3 members)."""
+    # Database currently has 4 members (Owner + 3 Members) with default Free plan
     client.force_login(lockout_setup["owner"])
 
-    # تعيين مساحة العمل كنشطة في الجلسة
+    # Set active workspace in session
     session = client.session
     session["active_workspace_id"] = str(lockout_setup["workspace"].id)
     session.save()
 
     response = client.get(reverse("profile"))
 
-    # التحقق من أن خصائص Inertia المشتركة تحتوي على قفل لمساحة العمل
+    # Verify Inertia shared props include workspace lockout flag
     import json
 
     page = response.context["page"]
@@ -71,15 +66,15 @@ def test_workspace_lockout_when_exceeding_free_limit(client, lockout_setup):
 
 @pytest.mark.django_db
 def test_workspace_lockout_when_subscription_canceled(client, lockout_setup):
-    """التحقق من قفل الحساب عند إلغاء أو عدم سداد اشتراك باقة Pro."""
+    """Verifies workspace lockout when Pro subscription is canceled or unpaid."""
     client.force_login(lockout_setup["owner"])
 
-    # تعيين مساحة العمل كنشطة
+    # Set active workspace in session
     session = client.session
     session["active_workspace_id"] = str(lockout_setup["workspace"].id)
     session.save()
 
-    # إنشاء اشتراك Pro غير نشط (ملغى أو متأخر السداد)
+    # Create inactive Pro subscription (canceled)
     Subscription.objects.create(
         workspace=lockout_setup["workspace"],
         plan_id="pro",
