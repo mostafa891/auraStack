@@ -52,7 +52,7 @@ jobs:
         run: python manage.py makemigrations --check --dry-run
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
+        run: python -m playwright install --with-deps chromium
 
       - name: Run Pytest Test Suite
         env:
