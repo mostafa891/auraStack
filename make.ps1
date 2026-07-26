@@ -8,13 +8,13 @@ switch ($Target) {
         npm run dev
     }
     "test" {
-        & .venv\Scripts\pytest.exe -v
+        & .venv\Scripts\python.exe -m pytest -v
     }
     "verify" {
         & .venv\Scripts\python.exe verify_all.py
     }
     "lint" {
-        & .venv\Scripts\ruff.exe check .
+        & .venv\Scripts\python.exe -m ruff check .
     }
     "migrate" {
         & .venv\Scripts\python.exe manage.py makemigrations

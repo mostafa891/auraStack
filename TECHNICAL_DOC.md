@@ -1,6 +1,6 @@
 # 🌌 Comprehensive Technical Architecture Document — auraStack Engine
 
-This document details the software architecture, technical integrations, data flows, and design decisions of the **auraStack** SaaS Boilerplate & Internal Tools Engine.
+This document details the software architecture, technical integrations, data flows, and design decisions of the **auraStack** SaaS Boilerplate & Internal Platform Engine.
 
 ---
 
@@ -26,7 +26,7 @@ Serves as the system core responsible for:
 * **Database & Custom User ORM:** Custom `CustomUser` model inheriting from `AbstractUser` and `TimeStampedModel`, utilizing UUID primary keys and username-less email authentication.
 * **django-allauth Integration:** Underpins account lifecycle, password resets, social connections, and Time-based One-Time Password (TOTP) Multi-Factor Authentication (MFA).
 
-### 2. Protocol Bridge (Inertia.js)
+### 2. Protocol Bridge (Inertia.js v2)
 The smart data-bridge enabling a full SPA experience powered by server-side routing:
 * Intercepts standard HTTP requests and returns JSON payloads containing reactive `props` and target Vue `component` declarations.
 * Handles page transitions dynamically without full page reloads while maintaining browser history state and URL routing.
@@ -72,16 +72,16 @@ sequenceDiagram
 
 ## 🧪 Quality Assurance & Test Engineering
 
-AuraFlow features an extensive testing suite covering unit, integration, and E2E browser behavior:
+auraStack features an extensive testing suite covering unit, integration, and E2E browser behavior:
 
 ### 1. Backend & Unit Testing (Pytest)
 * Model tests verifying custom constraints, UUID generation, and soft-delete behaviors.
 * Service tests (`AuthService`, `WorkspaceService`) verifying audit trail logging and role assignment.
-* Security tests targeting N+1 query detection, tenant isolation, workspace lockout states, and webhook signature verifications.
+* Security tests targeting N+1 query detection, tenant isolation, workspace lockout states, system health probe (`/api/v1/public/health`), and webhook signature verifications.
 
 ### 2. End-to-End Browser Automation (Playwright)
 * Automated Chromium execution simulating authentic end-user sessions.
-* Verifies registration, login, profile updates, and dynamic DOM theme updates (`.dark` CSS verification).
+* Verifies registration, login, 2FA prompt, profile updates, avatar removal, and dynamic DOM theme updates (`.dark` CSS verification).
 
 ---
 
@@ -114,3 +114,7 @@ AuraFlow features an extensive testing suite covering unit, integration, and E2E
 ### [ADR-07] Automated CI/CD Quality Pipeline
 - **Decision:** Configure GitHub Actions workflows (`ci.yml`) to enforce code formatting (Ruff), migration consistency checks, and full Pytest execution on every push/PR.
 - **Rationale:** Guarantees zero regression bugs reach the production main branch.
+
+### [ADR-08] Cross-Platform Developer DX Automation (Makefile / Batch / PowerShell)
+- **Decision:** Provide unified developer shortcuts (`make dev`, `make test`, `make verify`, `make lint`) supporting Linux, macOS, and Windows via `Makefile`, `make.bat`, and `make.ps1`.
+- **Rationale:** Delivers seamless developer experience across all operating systems without requiring manual GNU tool installations on Windows.
