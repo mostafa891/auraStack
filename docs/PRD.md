@@ -8,6 +8,7 @@ Please refer to the main entry point:
 ---
 
 ## 📂 Documentation Sub-folders:
+*   [Why auraStack? Value Proposition & ROI](WHY_AURASTACK.md)
 *   [Developer Onboarding & Contributing](contributing/index.md)
 *   [Database & Architecture](architecture/database.md)
 *   [Authentication & security](authentication/index.md)

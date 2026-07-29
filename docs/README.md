@@ -6,6 +6,10 @@ Welcome to the **AuraStack SaaS Engine** documentation. This directory contains 
 
 ## 📂 Documentation Structure
 
+### 0. [Why auraStack? Value Proposition & Engineering Velocity](WHY_AURASTACK.md)
+*   **Value Proposition:** Why use auraStack, time & engineering effort savings breakdown (190–270 hours saved), and key features.
+*   **Target Audience:** Indie hackers, SaaS founders, software agencies, and internal tooling teams.
+
 ### 1. [Developer Onboarding & Contributing](contributing/index.md)
 *   **Quickstart Guide:** Run the engine locally in 3 steps.
 *   **Code Standards:** Ruff configuration, formatting, and pre-commit hooks.

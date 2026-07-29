@@ -12,6 +12,28 @@ Production-grade, modular Full-Stack SaaS Boilerplate & Internal Platform Engine
 
 ---
 
+## 💡 Why auraStack? (Time & Effort Savings)
+
+> **Launch your SaaS or internal platform in days—saving 200+ hours of setup time, engineering effort, and configuration headaches.**
+
+Building modern SaaS infrastructure from scratch burns weeks of development time on tedious, repetitive setup: authentication, 2FA, workspace isolation, payment gateways, background workers, and E2E test suites. **auraStack** gives you this entire production-grade foundation out of the box so you can focus 100% on your core product logic.
+
+### ⏱️ Time & Engineering Effort Savings
+
+| Component / Feature | Building from Scratch | With auraStack | Time & Effort Saved |
+| :--- | :--- | :--- | :--- |
+| **B2B Multi-Tenancy & RBAC** | 35 – 50 Hours | 0 Hours (Pre-built) | 4–6 Days of complex security coding |
+| **SOC2-Grade Auth, OAuth & 2FA/TOTP** | 30 – 45 Hours | 0 Hours (Pre-built) | 4–5 Days of identity & session setup |
+| **5 Payment Gateways (inc. Paymob MENA)** | 40 – 60 Hours | 0 Hours (Pre-built) | 5–7 Days of API & webhook integration |
+| **Zero REST API Boilerplate (Inertia v2)** | 25 – 35 Hours | 0 Hours (Pre-built) | 3–4 Days of state & fetcher duplication |
+| **70+ Automated Pytest & Playwright Tests** | 40 – 50 Hours | 0 Hours (Pre-built) | 4–6 Days of QA script writing |
+| **Dark-Mode Admin & Task Queues** | 20 – 30 Hours | 0 Hours (Pre-built) | 2–3 Days of dashboard configuration |
+| **TOTAL EFFORT SAVED** | **190 – 270 Hours** | **Instant Setup** | **4–6 Weeks of Full-Time Engineering Saved** |
+
+👉 **Read the full developer focus & architectural breakdown in [Why auraStack? (docs/WHY_AURASTACK.md)](docs/WHY_AURASTACK.md).**
+
+---
+
 ## 🛠️ Core Technology Stack
 
 auraStack leverages a modern hybrid architecture combining robust backend security with rich, dynamic Single Page Application (SPA) reactive user experiences:
