@@ -4,8 +4,17 @@ param (
 
 switch ($Target) {
     "dev" {
-        Start-Process powershell -ArgumentList "-NoExit", "-Command", ".venv\Scripts\python.exe manage.py runserver"
-        npm run dev
+        $python = if (Test-Path ".venv\Scripts\python.exe") { ".venv\Scripts\python.exe" } else { "python" }
+        Write-Host "🚀 Starting Django Backend & Vite Frontend..." -ForegroundColor Green
+        $backend = Start-Process -FilePath $python -ArgumentList "manage.py", "runserver" -PassThru -NoNewWindow
+        try {
+            npm run dev
+        } finally {
+            if ($backend -and -not $backend.HasExited) {
+                Write-Host "🛑 Stopping Django Backend process..." -ForegroundColor Yellow
+                Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue
+            }
+        }
     }
     "test" {
         & .venv\Scripts\python.exe -m pytest -v
