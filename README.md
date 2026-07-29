@@ -2,7 +2,7 @@
 
 Production-ready Django + Vue + Inertia SaaS Boilerplate.
 
-Build multi-tenant SaaS applications with authentication, RBAC, billing, Docker, CI/CD, and end-to-end testing — without building everything from scratch.
+Build multi-tenant SaaS applications **without writing REST serializer boilerplate** — featuring authentication, RBAC, 5 payment gateways, Docker, CI/CD, and automated testing out-of-the-box.
 
 [![CI/CD Pipeline](https://github.com/mostafa891/auraStack/actions/workflows/ci.yml/badge.svg)](#)
 ![Python](https://img.shields.io/badge/Python-3.12%2B-blue?style=for-the-badge&logo=python)
@@ -14,7 +14,7 @@ Build multi-tenant SaaS applications with authentication, RBAC, billing, Docker,
 
 ---
 
-## ⚡ Quick Start (Under 1 Minute)
+## ⚡ Quick Start
 
 ```bash
 # 1. Clone the repository
@@ -63,7 +63,7 @@ Visit `http://localhost:8000` to see your application running.
 - ✅ **Dark Mode & Styling:** Built with Tailwind CSS v4 and `django-unfold` admin dashboard.
 - ✅ **Background Queues & Webhooks:** Django-Q2 worker queues with signature-verified webhook security handlers.
 - ✅ **Enterprise Security & Compliance:** Soft-deletes, rate limiting, security headers, and binary avatar verification.
-- ✅ **Automated QA Suite:** 70+ automated backend Pytest tests + Playwright E2E browser automation suite.
+- ✅ **Automated QA Suite:** 72 automated backend Pytest tests + Playwright E2E browser automation suite.
 - ✅ **Cloud Deployment Ready:** Pre-configured for Render.com, Fly.io, and Docker containerization.
 
 ---
