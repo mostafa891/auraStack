@@ -111,6 +111,7 @@ def paymob_webhook(request: HttpRequest):
         "apps.payments.tasks.process_paymob_webhook",
         payload=data,
         params=params,
+        raw_payload=request.body,
     )
     return HttpResponse(status=200)
 

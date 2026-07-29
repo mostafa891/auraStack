@@ -95,7 +95,7 @@ def process_stripe_webhook(payload: bytes, sig_header: str):
                 sub.save()
 
 
-def process_paymob_webhook(payload: dict, params: dict):
+def process_paymob_webhook(payload: dict, params: dict, raw_payload: bytes = b""):
     """Processes incoming webhooks from Paymob.
     Paymob sends payment data via GET params + POST body.
     """
@@ -103,18 +103,26 @@ def process_paymob_webhook(payload: dict, params: dict):
 
     logger = logging.getLogger(__name__)
 
+    # Verify Paymob HMAC signature if raw_payload and hmac parameter exist
+    hmac_sig = params.get("hmac")
+    if raw_payload and hmac_sig:
+        paymob_service = PaymentGatewayFactory.get_gateway("PAYMOB")
+        if not paymob_service.verify_webhook_signature(raw_payload, hmac_sig):
+            raise ValueError("Invalid Paymob webhook signature")
+
     obj = payload.get("obj", {})
     success = obj.get("success", False)
     pending = obj.get("pending", True)
 
     if success and not pending:
-        # Extract workspace_id from merchant_order_id
+        # Extract workspace_id and plan_id from merchant_order_id & payload
         order = obj.get("order", {})
         workspace_id = order.get("merchant_order_id")
         if not workspace_id:
             logger.warning("Paymob webhook: missing merchant_order_id in payload")
             return
 
+        plan_id = order.get("data", {}).get("plan_id") or obj.get("plan_id") or "pro"
         amount_cents = obj.get("amount_cents", 0)
         transaction_id = str(obj.get("id", ""))
 
@@ -123,12 +131,13 @@ def process_paymob_webhook(payload: dict, params: dict):
                 workspace_id=workspace_id,
                 defaults={
                     "provider": ProviderChoices.PAYMOB,
-                    "plan_id": "pro",
+                    "plan_id": plan_id,
                     "status": SubscriptionStatusChoices.ACTIVE,
                     "current_period_end": now() + datetime.timedelta(days=30),
                 },
             )
             if not created:
+                sub.plan_id = plan_id
                 sub.status = SubscriptionStatusChoices.ACTIVE
                 sub.current_period_end = now() + datetime.timedelta(days=30)
                 sub.save()
@@ -174,18 +183,29 @@ def process_lemonsqueezy_webhook(payload: bytes, signature: str):
         logger.warning(f"LemonSqueezy webhook: no workspace_id in event '{event_name}'")
         return
 
+    plan_id = (
+        event.get("meta", {}).get("custom_data", {}).get("plan_id")
+        or attrs.get("custom_data", {}).get("plan_id")
+        or "pro"
+    )
+
     if event_name == "order_created":
         with transaction.atomic():
-            sub, _ = Subscription.objects.select_for_update().get_or_create(
+            sub, created = Subscription.objects.select_for_update().get_or_create(
                 workspace_id=workspace_id,
                 defaults={
                     "provider": ProviderChoices.LEMONSQUEEZY,
                     "subscription_id": str(data.get("id", "")),
-                    "plan_id": "pro",
+                    "plan_id": plan_id,
                     "status": SubscriptionStatusChoices.ACTIVE,
                     "current_period_end": now() + datetime.timedelta(days=30),
                 },
             )
+            if not created:
+                sub.plan_id = plan_id
+                sub.status = SubscriptionStatusChoices.ACTIVE
+                sub.save()
+
             PaymentTransaction.objects.update_or_create(
                 transaction_id=str(data.get("id", "")),
                 defaults={
@@ -228,18 +248,25 @@ def process_paddle_webhook(payload: bytes, signature: str):
         logger.warning(f"Paddle webhook: no workspace_id in event '{event_type}'")
         return
 
+    plan_id = custom_data.get("plan_id") or "pro"
+
     if event_type == "transaction.completed":
         with transaction.atomic():
-            sub, _ = Subscription.objects.select_for_update().get_or_create(
+            sub, created = Subscription.objects.select_for_update().get_or_create(
                 workspace_id=workspace_id,
                 defaults={
                     "provider": ProviderChoices.PADDLE,
                     "subscription_id": data.get("subscription_id", ""),
-                    "plan_id": "pro",
+                    "plan_id": plan_id,
                     "status": SubscriptionStatusChoices.ACTIVE,
                     "current_period_end": now() + datetime.timedelta(days=30),
                 },
             )
+            if not created:
+                sub.plan_id = plan_id
+                sub.status = SubscriptionStatusChoices.ACTIVE
+                sub.save()
+
             details = data.get("details", {}).get("totals", {})
             PaymentTransaction.objects.update_or_create(
                 transaction_id=data.get("id", ""),
@@ -282,18 +309,24 @@ def process_paypal_webhook(payload: bytes, signature: str):
         logger.warning(f"PayPal webhook: no workspace_id (custom_id) in event '{event_type}'")
         return
 
+    plan_id = resource.get("plan_id") or "pro"
+
     if event_type == "BILLING.SUBSCRIPTION.ACTIVATED":
         with transaction.atomic():
-            sub, _ = Subscription.objects.select_for_update().get_or_create(
+            sub, created = Subscription.objects.select_for_update().get_or_create(
                 workspace_id=workspace_id,
                 defaults={
                     "provider": ProviderChoices.PAYPAL,
                     "subscription_id": resource.get("id", ""),
-                    "plan_id": "pro",
+                    "plan_id": plan_id,
                     "status": SubscriptionStatusChoices.ACTIVE,
                     "current_period_end": now() + datetime.timedelta(days=30),
                 },
             )
+            if not created:
+                sub.plan_id = plan_id
+                sub.status = SubscriptionStatusChoices.ACTIVE
+                sub.save()
     elif event_type == "BILLING.SUBSCRIPTION.CANCELLED":
         Subscription.objects.filter(
             workspace_id=workspace_id, provider=ProviderChoices.PAYPAL

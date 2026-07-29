@@ -2,6 +2,51 @@ from django.http import HttpRequest
 from inertia import share
 
 
+def _serialize_workspace_membership(mem):
+    """Serialize a workspace membership instance with plan limit and lock status."""
+    from apps.payments.models import SubscriptionStatusChoices
+    from apps.payments.plans import PLANS
+
+    sub = getattr(mem.workspace, "subscription", None)
+    if sub:
+        plan_id = sub.plan_id
+        sub_status = sub.status
+        current_period_end = sub.current_period_end.isoformat() if sub.current_period_end else None
+        cancel_at_period_end = sub.cancel_at_period_end
+    else:
+        plan_id = "free"
+        sub_status = SubscriptionStatusChoices.ACTIVE
+        current_period_end = None
+        cancel_at_period_end = False
+
+    plan_limits = PLANS.get(plan_id, PLANS["free"])
+    max_members = plan_limits["max_members"]
+    member_count = mem.workspace.members.count()
+
+    is_locked = False
+    if plan_id != "free" and sub_status != SubscriptionStatusChoices.ACTIVE:
+        is_locked = True
+    elif member_count > max_members:
+        is_locked = True
+
+    return {
+        "id": str(mem.workspace.id),
+        "name": mem.workspace.name,
+        "slug": mem.workspace.slug,
+        "role": mem.role,
+        "role_display": mem.get_role_display(),
+        "subscription": {
+            "plan_id": plan_id,
+            "status": sub_status,
+            "current_period_end": current_period_end,
+            "cancel_at_period_end": cancel_at_period_end,
+            "is_locked": is_locked,
+            "max_members": max_members,
+            "member_count": member_count,
+        },
+    }
+
+
 class ShareUserDataMiddleware:
     """Middleware to share authenticated user, workspace, and flash data with Inertia."""
 
@@ -43,54 +88,11 @@ class ShareUserDataMiddleware:
             active_workspace_id = request.session.get("active_workspace_id")
             active_workspace = None
 
-            from apps.payments.models import SubscriptionStatusChoices
-            from apps.payments.plans import PLANS
-
             if active_workspace_id:
                 active_mem = get_active_workspace(request.user, active_workspace_id)
                 if active_mem:
                     request.active_workspace = active_mem.workspace
-                    # Get current subscription details from select_related object
-                    sub = getattr(active_mem.workspace, "subscription", None)
-                    if sub:
-                        plan_id = sub.plan_id
-                        sub_status = sub.status
-                        current_period_end = (
-                            sub.current_period_end.isoformat() if sub.current_period_end else None
-                        )
-                        cancel_at_period_end = sub.cancel_at_period_end
-                    else:
-                        plan_id = "free"
-                        sub_status = SubscriptionStatusChoices.ACTIVE
-                        current_period_end = None
-                        cancel_at_period_end = False
-
-                    plan_limits = PLANS.get(plan_id, PLANS["free"])
-                    max_members = plan_limits["max_members"]
-                    member_count = active_mem.workspace.members.count()
-
-                    is_locked = False
-                    if plan_id != "free" and sub_status != SubscriptionStatusChoices.ACTIVE:
-                        is_locked = True
-                    elif member_count > max_members:
-                        is_locked = True
-
-                    active_workspace = {
-                        "id": str(active_mem.workspace.id),
-                        "name": active_mem.workspace.name,
-                        "slug": active_mem.workspace.slug,
-                        "role": active_mem.role,
-                        "role_display": active_mem.get_role_display(),
-                        "subscription": {
-                            "plan_id": plan_id,
-                            "status": sub_status,
-                            "current_period_end": current_period_end,
-                            "cancel_at_period_end": cancel_at_period_end,
-                            "is_locked": is_locked,
-                            "max_members": max_members,
-                            "member_count": member_count,
-                        },
-                    }
+                    active_workspace = _serialize_workspace_membership(active_mem)
                 else:
                     request.session.pop("active_workspace_id", None)
 
@@ -99,47 +101,7 @@ class ShareUserDataMiddleware:
                 first_mem = memberships[0]
                 request.active_workspace = first_mem.workspace
                 request.session["active_workspace_id"] = str(first_mem.workspace.id)
-                # Get current subscription details from select_related object
-                sub = getattr(first_mem.workspace, "subscription", None)
-                if sub:
-                    plan_id = sub.plan_id
-                    sub_status = sub.status
-                    current_period_end = (
-                        sub.current_period_end.isoformat() if sub.current_period_end else None
-                    )
-                    cancel_at_period_end = sub.cancel_at_period_end
-                else:
-                    plan_id = "free"
-                    sub_status = SubscriptionStatusChoices.ACTIVE
-                    current_period_end = None
-                    cancel_at_period_end = False
-
-                plan_limits = PLANS.get(plan_id, PLANS["free"])
-                max_members = plan_limits["max_members"]
-                member_count = first_mem.workspace.members.count()
-
-                is_locked = False
-                if plan_id != "free" and sub_status != SubscriptionStatusChoices.ACTIVE:
-                    is_locked = True
-                elif member_count > max_members:
-                    is_locked = True
-
-                active_workspace = {
-                    "id": str(first_mem.workspace.id),
-                    "name": first_mem.workspace.name,
-                    "slug": first_mem.workspace.slug,
-                    "role": first_mem.role,
-                    "role_display": first_mem.get_role_display(),
-                    "subscription": {
-                        "plan_id": plan_id,
-                        "status": sub_status,
-                        "current_period_end": current_period_end,
-                        "cancel_at_period_end": cancel_at_period_end,
-                        "is_locked": is_locked,
-                        "max_members": max_members,
-                        "member_count": member_count,
-                    },
-                }
+                active_workspace = _serialize_workspace_membership(first_mem)
 
             share(
                 request,
